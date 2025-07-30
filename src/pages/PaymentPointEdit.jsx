@@ -608,14 +608,14 @@ const PaymentPointEdit = () => {
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#34495e', marginBottom: '8px' }}>
                   Tam Adres *
-                </label>
-                <textarea
+              </label>
+              <textarea
                   name="address.fullAddress"
                   value={formData.address.fullAddress}
-                  onChange={handleInputChange}
-                  placeholder="Tam adres bilgisi..."
-                  required
-                  rows={3}
+                onChange={handleInputChange}
+                placeholder="Tam adres bilgisi..."
+                required
+                rows={3}
                   style={{ 
                     width: '100%', 
                     padding: '12px', 
@@ -631,25 +631,25 @@ const PaymentPointEdit = () => {
                     {validationErrors['address.fullAddress']}
                   </span>
                 )}
-              </div>
+            </div>
             </div>
 
             {/* İletişim Bilgileri */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#34495e', marginBottom: '12px' }}>
-                  <Phone size={16} />
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#34495e', marginBottom: '12px' }}>
+                <Phone size={16} />
                   İletişim Numarası:
-                </label>
-                <input
-                  type="tel"
+              </label>
+              <input
+                type="tel"
                   name="contactNumber"
                   value={formData.contactNumber}
-                  onChange={handleInputChange}
-                  placeholder="örn: 0212 555 12 34"
-                  style={{ width: '100%', padding: '15px', border: '2px solid #bdc3c7', borderRadius: '8px', fontSize: '16px' }}
-                />
-              </div>
+                onChange={handleInputChange}
+                placeholder="örn: 0212 555 12 34"
+                style={{ width: '100%', padding: '15px', border: '2px solid #bdc3c7', borderRadius: '8px', fontSize: '16px' }}
+              />
+            </div>
 
               <div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', color: '#34495e', marginBottom: '12px' }}>
@@ -683,7 +683,7 @@ const PaymentPointEdit = () => {
               }}>
                 {paymentMethodOptions.map(option => (
                   <label key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px', borderRadius: '6px', background: formData.paymentMethods.includes(option.value) ? '#e3f2fd' : 'transparent' }}>
-                    <input
+              <input
                       type="checkbox"
                       checked={formData.paymentMethods.includes(option.value)}
                       onChange={() => handlePaymentMethodChange(option.value)}

@@ -15,8 +15,11 @@ import FeedbackDetail from './pages/FeedbackDetail';
 import PaymentPointList from './pages/PaymentPointList';
 import PaymentPointAdd from './pages/PaymentPointAdd';
 import PaymentPointEdit from './pages/PaymentPointEdit';
+import PaymentPointDetail from './pages/PaymentPointDetail';
 import StationList from './pages/StationList';
 import StationAdd from './pages/StationAdd';
+import StationEdit from './pages/StationEdit';
+import StationDetail from './pages/StationDetail';
 import StationMap from './pages/StationMap';
 import Analytics from './pages/Analytics';
 import AdminApprovals from './pages/AdminApprovals';
@@ -119,6 +122,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/payment-point/detail/:id"
+              element={
+                <ProtectedRoute>
+                  <PaymentPointDetail />
+                </ProtectedRoute>
+              }
+            />
             
             {/* Station Management Routes */}
             <Route
@@ -142,6 +153,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StationAdd />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/station/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <StationEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/station/detail/:id"
+              element={
+                <ProtectedRoute>
+                  <StationDetail />
                 </ProtectedRoute>
               }
             />

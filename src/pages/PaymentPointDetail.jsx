@@ -47,53 +47,36 @@ const PaymentPointDetail = () => {
       setLoading(true);
       setError('');
       
+      console.log('Payment Point ID ile veri çekiliyor:', id);
       const response = await paymentPointApi.getPaymentPointById(parseInt(id));
+      console.log('Payment Point API Response:', response);
       
-      if (response.isSuccess || response.success) {
-        setPaymentPoint(response.data);
+      // Response yapısını kontrol et - birden fazla format destekle
+      let paymentPointData = null;
+      
+      if (response && (response.isSuccess || response.success || response.data)) {
+        // Eğer response.data var ise onu kullan
+        paymentPointData = response.data;
+        
+        // Eğer response.data yoksa ama response başarılıysa, data response'un kendisinde olabilir
+        if (!paymentPointData && response.isSuccess !== false) {
+          paymentPointData = response;
+        }
+        
+        if (paymentPointData) {
+          console.log('Payment Point Data:', paymentPointData);
+          setPaymentPoint(paymentPointData);
+        } else {
+          throw new Error('Ödeme noktası verisi alınamadı');
+        }
       } else {
-        throw new Error(response.message || 'Ödeme noktası bulunamadı');
+        throw new Error(response?.message || 'Ödeme noktası bulunamadı');
       }
     } catch (error) {
       console.error('Ödeme noktası yükleme hatası:', error);
-      setError('Ödeme noktası yüklenirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
-      
-      // Show sample data in case of error
-      setPaymentPoint({
-        id: parseInt(id),
-        name: 'Merkez Ödeme Noktası',
-        location: {
-          latitude: 41.0082,
-          longitude: 28.9784
-        },
-        address: {
-          city: 'İstanbul',
-          district: 'Merkez',
-          street: 'Atatürk Caddesi',
-          postalCode: '34000',
-          fullAddress: 'Atatürk Cad. No:123 Merkez/İSTANBUL'
-        },
-        contactNumber: '0212 555 12 34',
-        workingHours: '09:00 - 18:00',
-        paymentMethods: ['CREDIT_CARD', 'CASH', 'QR_CODE'],
-        description: 'Ana şube ödeme noktası. Tüm ödeme yöntemleri kabul edilir.',
-        active: true,
-        photos: [
-          { 
-            id: 1, 
-            url: 'https://via.placeholder.com/300x200?text=Ödeme+Noktası+1', 
-            path: 'placeholder'
-          },
-          { 
-            id: 2, 
-            url: 'https://via.placeholder.com/300x200?text=Ödeme+Noktası+2', 
-            path: 'placeholder'
-          }
-        ],
-        createdAt: '2024-01-15T10:30:00',
-        lastUpdated: '2024-01-20T14:45:00',
-        distance: 2.5
-      });
+      const errorMessage = error.response?.data?.message || error.message || 'Bilinmeyen hata';
+      setError('Ödeme noktası yüklenirken bir hata oluştu: ' + errorMessage);
+      console.log('API hatası - gerçek veriler gösterilmiyor');
     } finally {
       setLoading(false);
     }
@@ -183,9 +166,9 @@ const PaymentPointDetail = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ background: 'white', borderRadius: '12px', padding: '25px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+      <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '30px', marginBottom: '25px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <button 
@@ -251,9 +234,9 @@ const PaymentPointDetail = () => {
         {/* Main Content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Basic Information */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '35px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
-              <Building size={24} style={{ color: '#007bff' }} />
+              <Building size={28} style={{ color: '#667eea' }} />
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2c3e50' }}>Temel Bilgiler</h2>
             </div>
 
@@ -325,9 +308,9 @@ const PaymentPointDetail = () => {
           </div>
 
           {/* Address Information */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '35px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
-              <MapPin size={24} style={{ color: '#007bff' }} />
+              <MapPin size={28} style={{ color: '#667eea' }} />
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2c3e50' }}>Adres Bilgileri</h2>
             </div>
 
@@ -423,9 +406,9 @@ const PaymentPointDetail = () => {
           </div>
 
           {/* Payment Methods */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '35px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px' }}>
-              <CreditCard size={24} style={{ color: '#007bff' }} />
+              <CreditCard size={28} style={{ color: '#667eea' }} />
               <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2c3e50' }}>Ödeme Yöntemleri</h2>
             </div>
 
@@ -433,18 +416,30 @@ const PaymentPointDetail = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 {paymentPoint.paymentMethods.map((method, index) => (
                   <div key={index} style={{
-                    background: '#e3f2fd',
-                    border: '2px solid #1976d2',
-                    borderRadius: '12px',
-                    padding: '15px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    borderRadius: '16px',
+                    padding: '20px',
                     textAlign: 'center',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '10px',
+                    transform: 'scale(1)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.transform = 'scale(1.05)';
+                    e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
                   }}>
                     <div style={{ fontSize: '24px' }}>{getPaymentMethodIcon(method)}</div>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#1976d2' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: 'white' }}>
                       {getPaymentMethodLabel(method)}
                     </div>
                   </div>
@@ -461,9 +456,9 @@ const PaymentPointDetail = () => {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Photos */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '25px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '30px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <ImageIcon size={20} style={{ color: '#007bff' }} />
+              <ImageIcon size={24} style={{ color: '#667eea' }} />
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>Fotoğraflar</h3>
             </div>
 
@@ -512,9 +507,9 @@ const PaymentPointDetail = () => {
           </div>
 
           {/* Meta Information */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '25px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '30px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <Calendar size={20} style={{ color: '#007bff' }} />
+              <Calendar size={24} style={{ color: '#667eea' }} />
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>Meta Bilgiler</h3>
             </div>
 

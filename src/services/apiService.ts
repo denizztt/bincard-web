@@ -537,112 +537,113 @@ export const feedbackApi = {
   }
 };
 
-// Station API endpoints (from StationApiClient.java)
+// Station API endpoints
 export const stationApi = {
-  // Create new station (requires auth)
-  async createStation(stationData: any): Promise<ApiResponse<any>> {
-    const response = await apiService.post<ApiResponse<any>>('/station', stationData);
-    return response;
-  },
-
-  // Get station by ID (no auth required)
-  async getStationById(id: string): Promise<ApiResponse<any>> {
-    // Remove auth token for this request
-    const response = await apiClient.get(`/station/${id}`);
-    return response.data;
-  },
-
-  // Update station (requires auth)
-  async updateStation(stationData: any): Promise<ApiResponse<any>> {
-    const response = await apiService.put<ApiResponse<any>>('/station', stationData);
-    return response;
-  },
-
-  // Change station status (requires auth)
-  async changeStationStatus(id: string, active: boolean, stationData?: any): Promise<ApiResponse<any>> {
-    const url = `/station/${id}/status?active=${active}`;
-    const response = await apiService.patch<ApiResponse<any>>(url, stationData || {});
-    return response;
-  },
-
-  // Delete station (requires auth)
-  async deleteStation(id: string, stationData?: any): Promise<ApiResponse<any>> {
-    const response = await apiService.delete<ApiResponse<any>>(`/station/${id}`, {
-      data: stationData || {}
-    });
-    return response;
-  },
-
-  // Search stations by name (no auth required)
-  async searchStations(name: string = '', page: number = 0, size: number = 20): Promise<PagedResponse<any>> {
-    const encodedName = encodeURIComponent(name);
-    const url = `/station/search?name=${encodedName}&page=${page}&size=${size}`;
-    const response = await apiClient.get(url);
-    return response.data;
-  },
-
-  // Search nearby stations (no auth required)
-  async searchNearbyStations(location: {
+  // Create new station
+  async createStation(data: {
+    name: string;
     latitude: number;
     longitude: number;
-    radius?: number;
-  }, page: number = 0, size: number = 20): Promise<PagedResponse<any>> {
-    const url = `/station/search/nearby?page=${page}&size=${size}`;
-    const response = await apiClient.post(url, location);
-    return response.data;
-  },
-
-  // Search by keywords (no auth required)
-  async searchByKeywords(query: string): Promise<ApiResponse<any[]>> {
-    const encodedQuery = encodeURIComponent(query);
-    const url = `/station/keywords?query=${encodedQuery}`;
-    const response = await apiClient.get(url);
-    return response.data;
-  },
-
-  // Get station routes (no auth required)
-  async getStationRoutes(stationId: string): Promise<ApiResponse<any[]>> {
-    const url = `/station/routes?stationId=${stationId}`;
-    const response = await apiClient.get(url);
-    return response.data;
-  },
-
-  // Get station arrivals (no auth required)
-  async getStationArrivals(stationId: string, routeId: string): Promise<ApiResponse<any[]>> {
-    const url = `/tracking/arrivals/station/${stationId}/route/${routeId}`;
-    const response = await apiClient.get(url);
-    return response.data;
-  },
-
-  // Create station with location
-  async createStationWithLocation(data: {
-    name: string;
-    type: string;
+    type: string; // StationType enum
     city: string;
     district: string;
     street: string;
-    postalCode: string;
-    latitude: number;
-    longitude: number;
+    postalCode?: string;
   }): Promise<ApiResponse<any>> {
     const response = await apiService.post<ApiResponse<any>>('/station', data);
     return response;
   },
 
-  // Update station with partial data
-  async updateStationPartial(id: string, data: Partial<{
-    name: string;
-    type: string;
-    city: string;
-    district: string;
-    street: string;
-    postalCode: string;
+  // Get station by ID
+  async getStationById(id: number): Promise<ApiResponse<any>> {
+    const response = await apiService.get<ApiResponse<any>>(`/station/${id}`);
+    return response;
+  },
+
+  // Update station
+  async updateStation(data: {
+    id: number;
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+    type?: string;
+    city?: string;
+    district?: string;
+    street?: string;
+    postalCode?: string;
+    active?: boolean;
+  }): Promise<ApiResponse<any>> {
+    const response = await apiService.put<ApiResponse<any>>('/station', data);
+    return response;
+  },
+
+  // Change station status
+  async changeStationStatus(id: number, active: boolean): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({
+      active: active.toString()
+    });
+    const response = await apiServiceExtended.patch<ApiResponse<any>>(`/station/${id}/status?${params.toString()}`);
+    return response;
+  },
+
+  // Delete station
+  async deleteStation(id: number): Promise<ApiResponse<any>> {
+    const response = await apiService.delete<ApiResponse<any>>(`/station/${id}`);
+    return response;
+  },
+
+  // Get all stations with location-based filtering
+  async getAllStations(
+    latitude: number, 
+    longitude: number, 
+    type?: string, 
+    page = 0, 
+    size = 10
+  ): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      page: page.toString(),
+      size: size.toString()
+    });
+    
+    if (type && type !== 'ALL') {
+      params.append('type', type);
+    }
+    
+    const response = await apiService.get<ApiResponse<any>>(`/station?${params.toString()}`);
+    return response;
+  },
+
+  // Search stations by name
+  async searchStationsByName(name: string, page = 0, size = 10): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({
+      name: name,
+      page: page.toString(),
+      size: size.toString()
+    });
+    
+    const response = await apiService.get<ApiResponse<any>>(`/station/search?${params.toString()}`);
+    return response;
+  },
+
+  // Get matching keywords for search suggestions
+  async getMatchingKeywords(query: string): Promise<Set<string>> {
+    const params = new URLSearchParams({
+      query: query
+    });
+    
+    const response = await apiService.get<Set<string>>(`/station/keywords?${params.toString()}`);
+    return response;
+  },
+
+  // Search nearby stations (legacy compatibility)
+  async searchNearbyStations(location: {
     latitude: number;
     longitude: number;
-    status: string;
-  }>): Promise<ApiResponse<any>> {
-    const response = await apiService.put<ApiResponse<any>>('/station', { id, ...data });
-    return response;
+    type?: string;
+  }, page: number = 0, size: number = 20): Promise<ApiResponse<any>> {
+    return this.getAllStations(location.latitude, location.longitude, location.type, page, size);
   }
 };
 

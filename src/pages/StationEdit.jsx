@@ -1,18 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Save, 
   MapPin,
   Building,
   Navigation,
-  AlertCircle
+  AlertCircle,
+  Loader,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import { config } from '../config/config';
 import { stationApi } from '../services/apiService';
 
-const StationAdd = () => {
+const StationEdit = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
@@ -25,9 +29,11 @@ const StationAdd = () => {
     city: '',
     district: '',
     street: '',
-    postalCode: ''
+    postalCode: '',
+    active: true
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
@@ -55,26 +61,26 @@ const StationAdd = () => {
     { value: 'DIGER', label: 'Diğer', icon: '📍' }
   ];
 
-  // Load Google Maps on component mount
   useEffect(() => {
     loadGoogleMaps();
-  }, []);
+    loadStationData();
+  }, [id]);
 
   const loadGoogleMaps = () => {
     // Check if Google Maps is already loaded
     if (window.google && window.google.maps) {
-      initializeMap();
+      setTimeout(() => initializeMap(), 100);
       return;
     }
 
     // Load Google Maps script
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMaps.apiKey}&libraries=${config.googleMaps.libraries.join(',')}&callback=initMapStation`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMaps.apiKey}&libraries=${config.googleMaps.libraries.join(',')}&callback=initMapStationEdit`;
     script.async = true;
     script.defer = true;
     
     // Set up global callback
-    window.initMapStation = () => {
+    window.initMapStationEdit = () => {
       initializeMap();
     };
     
@@ -86,13 +92,16 @@ const StationAdd = () => {
   };
 
   const initializeMap = () => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !formData.latitude) return;
 
     try {
-      const center = config.googleMaps.defaultCenter;
+      const center = {
+        lat: formData.latitude,
+        lng: formData.longitude
+      };
       
       const map = new window.google.maps.Map(mapRef.current, {
-        zoom: 13,
+        zoom: 15,
         center: center,
         mapTypeId: window.google.maps.MapTypeId.ROADMAP,
         styles: [
@@ -112,9 +121,8 @@ const StationAdd = () => {
         getAddressFromCoordinates(event.latLng.lat(), event.latLng.lng());
       });
 
-      // Place initial marker at default center
+      // Place marker at current location
       placeMarker(new window.google.maps.LatLng(center.lat, center.lng));
-      getAddressFromCoordinates(center.lat, center.lng);
       
       setMapLoaded(true);
       
@@ -181,10 +189,10 @@ const StationAdd = () => {
 
         setFormData(prev => ({
           ...prev,
-          city: city || 'İstanbul',
-          district: district || '',
-          street: street || '',
-          postalCode: postalCode || ''
+          city: city || prev.city,
+          district: district || prev.district,
+          street: street || prev.street,
+          postalCode: postalCode || prev.postalCode
         }));
       }
     } catch (error) {
@@ -192,11 +200,62 @@ const StationAdd = () => {
     }
   };
 
+  const loadStationData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      console.log('Durak edit için veri çekiliyor:', id);
+      const response = await stationApi.getStationById(parseInt(id));
+      console.log('Edit API Response:', response);
+      
+      // Response yapısını kontrol et
+      let stationData = null;
+      
+      if (response && (response.isSuccess || response.success || response.data)) {
+        stationData = response.data || response;
+        
+        if (stationData) {
+          console.log('Edit Station Data:', stationData);
+          setFormData({
+            name: stationData.name || '',
+            latitude: stationData.latitude || config.googleMaps.defaultCenter.lat,
+            longitude: stationData.longitude || config.googleMaps.defaultCenter.lng,
+            type: stationData.type || '',
+            city: stationData.city || '',
+            district: stationData.district || '',
+            street: stationData.street || '',
+            postalCode: stationData.postalCode || '',
+            active: stationData.active !== undefined ? stationData.active : true
+          });
+          
+          // Harita yeniden başlat
+          setTimeout(() => {
+            if (window.google && window.google.maps) {
+              initializeMap();
+            }
+          }, 500);
+        } else {
+          throw new Error('Durak verisi alınamadı');
+        }
+      } else {
+        throw new Error(response?.message || 'Durak bulunamadı');
+      }
+    } catch (error) {
+      console.error('Durak yükleme hatası:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Bilinmeyen hata';
+      setError('Durak yüklenirken bir hata oluştu: ' + errorMessage);
+      console.log('API hatası - gerçek veriler gösterilmiyor');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
     // Clear validation error for this field
@@ -243,11 +302,12 @@ const StationAdd = () => {
       return;
     }
     
-    setLoading(true);
+    setSaving(true);
     setError('');
     
     try {
       const submitData = {
+        id: parseInt(id),
         name: formData.name,
         latitude: formData.latitude,
         longitude: formData.longitude,
@@ -255,24 +315,25 @@ const StationAdd = () => {
         city: formData.city,
         district: formData.district,
         street: formData.street,
-        postalCode: formData.postalCode || undefined
+        postalCode: formData.postalCode || undefined,
+        active: formData.active
       };
       
-      console.log('Durak verileri:', submitData);
+      console.log('Durak güncelleme verileri:', submitData);
       
-      const response = await stationApi.createStation(submitData);
+      const response = await stationApi.updateStation(submitData);
       
       if (response.isSuccess || response.success) {
-        alert('Durak başarıyla eklendi!');
+        alert('Durak başarıyla güncellendi!');
         navigate('/station');
       } else {
-        throw new Error(response.message || 'Durak eklenemedi');
+        throw new Error(response.message || 'Durak güncellenemedi');
       }
     } catch (error) {
-      console.error('Durak ekleme hatası:', error);
-      setError('Durak eklenirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
+      console.error('Durak güncelleme hatası:', error);
+      setError('Durak güncellenirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -286,6 +347,17 @@ const StationAdd = () => {
     return option ? option.icon : '📍';
   };
 
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>
+          <Loader size={40} style={{ animation: 'spin 1s linear infinite', marginBottom: '15px' }} />
+          <p>Durak bilgileri yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
       {/* Header */}
@@ -298,7 +370,7 @@ const StationAdd = () => {
             <ArrowLeft size={20} />
             Geri Dön
           </button>
-          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>🚇 Yeni Durak Ekle</h1>
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>✏️ Durak Düzenle #{id}</h1>
         </div>
       </div>
 
@@ -311,9 +383,9 @@ const StationAdd = () => {
 
       {/* Form */}
       <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', overflow: 'hidden' }}>
-        <div style={{ background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)', color: 'white', padding: '30px', textAlign: 'center' }}>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '700' }}>Durak Bilgileri</h2>
-          <p style={{ margin: 0, fontSize: '16px', opacity: '0.9' }}>Yeni durak eklemek için gerekli bilgileri doldurun.</p>
+        <div style={{ background: 'linear-gradient(135deg, #ffc107 0%, #ffb300 100%)', color: 'white', padding: '30px', textAlign: 'center' }}>
+          <h2 style={{ margin: '0 0 10px 0', fontSize: '24px', fontWeight: '700' }}>Durak Bilgilerini Düzenle</h2>
+          <p style={{ margin: 0, fontSize: '16px', opacity: '0.9' }}>Mevcut bilgileri güncelleyerek kaydedin.</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
@@ -389,7 +461,7 @@ const StationAdd = () => {
                 <MapPin size={16} />
                 Konum Seçimi:
               </label>
-              <div style={{ border: '2px solid #bdc3c7', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ border: '2px solid #bdc3c7', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
                 <div 
                   ref={mapRef}
                   style={{ 
@@ -407,14 +479,14 @@ const StationAdd = () => {
                     zIndex: 1
                   }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #dc3545', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }}></div>
+                      <div style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #ffc107', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }}></div>
                       <p style={{ color: '#6c757d' }}>Harita yükleniyor...</p>
                     </div>
                   </div>
                 )}
               </div>
               <p style={{ fontSize: '14px', color: '#6c757d', marginTop: '8px' }}>
-                📍 Durak konumunu seçmek için harita üzerine tıklayın
+                📍 Durak konumunu değiştirmek için harita üzerine tıklayın
               </p>
               <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '5px', fontFamily: 'monospace' }}>
                 Koordinatlar: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
@@ -524,22 +596,46 @@ const StationAdd = () => {
                 </div>
               </div>
             </div>
+
+            {/* Aktif Durumu */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '16px', fontWeight: '600', color: '#34495e', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {formData.active ? (
+                    <ToggleRight size={24} style={{ color: '#28a745' }} />
+                  ) : (
+                    <ToggleLeft size={24} style={{ color: '#6c757d' }} />
+                  )}
+                  <input
+                    type="checkbox"
+                    name="active"
+                    checked={formData.active}
+                    onChange={handleInputChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+                Durak aktif
+              </label>
+              <p style={{ fontSize: '14px', color: '#6c757d', margin: '8px 0 0 36px' }}>
+                Bu seçenek işaretliyse durak kullanıcılara görünür olacaktır.
+              </p>
+            </div>
           </div>
 
           {/* Submit Button */}
           <div style={{ textAlign: 'center', marginTop: '40px' }}>
             <button
               type="submit"
-              disabled={loading}
+              disabled={saving}
               style={{ 
-                background: loading ? '#95a5a6' : '#dc3545', 
-                color: 'white', 
+                background: saving ? '#95a5a6' : '#ffc107', 
+                color: saving ? 'white' : '#212529',
                 border: 'none', 
                 padding: '15px 40px', 
                 fontSize: '16px', 
                 fontWeight: '600',
                 borderRadius: '50px', 
-                cursor: loading ? 'not-allowed' : 'pointer', 
+                cursor: saving ? 'not-allowed' : 'pointer', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px',
@@ -548,15 +644,15 @@ const StationAdd = () => {
                 justifyContent: 'center'
               }}
             >
-              {loading ? (
+              {saving ? (
                 <>
                   <div style={{ width: '16px', height: '16px', border: '2px solid transparent', borderTop: '2px solid currentColor', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                  Kaydediliyor...
+                  Güncelleniyor...
                 </>
               ) : (
                 <>
                   <Save size={16} />
-                  Durağı Kaydet
+                  Değişiklikleri Kaydet
                 </>
               )}
             </button>
@@ -573,8 +669,8 @@ const StationAdd = () => {
           
           input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+            border-color: #ffc107 !important;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
           }
         `}
       </style>
@@ -582,4 +678,4 @@ const StationAdd = () => {
   );
 };
 
-export default StationAdd;
+export default StationEdit;
