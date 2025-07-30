@@ -1,0 +1,254 @@
+/* FeedbackList.css */
+.feedback-list-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.feedback-list-header {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.feedback-list-search {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.feedback-list-table {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.feedback-search-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 15px;
+  align-items: end;
+}
+
+.feedback-search-input {
+  position: relative;
+}
+
+.feedback-search-input input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.feedback-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.feedback-filter-select {
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  min-width: 150px;
+}
+
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.feedback-table thead {
+  background: #f8f9fa;
+}
+
+.feedback-table th,
+.feedback-table td {
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.feedback-table th {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.feedback-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.feedback-type-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.feedback-source-badge {
+  background: #17a2b8;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feedback-status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.feedback-status-new {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.feedback-status-reviewed {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.feedback-status-resolved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.feedback-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feedback-btn-view {
+  background: #007bff;
+  color: white;
+}
+
+.feedback-btn-edit {
+  background: #ffc107;
+  color: #212529;
+}
+
+.feedback-btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.feedback-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.feedback-pagination button {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.feedback-pagination button:hover {
+  background: #f8f9fa;
+}
+
+.feedback-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback-pagination .active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.feedback-empty-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.feedback-empty-state svg {
+  color: #cbd5e1;
+  margin-bottom: 15px;
+}
+
+.feedback-empty-state p {
+  color: #6c757d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.loading-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .feedback-list-container {
+    padding: 10px;
+  }
+  
+  .feedback-search-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .feedback-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .feedback-table {
+    min-width: 600px;
+  }
+  
+  .feedback-actions {
+    flex-direction: column;
+  }
+} 

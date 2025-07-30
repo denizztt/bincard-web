@@ -1,0 +1,286 @@
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-hover) 100%);
+  position: relative;
+}
+
+.register-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hexagon" width="28" height="24" patternUnits="userSpaceOnUse"><polygon points="14,2 26,8 26,16 14,22 2,16 2,8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23hexagon)"/></svg>');
+  opacity: 0.3;
+}
+
+.register-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-2xl);
+  padding: var(--spacing-8);
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: var(--gray-100);
+  color: var(--gray-600);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--spacing-6);
+  border: 1px solid var(--gray-200);
+}
+
+.back-button:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  transform: translateX(-2px);
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: var(--spacing-8);
+}
+
+.register-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--secondary-color), var(--secondary-hover));
+  border-radius: var(--radius-2xl);
+  margin: 0 auto var(--spacing-4);
+  color: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+
+.register-header h1 {
+  color: var(--gray-900);
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-3);
+}
+
+.register-header p {
+  color: var(--gray-600);
+  font-size: var(--font-size-base);
+  margin-bottom: 0;
+}
+
+.register-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.info-message {
+  background: linear-gradient(135deg, var(--info-light), rgba(59, 130, 246, 0.05));
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  text-align: center;
+}
+
+.info-message h3 {
+  color: var(--info-color);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-3);
+}
+
+.info-message p {
+  color: var(--gray-700);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.register-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.contact-button {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-hover) 100%);
+  color: var(--white);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.contact-button:hover::before {
+  left: 100%;
+}
+
+.contact-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.contact-button:active {
+  transform: translateY(0);
+}
+
+.back-to-login-button {
+  background: none;
+  border: 2px solid var(--gray-300);
+  color: var(--gray-600);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.back-to-login-button:hover {
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
+  background: rgba(100, 116, 139, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .register-container {
+    padding: var(--spacing-2);
+  }
+  
+  .register-card {
+    padding: var(--spacing-6);
+  }
+  
+  .register-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .register-header h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .info-message {
+    padding: var(--spacing-4);
+  }
+  
+  .register-actions {
+    gap: var(--spacing-3);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .register-container {
+    background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+  }
+  
+  .register-card {
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+  }
+  
+  .back-button {
+    background: var(--gray-700);
+    color: var(--gray-300);
+    border-color: var(--gray-600);
+  }
+  
+  .back-button:hover {
+    background: var(--gray-600);
+    color: var(--gray-200);
+  }
+  
+  .register-header h1 {
+    color: var(--white);
+  }
+  
+  .register-header p {
+    color: var(--gray-300);
+  }
+  
+  .info-message {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  
+  .info-message h3 {
+    color: var(--info-color);
+  }
+  
+  .info-message p {
+    color: var(--gray-300);
+  }
+  
+  .back-to-login-button {
+    border-color: var(--gray-600);
+    color: var(--gray-300);
+  }
+  
+  .back-to-login-button:hover {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    background: rgba(100, 116, 139, 0.1);
+  }
+}
+
+/* Animation for the register card */
+.register-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effect for info message */
+.info-message {
+  transition: all var(--transition-normal);
+}
+
+.info-message:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
