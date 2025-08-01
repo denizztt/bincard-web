@@ -1122,4 +1122,199 @@ export const walletStatusApi = {
   }
 };
 
+// Bus API - BusController.java endpoints
+export const busApi = {
+  // === GENEL SORGULAMA ENDPOİNTLERİ ===
+  
+  // Tüm otobüsleri getir
+  getAllBuses: async (page = 0, size = 10) => {
+    const response = await apiService.get(`/bus/all?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // ID'ye göre otobüs getir
+  getBusById: async (busId: number) => {
+    const response = await apiService.get(`/bus/${busId}`);
+    return response.data;
+  },
+
+  // Aktif otobüsleri getir
+  getActiveBuses: async (page = 0, size = 10) => {
+    const response = await apiService.get(`/bus/active?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // === CRUD İŞLEMLERİ ===
+  
+  // Yeni otobüs oluştur
+  createBus: async (busData: {
+    numberPlate: string;
+    routeId?: number;
+    driverId?: number;
+    baseFare: number;
+    capacity?: number;
+    notes?: string;
+  }) => {
+    const response = await apiService.post('/bus/create', busData);
+    return response.data;
+  },
+
+  // Otobüs güncelle
+  updateBus: async (busId: number, busData: {
+    numberPlate?: string;
+    routeId?: number;
+    driverId?: number;
+    baseFare?: number;
+    capacity?: number;
+    active?: boolean;
+    status?: string;
+    notes?: string;
+  }) => {
+    const response = await apiService.put(`/bus/update/${busId}`, busData);
+    return response.data;
+  },
+
+  // Otobüs sil
+  deleteBus: async (busId: number) => {
+    const response = await apiService.delete(`/bus/delete/${busId}`);
+    return response.data;
+  },
+
+  // Otobüs aktif/pasif durumunu değiştir
+  toggleActiveStatus: async (busId: number) => {
+    const response = await apiService.put(`/bus/${busId}/toggle-active`);
+    return response.data;
+  },
+
+  // === ŞOFÖR YÖNETİMİ ===
+  
+  // Otobüse şoför ata
+  assignDriver: async (busId: number, driverId: number) => {
+    const response = await apiService.put(`/bus/${busId}/assign-driver`, { driverId });
+    return response.data;
+  },
+
+  // === KONUM YÖNETİMİ ===
+  
+  // Mevcut otobüs konumunu getir
+  getCurrentLocation: async (busId: number) => {
+    const response = await apiService.get(`/bus/${busId}/location`);
+    return response.data;
+  },
+
+  // Otobüs konumunu güncelle
+  updateLocation: async (busId: number, locationData: {
+    latitude: number;
+    longitude: number;
+    speed?: number;
+    accuracy?: number;
+  }) => {
+    const response = await apiService.post(`/bus/${busId}/location`, locationData);
+    return response.data;
+  },
+
+  // Konum geçmişini getir
+  getLocationHistory: async (busId: number, date?: string, page = 0, size = 10) => {
+    let url = `/bus/${busId}/location-history?page=${page}&size=${size}`;
+    if (date) url += `&date=${date}`;
+    const response = await apiService.get(url);
+    return response.data;
+  },
+
+  // === ROTA YÖNETİMİ ===
+  
+  // Otobüse rota ata
+  assignRoute: async (busId: number, routeId: number) => {
+    const response = await apiService.put(`/bus/${busId}/route`, { routeId });
+    return response.data;
+  },
+
+  // Rota istasyonlarını getir
+  getRouteStations: async (busId: number) => {
+    const response = await apiService.get(`/bus/${busId}/route/stations`);
+    return response.data;
+  },
+
+  // Otobüs yönünü değiştir
+  switchDirection: async (busId: number) => {
+    const response = await apiService.put(`/bus/${busId}/switch-direction`);
+    return response.data;
+  },
+
+  // === İSTATİSTİKLER ===
+  
+  // Otobüs istatistiklerini getir
+  getStatistics: async () => {
+    const response = await apiService.get('/bus/statistics');
+    return response.data;
+  },
+
+  // === ARAMA VE FİLTRELEME ===
+  
+  // Otobüs ara
+  searchBuses: async (filters: {
+    numberPlate?: string;
+    routeId?: number;
+    driverId?: number;
+    status?: string;
+    page?: number;
+    size?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters.numberPlate) params.append('numberPlate', filters.numberPlate);
+    if (filters.routeId) params.append('routeId', filters.routeId.toString());
+    if (filters.driverId) params.append('driverId', filters.driverId.toString());
+    if (filters.status) params.append('status', filters.status);
+    params.append('page', (filters.page || 0).toString());
+    params.append('size', (filters.size || 10).toString());
+    
+    const response = await apiService.get(`/bus/search?${params.toString()}`);
+    return response.data;
+  },
+
+  // Rotaya göre otobüsleri getir
+  getBusesByRoute: async (routeId: number, page = 0, size = 10) => {
+    const response = await apiService.get(`/bus/route/${routeId}?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // Şoföre göre otobüsleri getir
+  getBusesByDriver: async (driverId: number, page = 0, size = 10) => {
+    const response = await apiService.get(`/bus/driver/${driverId}?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // Duruma göre otobüsleri getir
+  getBusesByStatus: async (status: string, page = 0, size = 10) => {
+    const response = await apiService.get(`/bus/status/${status}?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // === DURUM YÖNETİMİ ===
+  
+  // Otobüs durumunu güncelle
+  updateStatus: async (busId: number, statusData: {
+    status: string;
+    reason?: string;
+    estimatedDurationMinutes?: number;
+  }) => {
+    const response = await apiService.put(`/bus/${busId}/status`, statusData);
+    return response.data;
+  },
+
+  // === TOPLU İŞLEMLER ===
+  
+  // Toplu aktifleştir
+  bulkActivate: async (busIds: number[]) => {
+    const response = await apiService.put('/bus/bulk/activate', busIds);
+    return response.data;
+  },
+
+  // Toplu pasifleştir
+  bulkDeactivate: async (busIds: number[]) => {
+    const response = await apiService.put('/bus/bulk/deactivate', busIds);
+    return response.data;
+  }
+};
+
 export default apiService; 

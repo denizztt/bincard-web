@@ -27,7 +27,8 @@ import {
   Edit3,
   PieChart,
   ChevronLeft,
-  Search
+  Search,
+  Bus
 } from 'lucide-react';
 import { dashboardApi, reportsApi } from '../services/apiService';
 import '../styles/Dashboard.css';
@@ -283,18 +284,18 @@ const Dashboard = () => {
                 onClick={() => setSearchVisible(!searchVisible)}
                 title={searchVisible ? "Aramayı kapat" : "Menüde arama yap"}
               >
-                <Search size={18} />
+                <Search size={20} />
               </button>
-              {(searchVisible || sidebarCollapsed) && (
+              {searchVisible && (
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Ara..."
+                  placeholder="Menüde ara..."
                   className="search-input-expandable"
                   autoFocus={searchVisible}
                   style={{
-                    width: searchVisible ? (sidebarCollapsed ? '150px' : '200px') : '0px',
+                    width: searchVisible ? '200px' : '0px',
                     opacity: searchVisible ? 1 : 0,
                     paddingLeft: searchVisible ? '12px' : '0px',
                     paddingRight: searchVisible ? '12px' : '0px'
@@ -371,6 +372,24 @@ const Dashboard = () => {
             <div className="submenu">
               {renderSubmenuItem('Ödeme Noktaları', '/payment-point')}
               {renderSubmenuItem('Yeni Nokta Ekle', '/payment-point/add')}
+            </div>
+          )}
+
+          {/* Otobüs Yönetimi - YENİ */}
+          {renderMenuItem(
+            Bus, 
+            'Otobüs Yönetimi', 
+            null, 
+            expandedMenus.bus, 
+            true, 
+            () => toggleMenu('bus'),
+            ['Otobüs Listesi', 'Yeni Otobüs', 'Otobüs Haritası']
+          )}
+          {expandedMenus.bus && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Otobüs Listesi', '/bus')}
+              {renderSubmenuItem('Yeni Otobüs', '/bus/add')}
+              {renderSubmenuItem('Otobüs Haritası', '/bus/map')}
             </div>
           )}
 

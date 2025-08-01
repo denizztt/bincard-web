@@ -9,8 +9,8 @@
 /* Sidebar */
 .sidebar {
   width: 280px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  color: var(--white);
+  background: var(--background-secondary);
+  color: var(--text-primary);
   transform: translateX(-100%);
   transition: all var(--transition-normal);
   position: fixed;
@@ -21,7 +21,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-2xl);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid var(--border-color);
 }
 
 .sidebar.collapsed {
@@ -38,7 +38,7 @@
 
 .sidebar-header {
   padding: var(--spacing-8) var(--spacing-6);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -87,7 +87,7 @@
   padding: 12px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   border: none;
   background: none;
   width: 100%;
@@ -100,13 +100,13 @@
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--background-hover);
+  color: var(--text-primary);
 }
 
 .menu-item.expanded {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: var(--background-hover);
+  color: var(--text-primary);
 }
 
 .menu-item-content {
@@ -122,7 +122,7 @@
 
 /* Submenu */
 .submenu {
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--background-hover);
   padding: 5px 0;
   margin-bottom: 5px;
 }
@@ -131,21 +131,21 @@
   padding: 10px 20px 10px 50px;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   font-size: 13px;
   border-left: 3px solid transparent;
 }
 
 .submenu-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-left-color: rgba(255, 255, 255, 0.5);
+  background: var(--background-hover);
+  color: var(--text-primary);
+  border-left-color: var(--primary-color);
 }
 
 /* Sidebar Search */
 .sidebar-search {
   padding: 0 20px 15px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 15px;
 }
 
@@ -870,28 +870,28 @@
 .sidebar-search {
   margin-bottom: var(--spacing-4);
   padding: 0 var(--spacing-4);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .search-container {
   display: flex;
   align-items: center;
-  background: var(--background-secondary);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   border-radius: var(--radius-lg);
-  padding: var(--spacing-1);
+  padding: 0;
   transition: all var(--transition-normal);
   position: relative;
 }
 
 .sidebar-search.expanded .search-container {
   background: var(--background-primary);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px var(--primary-light);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-1);
 }
 
 .search-icon {
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-secondary);
   padding: var(--spacing-2);
@@ -901,8 +901,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 36px;
+  min-width: 40px;
+  height: 40px;
   z-index: 2;
   position: relative;
 }
@@ -910,17 +910,17 @@
 .search-icon:hover {
   background: var(--background-hover);
   color: var(--text-primary);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .sidebar-search.expanded .search-icon {
-  background: var(--primary-color);
-  color: white;
+  background: transparent;
+  color: var(--text-primary);
 }
 
 .sidebar-search.expanded .search-icon:hover {
-  background: var(--primary-hover);
-  transform: scale(1.05);
+  background: var(--background-hover);
+  transform: scale(1);
 }
 
 .search-input-expandable {
@@ -942,4 +942,22 @@
 
 .search-input-expandable:focus::placeholder {
   color: var(--text-secondary);
+}
+
+/* When sidebar is collapsed */
+.sidebar.collapsed .search-icon {
+  min-width: 30px;
+  height: 30px;
+}
+
+.sidebar.collapsed .sidebar-search {
+  padding: 0 var(--spacing-2);
+}
+
+.sidebar.collapsed .sidebar-search.expanded .search-container {
+  position: absolute;
+  left: 60px;
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-lg);
+  width: 200px;
 }

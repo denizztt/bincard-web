@@ -30,6 +30,8 @@ import Statistics from './pages/Statistics';
 import WalletStatusUpdate from './pages/WalletStatusUpdate';
 import AllWallets from './pages/AllWallets';
 import WalletTransfers from './pages/WalletTransfers';
+import BusList from './pages/BusList';
+import BusMap from './pages/BusMap';
 import './App.css';
 
 function App() {
@@ -249,6 +251,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WalletTransfers />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Bus Management Routes */}
+            <Route
+              path="/bus"
+              element={
+                <ProtectedRoute>
+                  <BusList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bus/map"
+              element={
+                <ProtectedRoute>
+                  <BusMap />
                 </ProtectedRoute>
               }
             />

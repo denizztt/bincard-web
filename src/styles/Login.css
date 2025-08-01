@@ -648,6 +648,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #333333;
 }
 
 .label-mini-bus {
@@ -666,9 +667,9 @@
 
 .modern-country-select {
   width: 128px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
+  color: #333333;
   backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 12px;
@@ -678,19 +679,21 @@
 }
 
 .modern-country-select:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #333333;
 }
 
 .modern-country-select:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #333333;
 }
 
 .modern-country-select option {
-  background: rgba(30, 41, 59, 0.95);
-  color: white;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333333;
 }
 
 /* Modern Input Container */
@@ -701,9 +704,9 @@
 
 .modern-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
+  color: #333333;
   backdrop-filter: blur(12px);
   border-radius: 12px;
   padding: 12px;
@@ -714,12 +717,14 @@
 
 .modern-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #333333;
 }
 
 .modern-input:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 1);
+  color: #333333;
 }
 
 .modern-input.error {
@@ -731,11 +736,11 @@
 }
 
 .modern-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(51, 51, 51, 0.6);
 }
 
 .modern-input:focus::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(51, 51, 51, 0.4);
 }
 
 /* Input Buttons */
@@ -747,7 +752,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: #333333;
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -779,7 +784,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: #333333;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -792,8 +797,8 @@
 }
 
 .password-visibility-btn:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.25);
+  color: #555555;
+  background: rgba(51, 51, 51, 0.1);
 }
 
 .visibility-icon-container {
