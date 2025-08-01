@@ -155,54 +155,82 @@ const FeedbackList = () => {
 
         {/* Filters */}
         <div className="filters-container">
-          <div className="filter-row">
-            <div className="filter-group">
-              <label>Tür:</label>
-              <select 
-                value={filters.type}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                {Object.values(FeedbackType).map(type => (
-                  <option key={type} value={type}>{getFeedbackTypeDisplayName(type)}</option>
-                ))}
-              </select>
+          <div className="filters-header">
+            <h3 className="filters-title">
+              <span className="filter-icon">🔍</span>
+              Filtreleme Seçenekleri
+            </h3>
+            <div className="filters-count">
+              Toplam: {feedbacks.length} | Gösterilen: {filteredFeedbacks.length}
+            </div>
+          </div>
+          
+          <div className="filters-grid">
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">📝</span>
+                Tür
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.type}
+                  onChange={(e) => handleFilterChange('type', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Türler</option>
+                  {Object.values(FeedbackType).map(type => (
+                    <option key={type} value={type}>{getFeedbackTypeDisplayName(type)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Kaynak:</label>
-              <select 
-                value={filters.source}
-                onChange={(e) => handleFilterChange('source', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                {Object.values(FeedbackSource).map(source => (
-                  <option key={source} value={source}>{getFeedbackSourceDisplayName(source)}</option>
-                ))}
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">📡</span>
+                Kaynak
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.source}
+                  onChange={(e) => handleFilterChange('source', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Kaynaklar</option>
+                  {Object.values(FeedbackSource).map(source => (
+                    <option key={source} value={source}>{getFeedbackSourceDisplayName(source)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Tarih:</label>
-              <select 
-                value={filters.dateRange}
-                onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                <option value="Bugün">Bugün</option>
-                <option value="Bu Hafta">Bu Hafta</option>
-                <option value="Bu Ay">Bu Ay</option>
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">📅</span>
+                Tarih
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.dateRange}
+                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Tarihler</option>
+                  <option value="Bugün">Bugün</option>
+                  <option value="Bu Hafta">Bu Hafta</option>
+                  <option value="Bu Ay">Bu Ay</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="stats-row">
-          <span>Toplam: {feedbacks.length} geri bildirim</span>
-          <span>Gösterilen: {filteredFeedbacks.length} geri bildirim</span>
-          {error && <span className="error-message">{error}</span>}
-        </div>
+        {/* Error Display */}
+        {error && (
+          <div className="error-banner">
+            ⚠️ {error}
+          </div>
+        )}
       </div>
 
       {/* Feedback Table */}

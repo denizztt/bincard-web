@@ -1,0 +1,108 @@
+/* Theme Toggle Component */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+.theme-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.sun-icon {
+  color: #fbbf24;
+  animation: sunRotate 20s linear infinite;
+}
+
+.moon-icon {
+  color: #6366f1;
+  animation: moonPulse 2s ease-in-out infinite;
+}
+
+.theme-toggle-text {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* Animations */
+@keyframes sunRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes moonPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Theme specific styles */
+.light-theme .theme-toggle {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+.light-theme .theme-toggle:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+.dark-theme .theme-toggle {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark-theme .theme-toggle:hover {
+  background: #334155;
+  border-color: #6366f1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .theme-toggle-text {
+    display: none;
+  }
+  
+  .theme-toggle {
+    padding: 8px;
+    min-width: 40px;
+    justify-content: center;
+  }
+}

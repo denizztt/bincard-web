@@ -217,79 +217,119 @@ const NewsList = () => {
 
         {/* Filters */}
         <div className="filters-container">
-          <div className="filter-row">
-            <div className="filter-group">
-              <label>Platform:</label>
-              <select 
-                value={filters.platform}
-                onChange={(e) => handleFilterChange('platform', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                {Object.values(NewsPlatform).map(platform => (
-                  <option key={platform} value={platform}>{platform}</option>
-                ))}
-              </select>
+          <div className="filters-header">
+            <h3 className="filters-title">
+              <span className="filter-icon">🔍</span>
+              Filtreleme Seçenekleri
+            </h3>
+            <div className="filters-count">
+              Toplam: {news.length} | Gösterilen: {filteredNews.length}
+            </div>
+          </div>
+          
+          <div className="filters-grid">
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">🌐</span>
+                Platform
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.platform}
+                  onChange={(e) => handleFilterChange('platform', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Platformlar</option>
+                  {Object.values(NewsPlatform).map(platform => (
+                    <option key={platform} value={platform}>{platform}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Kategori:</label>
-              <select 
-                value={filters.type}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                {Object.values(NewsType).map(type => (
-                  <option key={type} value={type}>{getTypeDisplayName(type)}</option>
-                ))}
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">📂</span>
+                Kategori
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.type}
+                  onChange={(e) => handleFilterChange('type', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Kategoriler</option>
+                  {Object.values(NewsType).map(type => (
+                    <option key={type} value={type}>{getTypeDisplayName(type)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Öncelik:</label>
-              <select 
-                value={filters.priority}
-                onChange={(e) => handleFilterChange('priority', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                {Object.values(NewsPriority).map(priority => (
-                  <option key={priority} value={priority}>{getPriorityDisplayName(priority)}</option>
-                ))}
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">⚡</span>
+                Öncelik
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.priority}
+                  onChange={(e) => handleFilterChange('priority', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Öncelikler</option>
+                  {Object.values(NewsPriority).map(priority => (
+                    <option key={priority} value={priority}>{getPriorityDisplayName(priority)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Durum:</label>
-              <select 
-                value={filters.active}
-                onChange={(e) => handleFilterChange('active', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                <option value="Aktif">Aktif</option>
-                <option value="Pasif">Pasif</option>
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">🔘</span>
+                Durum
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.active}
+                  onChange={(e) => handleFilterChange('active', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Durumlar</option>
+                  <option value="Aktif">Aktif</option>
+                  <option value="Pasif">Pasif</option>
+                </select>
+              </div>
             </div>
 
-            <div className="filter-group">
-              <label>Tarih:</label>
-              <select 
-                value={filters.dateRange}
-                onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-              >
-                <option value="Tümü">Tümü</option>
-                <option value="Bugün">Bugün</option>
-                <option value="Bu Hafta">Bu Hafta</option>
-                <option value="Bu Ay">Bu Ay</option>
-              </select>
+            <div className="filter-card">
+              <label className="filter-label">
+                <span className="label-icon">📅</span>
+                Tarih
+              </label>
+              <div className="filter-select-wrapper">
+                <select 
+                  value={filters.dateRange}
+                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  className="modern-select"
+                >
+                  <option value="Tümü">Tüm Tarihler</option>
+                  <option value="Bugün">Bugün</option>
+                  <option value="Bu Hafta">Bu Hafta</option>
+                  <option value="Bu Ay">Bu Ay</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="stats-row">
-          <span>Toplam: {news.length} haber</span>
-          <span>Gösterilen: {filteredNews.length} haber</span>
-          {error && <span className="error-message">{error}</span>}
-        </div>
+        {/* Error Display */}
+        {error && (
+          <div className="error-banner">
+            ⚠️ {error}
+          </div>
+        )}
       </div>
 
       {/* News Table */}

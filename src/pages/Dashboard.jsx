@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 import { 
   BarChart3, 
   FileText, 
@@ -24,7 +25,9 @@ import {
   Wallet,
   ArrowLeftRight,
   Edit3,
-  PieChart
+  PieChart,
+  ChevronLeft,
+  Search
 } from 'lucide-react';
 import { dashboardApi, reportsApi } from '../services/apiService';
 import '../styles/Dashboard.css';
@@ -48,6 +51,9 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [lastUpdate, setLastUpdate] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchVisible, setSearchVisible] = useState(false);
 
   // Expandable menu state
   const [expandedMenus, setExpandedMenus] = useState({
@@ -140,10 +146,26 @@ const Dashboard = () => {
   };
 
   const toggleMenu = (menuKey) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuKey]: !prev[menuKey]
-    }));
+    setExpandedMenus(prev => {
+      // Accordion behavior: close all other menus when opening a new one
+      const newState = {
+        news: false,
+        feedback: false,
+        station: false,
+        payment: false,
+        admin: false,
+        wallet: false,
+        reports: false
+      };
+      
+      // If the clicked menu is currently closed, open it
+      // If it's already open, keep it closed (toggle behavior)
+      if (!prev[menuKey]) {
+        newState[menuKey] = true;
+      }
+      
+      return newState;
+    });
   };
 
   const handleMenuClick = (path) => {
@@ -172,21 +194,37 @@ const Dashboard = () => {
     }).format(date);
   };
 
-  const renderMenuItem = (icon, label, path, isExpanded = false, hasSubmenu = false, onClick) => {
+  const shouldShowMenuItem = (label, subItems = []) => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const labelMatch = label.toLowerCase().includes(query);
+    const subItemsMatch = subItems.some(item => item.toLowerCase().includes(query));
+    
+    return labelMatch || subItemsMatch;
+  };
+
+  const renderMenuItem = (icon, label, path, isExpanded = false, hasSubmenu = false, onClick, subItems = []) => {
     const IconComponent = icon;
+    
+    // Hide item if it doesn't match search
+    if (!shouldShowMenuItem(label, subItems)) {
+      return null;
+    }
     
     if (hasSubmenu) {
       return (
         <div key={label} className="menu-item-container">
           <div 
-            className={`menu-item ${isExpanded ? 'expanded' : ''}`}
+            className={`menu-item ${isExpanded ? 'expanded' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
             onClick={onClick}
+            title={sidebarCollapsed ? label : ''}
           >
             <div className="menu-item-content">
               <IconComponent size={20} />
-              <span>{label}</span>
+              {!sidebarCollapsed && <span>{label}</span>}
             </div>
-            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {!sidebarCollapsed && (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
           </div>
         </div>
       );
@@ -195,18 +233,21 @@ const Dashboard = () => {
     return (
       <div 
         key={path || label}
-        className="menu-item"
+        className={`menu-item ${sidebarCollapsed ? 'collapsed' : ''}`}
         onClick={() => handleMenuClick(path)}
+        title={sidebarCollapsed ? label : ''}
       >
         <div className="menu-item-content">
           <IconComponent size={20} />
-          <span>{label}</span>
+          {!sidebarCollapsed && <span>{label}</span>}
         </div>
       </div>
     );
   };
 
   const renderSubmenuItem = (label, path) => {
+    if (sidebarCollapsed) return null;
+    
     return (
       <div 
         key={path}
@@ -221,18 +262,48 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <h2>🚌 Superadmin</h2>
+          {!sidebarCollapsed && <h2>🚌 Superadmin</h2>}
           <button 
-            className="sidebar-close"
-            onClick={() => setSidebarOpen(false)}
+            className="sidebar-collapse-toggle"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Menüyü genişlet' : 'Menüyü daralt'}
           >
-            <X size={24} />
+            {sidebarCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
           </button>
         </div>
 
         <div className="sidebar-menu">
+          {/* Expandable Search functionality */}
+          <div className={`sidebar-search ${searchVisible ? 'expanded' : ''}`}>
+            <div className="search-container">
+              <button 
+                className="search-icon"
+                onClick={() => setSearchVisible(!searchVisible)}
+                title={searchVisible ? "Aramayı kapat" : "Menüde arama yap"}
+              >
+                <Search size={18} />
+              </button>
+              {(searchVisible || sidebarCollapsed) && (
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Ara..."
+                  className="search-input-expandable"
+                  autoFocus={searchVisible}
+                  style={{
+                    width: searchVisible ? (sidebarCollapsed ? '150px' : '200px') : '0px',
+                    opacity: searchVisible ? 1 : 0,
+                    paddingLeft: searchVisible ? '12px' : '0px',
+                    paddingRight: searchVisible ? '12px' : '0px'
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
           {renderMenuItem(Home, 'Dashboard', '/dashboard')}
           
           {/* Haber Yönetimi */}
@@ -242,9 +313,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.news, 
             true, 
-            () => toggleMenu('news')
+            () => toggleMenu('news'),
+            ['Haber Listesi', 'Haber Ekle']
           )}
-          {expandedMenus.news && (
+          {expandedMenus.news && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Haber Listesi', '/news')}
               {renderSubmenuItem('Haber Ekle', '/news/add')}
@@ -258,9 +330,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.feedback, 
             true, 
-            () => toggleMenu('feedback')
+            () => toggleMenu('feedback'),
+            ['Geri Bildirimler']
           )}
-          {expandedMenus.feedback && (
+          {expandedMenus.feedback && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Geri Bildirimler', '/feedback')}
             </div>
@@ -273,9 +346,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.station, 
             true, 
-            () => toggleMenu('station')
+            () => toggleMenu('station'),
+            ['İstasyon Listesi', 'İstasyon Ekle', 'Harita Görünümü']
           )}
-          {expandedMenus.station && (
+          {expandedMenus.station && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('İstasyon Listesi', '/station')}
               {renderSubmenuItem('İstasyon Ekle', '/station/add')}
@@ -290,9 +364,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.payment, 
             true, 
-            () => toggleMenu('payment')
+            () => toggleMenu('payment'),
+            ['Ödeme Noktaları', 'Yeni Nokta Ekle']
           )}
-          {expandedMenus.payment && (
+          {expandedMenus.payment && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Ödeme Noktaları', '/payment-point')}
               {renderSubmenuItem('Yeni Nokta Ekle', '/payment-point/add')}
@@ -306,9 +381,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.wallet, 
             true, 
-            () => toggleMenu('wallet')
+            () => toggleMenu('wallet'),
+            ['Tüm Cüzdanlar', 'Transfer İşlemleri', 'Durum Güncelle']
           )}
-          {expandedMenus.wallet && (
+          {expandedMenus.wallet && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Tüm Cüzdanlar', '/all-wallets')}
               {renderSubmenuItem('Transfer İşlemleri', '/wallet-transfers')}
@@ -323,9 +399,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.admin, 
             true, 
-            () => toggleMenu('admin')
+            () => toggleMenu('admin'),
+            ['Admin Onayları', 'Kimlik İstekleri']
           )}
-          {expandedMenus.admin && (
+          {expandedMenus.admin && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Admin Onayları', '/admin-approvals')}
               {renderSubmenuItem('Kimlik İstekleri', '/identity-requests')}
@@ -339,9 +416,10 @@ const Dashboard = () => {
             null, 
             expandedMenus.reports, 
             true, 
-            () => toggleMenu('reports')
+            () => toggleMenu('reports'),
+            ['Analiz Paneli', 'Sistem İstatistikleri', 'Denetim Kayıtları']
           )}
-          {expandedMenus.reports && (
+          {expandedMenus.reports && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Analiz Paneli', '/analytics')}
               {renderSubmenuItem('Sistem İstatistikleri', '/statistics')}
@@ -351,16 +429,17 @@ const Dashboard = () => {
         </div>
 
         <div className="sidebar-footer">
-          <div className="user-info">
+          <div className="user-info" title={sidebarCollapsed ? 'Superadmin' : ''}>
             <UserCheck size={20} />
-            <span>Superadmin</span>
+            {!sidebarCollapsed && <span>Superadmin</span>}
           </div>
           <button 
             className="logout-btn"
             onClick={handleLogout}
+            title={sidebarCollapsed ? 'Çıkış Yap' : ''}
           >
             <LogOut size={20} />
-            Çıkış Yap
+            {!sidebarCollapsed && 'Çıkış Yap'}
           </button>
         </div>
       </div>
@@ -380,6 +459,7 @@ const Dashboard = () => {
           </div>
           
           <div className="header-right">
+            <ThemeToggle />
             <div className="last-update">
               <Clock size={16} />
               <span>Son Güncelleme: {lastUpdate ? formatTime(lastUpdate) : '-'}</span>

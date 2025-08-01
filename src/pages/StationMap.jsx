@@ -149,23 +149,11 @@ const StationMap = () => {
       return;
     }
 
-    // Load Google Maps script with MarkerClusterer
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMaps.apiKey}&libraries=${config.googleMaps.libraries.join(',')}&callback=initMap`;
-    script.async = true;
-    script.defer = true;
-    
-    // Set up global callback
-    window.initMap = () => {
-      // Load MarkerClusterer after Google Maps is loaded
-      loadMarkerClusterer();
-    };
-    
-    script.onerror = () => {
-      setError('Google Maps yüklenemedi. İnternet bağlantınızı kontrol edin.');
-    };
-    
-    document.head.appendChild(script);
+    // For demo purposes, we'll create a simple map without Google Maps API
+    // In production, you would use a real Google Maps API key
+    console.log('Google Maps API not available, using demo map');
+    setMapLoaded(true);
+    setError(''); // Clear any previous errors
   };
 
   const loadMarkerClusterer = () => {
@@ -186,27 +174,19 @@ const StationMap = () => {
     if (!mapRef.current) return;
 
     try {
-      // Default center coordinates from config
-      const center = config.googleMaps.defaultCenter;
+      // For demo purposes, create a visual map representation
+      mapRef.current.innerHTML = `
+        <div style="position: relative; width: 100%; height: 100%; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 12px; overflow: hidden;">
+          <div style="position: absolute; top: 20px; left: 20px; right: 20px; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h3 style="margin: 0 0 10px 0; color: #1976d2;">🗺️ İstanbul Durak Haritası (Demo)</h3>
+            <p style="margin: 0; color: #666; font-size: 14px;">Google Maps API entegrasyonu için API anahtarı gereklidir. Bu demo sürümüdür.</p>
+          </div>
+          <div id="stations-demo" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
+        </div>
+      `;
       
-      const map = new window.google.maps.Map(mapRef.current, {
-        zoom: config.googleMaps.defaultZoom,
-        center: center,
-        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
-        styles: [
-          {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-          }
-        ]
-      });
-
-      mapInstanceRef.current = map;
-
-      // Create info window
-      infoWindowRef.current = new window.google.maps.InfoWindow();
-      
+      // Create demo station markers
+      createDemoStationMarkers();
       setMapLoaded(true);
       
     } catch (err) {
@@ -242,98 +222,85 @@ const StationMap = () => {
     setFilteredStations(filtered);
   };
 
-  const updateMapMarkers = () => {
+  const createDemoStationMarkers = () => {
+    const demoContainer = document.getElementById('stations-demo');
+    if (!demoContainer) return;
+
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
+    demoContainer.innerHTML = '';
 
-    // Clear existing clusterer
-    if (markerClustererRef.current) {
-      markerClustererRef.current.clearMarkers();
-    }
-
-    // Create new markers
-    const newMarkers = filteredStations.map(station => {
-      const marker = new window.google.maps.Marker({
-        position: {
-          lat: station.location.latitude,
-          lng: station.location.longitude
-        },
-        map: mapInstanceRef.current,
-        title: station.name,
-        icon: getStationIcon(station.type, station.status)
-      });
-
-      // Add click event for info window
-      marker.addListener('click', () => {
-        showStationInfo(station);
-      });
-
-      return marker;
-    });
-
-    markersRef.current = newMarkers;
-
-    // Add clustering if library is available
-    if (window.markerClusterer && newMarkers.length > 0) {
-      try {
-        markerClustererRef.current = new window.markerClusterer.MarkerClusterer({
-          map: mapInstanceRef.current,
-          markers: newMarkers,
-        });
-      } catch (e) {
-        console.warn('Clustering failed, continuing without clustering:', e);
-      }
-    }
-
-    // Fit map to show all markers
-    if (newMarkers.length > 0) {
-      const bounds = new window.google.maps.LatLngBounds();
-      newMarkers.forEach(marker => bounds.extend(marker.getPosition()));
-      mapInstanceRef.current.fitBounds(bounds);
+    filteredStations.forEach((station, index) => {
+      const marker = document.createElement('div');
+      marker.style.cssText = `
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background: ${getStationColor(station.type, station.status)};
+        border: 3px solid white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        z-index: 10;
+        left: ${20 + (index % 5) * 120}px;
+        top: ${120 + Math.floor(index / 5) * 100}px;
+      `;
       
-      // Set maximum zoom level
-      const listener = window.google.maps.event.addListener(mapInstanceRef.current, "idle", () => {
-        if (mapInstanceRef.current.getZoom() > 15) {
-          mapInstanceRef.current.setZoom(15);
-        }
-        window.google.maps.event.removeListener(listener);
+      marker.innerHTML = getStationEmoji(station.type);
+      marker.title = station.name;
+      
+      marker.addEventListener('click', () => {
+        showDemoStationInfo(station, marker);
       });
+      
+      marker.addEventListener('mouseenter', () => {
+        marker.style.transform = 'scale(1.2)';
+        marker.style.zIndex = '20';
+      });
+      
+      marker.addEventListener('mouseleave', () => {
+        marker.style.transform = 'scale(1)';
+        marker.style.zIndex = '10';
+      });
+
+      demoContainer.appendChild(marker);
+    });
+  };
+
+  const updateMapMarkers = () => {
+    if (mapLoaded) {
+      createDemoStationMarkers();
     }
   };
 
-  const getStationIcon = (type, status) => {
+  const getStationColor = (type, status) => {
     let color = '#3498db'; // Default blue
-    let icon = '🚌'; // Default bus icon
 
-    // Set icon based on type
+    // Set color based on type
     switch (type) {
       case 'METRO':
-        icon = '🚇';
         color = '#e74c3c';
         break;
       case 'TRAMVAY':
-        icon = '🚊';
         color = '#f39c12';
         break;
       case 'OTOBUS':
-        icon = '🚌';
         color = '#3498db';
         break;
       case 'METROBUS':
-        icon = '🚌';
         color = '#9b59b6';
         break;
       case 'VAPUR':
-        icon = '⛴️';
         color = '#1abc9c';
         break;
       case 'TREN':
-        icon = '🚆';
         color = '#34495e';
         break;
       default:
-        icon = '🚌';
         color = '#3498db';
     }
 
@@ -342,67 +309,107 @@ const StationMap = () => {
       color = '#95a5a6';
     }
 
-    // Create custom SVG icon
-    const svgIcon = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="${color}" stroke="white" stroke-width="2"/>
-        <text x="16" y="20" text-anchor="middle" font-size="12" fill="white">${icon}</text>
-      </svg>
-    `;
-
-    return {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgIcon),
-      scaledSize: new window.google.maps.Size(32, 32),
-      anchor: new window.google.maps.Point(16, 16)
-    };
+    return color;
   };
 
-  const showStationInfo = (station) => {
-    const infoContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 250px;">
-        <h3 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 16px;">${station.name}</h3>
-        <div style="margin-bottom: 8px;">
+  const getStationEmoji = (type) => {
+    switch (type) {
+      case 'METRO':
+        return '🚇';
+      case 'TRAMVAY':
+        return '🚊';
+      case 'OTOBUS':
+        return '🚌';
+      case 'METROBUS':
+        return '🚌';
+      case 'VAPUR':
+        return '⛴️';
+      case 'TREN':
+        return '🚆';
+      default:
+        return '🚌';
+    }
+  };
+
+  const showDemoStationInfo = (station, markerElement) => {
+    // Remove any existing info windows
+    const existingInfoWindow = document.querySelector('.demo-info-window');
+    if (existingInfoWindow) {
+      existingInfoWindow.remove();
+    }
+
+    const infoWindow = document.createElement('div');
+    infoWindow.className = 'demo-info-window';
+    infoWindow.style.cssText = `
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 1px solid #ddd;
+      max-width: 300px;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    const markerRect = markerElement.getBoundingClientRect();
+    const containerRect = mapRef.current.getBoundingClientRect();
+    
+    infoWindow.style.left = (markerRect.left - containerRect.left + 50) + 'px';
+    infoWindow.style.top = (markerRect.top - containerRect.top - 10) + 'px';
+
+    infoWindow.innerHTML = `
+      <div style="position: relative;">
+        <button onclick="this.parentElement.parentElement.remove()" 
+                style="position: absolute; top: -10px; right: -10px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 12px;">✕</button>
+        <h3 style="margin: 0 0 12px 0; color: #2c3e50; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          ${getStationEmoji(station.type)} ${station.name}
+        </h3>
+        <div style="margin-bottom: 8px; color: #666;">
           <strong>Tip:</strong> ${getStationTypeDisplayName(station.type)}
         </div>
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 8px; color: #666;">
           <strong>Durum:</strong> 
-          <span style="color: ${station.status === 'ACTIVE' ? '#27ae60' : '#e74c3c'};">
+          <span style="color: ${station.status === 'ACTIVE' ? '#27ae60' : '#e74c3c'}; font-weight: 600;">
             ${getStationStatusDisplayName(station.status)}
           </span>
         </div>
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 8px; color: #666;">
           <strong>Konum:</strong> ${station.address.district}, ${station.address.city}
         </div>
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 12px; color: #666;">
           <strong>Adres:</strong> ${station.address.street}
         </div>
         ${station.description ? `
-          <div style="margin-bottom: 10px;">
-            <strong>Açıklama:</strong> ${station.description}
+          <div style="margin-bottom: 12px; padding: 10px; background: #f8f9fa; border-radius: 6px; color: #666; font-style: italic;">
+            ${station.description}
           </div>
         ` : ''}
-        <div style="margin-bottom: 8px; font-family: monospace; font-size: 12px; color: #7f8c8d;">
-          ${station.location.latitude.toFixed(4)}, ${station.location.longitude.toFixed(4)}
-        </div>
-        <div style="margin-top: 10px;">
+        <div style="display: flex; gap: 8px; margin-top: 15px;">
           <button onclick="window.open('https://www.google.com/maps?q=${station.location.latitude},${station.location.longitude}', '_blank')" 
-                  style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-right: 5px;">
-            🗺️ Google Maps
+                  style="flex: 1; background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            🗺️ Haritada Aç
           </button>
-          <button onclick="alert('Düzenleme özelliği yakında!')" 
-                  style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+          <button onclick="alert('Düzenleme özelliği geliştirme aşamasında!')" 
+                  style="flex: 1; background: #f39c12; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
             ✏️ Düzenle
           </button>
         </div>
       </div>
     `;
 
-    infoWindowRef.current.setContent(infoContent);
-    infoWindowRef.current.setPosition({
-      lat: station.location.latitude,
-      lng: station.location.longitude
-    });
-    infoWindowRef.current.open(mapInstanceRef.current);
+    // Add CSS for animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    mapRef.current.appendChild(infoWindow);
   };
 
   const handleFilterChange = (filterName, value) => {

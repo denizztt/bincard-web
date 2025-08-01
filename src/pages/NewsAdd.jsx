@@ -7,6 +7,10 @@ import '../styles/NewsAdd.css';
 const NewsAdd = () => {
   const navigate = useNavigate();
   
+  // Step management
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
+  
   // Form states
   const [formData, setFormData] = useState({
     title: '',
@@ -27,6 +31,7 @@ const NewsAdd = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
+  const [dragActive, setDragActive] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -40,32 +45,59 @@ const NewsAdd = () => {
     }
   };
 
+  const processImageFile = (file) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, image: 'Lütfen geçerli bir resim dosyası seçin' }));
+      return false;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, image: 'Resim dosyası 5MB\'dan küçük olmalıdır' }));
+      return false;
+    }
+    
+    setFormData(prev => ({ ...prev, image: file }));
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+    
+    // Clear error
+    setErrors(prev => ({ ...prev, image: '' }));
+    return true;
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, image: 'Lütfen geçerli bir resim dosyası seçin' }));
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, image: 'Resim dosyası 5MB\'dan küçük olmalıdır' }));
-        return;
-      }
-      
-      setFormData(prev => ({ ...prev, image: file }));
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-      
-      // Clear error
-      setErrors(prev => ({ ...prev, image: '' }));
+      processImageFile(file);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      processImageFile(file);
     }
   };
 
@@ -224,61 +256,127 @@ const NewsAdd = () => {
     return priorityNames[priority] || priority;
   };
 
-  return (
-    <div className="news-add-container">
-      <div className="news-add-header">
-        <h1 className="page-title">Yeni Haber Ekle</h1>
-        <div className="header-actions">
-          <button 
-            onClick={() => navigate('/news')}
-            className="btn btn-secondary"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M11 1L4 8l7 7" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span>Haber Listesi</span>
-          </button>
-        </div>
-      </div>
+  // Step management functions
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
 
-      <div className="news-add-form-container">
-        <form onSubmit={handleSubmit} className="news-form">
-          {/* Title */}
-          <div className="form-group">
-            <label className="form-label required">Başlık</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Haber başlığını giriniz"
-              className={`form-input ${errors.title ? 'error' : ''}`}
-              maxLength="200"
-            />
-            {errors.title && <span className="error-message">{errors.title}</span>}
-            <small className="form-hint">{formData.title.length}/200 karakter</small>
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (step) => {
+    setCurrentStep(step);
+  };
+
+  // Step validation
+  const validateCurrentStep = () => {
+    const newErrors = {};
+    
+    switch (currentStep) {
+      case 1:
+        if (!formData.title.trim()) {
+          newErrors.title = 'Başlık zorunludur';
+        } else if (formData.title.length < 5) {
+          newErrors.title = 'Başlık en az 5 karakter olmalıdır';
+        }
+        
+        if (!formData.content.trim()) {
+          newErrors.content = 'İçerik zorunludur';
+        } else if (formData.content.length < 10) {
+          newErrors.content = 'İçerik en az 10 karakter olmalıdır';
+        }
+        break;
+      
+      case 3:
+        const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+        const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+        const now = new Date();
+        
+        if (startDateTime < now) {
+          newErrors.startDate = 'Başlangıç tarihi gelecekte olmalıdır';
+        }
+        
+        if (endDateTime <= startDateTime) {
+          newErrors.endDate = 'Bitiş tarihi başlangıç tarihinden sonra olmalıdır';
+        }
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateCurrentStep()) {
+      nextStep();
+    }
+  };
+
+  // Render step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="step-content">
+            <div className="step-header">
+              <h2>📝 Temel Bilgiler</h2>
+              <p>Haberin başlığını ve içeriğini girin</p>
+            </div>
+            
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label className="form-label required">Başlık</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  placeholder="Haber başlığını giriniz"
+                  className={`modern-input ${errors.title ? 'error' : ''}`}
+                  maxLength="200"
+                />
+                {errors.title && <span className="error-message">{errors.title}</span>}
+                <small className="form-hint">{formData.title.length}/200 karakter</small>
+              </div>
+
+              <div className="form-group full-width">
+                <label className="form-label required">İçerik</label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => handleInputChange('content', e.target.value)}
+                  placeholder="Haber içeriğini giriniz"
+                  className={`modern-textarea ${errors.content ? 'error' : ''}`}
+                  rows="8"
+                  maxLength="5000"
+                />
+                {errors.content && <span className="error-message">{errors.content}</span>}
+                <small className="form-hint">{formData.content.length}/5000 karakter</small>
+              </div>
+            </div>
           </div>
+        );
 
-          {/* Content */}
-          <div className="form-group">
-            <label className="form-label required">İçerik</label>
-            <textarea
-              value={formData.content}
-              onChange={(e) => handleInputChange('content', e.target.value)}
-              placeholder="Haber içeriğini giriniz"
-              className={`form-textarea ${errors.content ? 'error' : ''}`}
-              rows="6"
-              maxLength="5000"
-            />
-            {errors.content && <span className="error-message">{errors.content}</span>}
-            <small className="form-hint">{formData.content.length}/5000 karakter</small>
-          </div>
-
-          {/* Image Upload */}
-          <div className="form-group">
-            <label className="form-label">Görsel</label>
-            <div className="image-upload-area">
+      case 2:
+        return (
+          <div className="step-content">
+            <div className="step-header">
+              <h2>🖼️ Görsel Ekle</h2>
+              <p>Haberiniz için bir görsel seçin (isteğe bağlı)</p>
+            </div>
+            
+            <div className="image-upload-section">
               {!imagePreview ? (
-                <div className="upload-placeholder">
+                <div 
+                  className={`drag-drop-zone ${dragActive ? 'active' : ''}`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
                   <input
                     id="image-input"
                     type="file"
@@ -286,213 +384,312 @@ const NewsAdd = () => {
                     onChange={handleImageChange}
                     className="hidden-input"
                   />
-                  <label htmlFor="image-input" className="upload-button">
-                    <span>Görsel Seç</span>
-                  </label>
-                  <p>PNG, JPG, JPEG (Max 5MB)</p>
+                  
+                  <div className="upload-content">
+                    <div className="upload-icon">📸</div>
+                    <h3>Resmi buraya sürükleyin</h3>
+                    <p>ya da</p>
+                    <label htmlFor="image-input" className="upload-button">
+                      Dosya Seç
+                    </label>
+                    <small>PNG, JPG, JPEG • Max 5MB</small>
+                  </div>
                 </div>
               ) : (
-                <div className="image-preview">
-                  <img src={imagePreview} alt="Preview" />
-                  <button 
-                    type="button" 
-                    onClick={removeImage}
-                    className="remove-image-btn"
-                  >
-                    ✕
-                  </button>
+                <div className="image-preview-container">
+                  <div className="image-preview">
+                    <img src={imagePreview} alt="Preview" />
+                    <div className="image-overlay">
+                      <button 
+                        type="button" 
+                        onClick={removeImage}
+                        className="remove-image-btn"
+                      >
+                        🗑️ Kaldır
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-            {errors.image && <span className="error-message">{errors.image}</span>}
-          </div>
-
-          {/* Form Row 1: Type, Platform, Priority */}
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Kategori</label>
-              <select 
-                value={formData.type}
-                onChange={(e) => handleInputChange('type', e.target.value)}
-                className="form-select"
-              >
-                {Object.values(NewsType).map(type => (
-                  <option key={type} value={type}>{getTypeDisplayName(type)}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Platform</label>
-              <select 
-                value={formData.platform}
-                onChange={(e) => handleInputChange('platform', e.target.value)}
-                className="form-select"
-              >
-                {Object.values(NewsPlatform).map(platform => (
-                  <option key={platform} value={platform}>{platform}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Öncelik</label>
-              <select 
-                value={formData.priority}
-                onChange={(e) => handleInputChange('priority', e.target.value)}
-                className="form-select"
-              >
-                {Object.values(NewsPriority).map(priority => (
-                  <option key={priority} value={priority}>{getPriorityDisplayName(priority)}</option>
-                ))}
-              </select>
+              {errors.image && <span className="error-message">{errors.image}</span>}
             </div>
           </div>
+        );
 
-          {/* Date and Time Section */}
-          <div className="form-section">
-            <h3 className="section-title">Yayın Süresi</h3>
+      case 3:
+        return (
+          <div className="step-content">
+            <div className="step-header">
+              <h2>⚙️ Ayarlar</h2>
+              <p>Haber kategorisi, platform ve öncelik seviyesini belirleyin</p>
+            </div>
             
-            <div className="form-row">
-              {/* Start Date/Time */}
+            <div className="form-grid">
               <div className="form-group">
-                <label className="form-label">Başlangıç Tarihi</label>
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  className={`form-input ${errors.startDate ? 'error' : ''}`}
-                />
-                {errors.startDate && <span className="error-message">{errors.startDate}</span>}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Başlangıç Saati</label>
+                <label className="form-label">📂 Kategori</label>
                 <select 
-                  value={formData.startTime}
-                  onChange={(e) => handleInputChange('startTime', e.target.value)}
-                  className="form-select"
+                  value={formData.type}
+                  onChange={(e) => handleInputChange('type', e.target.value)}
+                  className="modern-select"
                 >
-                  {generateTimeOptions().map(time => (
-                    <option key={time} value={time}>{time}</option>
+                  {Object.values(NewsType).map(type => (
+                    <option key={type} value={type}>{getTypeDisplayName(type)}</option>
                   ))}
                 </select>
               </div>
 
-              {/* End Date/Time */}
               <div className="form-group">
-                <label className="form-label">Bitiş Tarihi</label>
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  className={`form-input ${errors.endDate ? 'error' : ''}`}
-                />
-                {errors.endDate && <span className="error-message">{errors.endDate}</span>}
+                <label className="form-label">🌐 Platform</label>
+                <select 
+                  value={formData.platform}
+                  onChange={(e) => handleInputChange('platform', e.target.value)}
+                  className="modern-select"
+                >
+                  {Object.values(NewsPlatform).map(platform => (
+                    <option key={platform} value={platform}>{platform}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Bitiş Saati</label>
+                <label className="form-label">⚡ Öncelik</label>
                 <select 
-                  value={formData.endTime}
-                  onChange={(e) => handleInputChange('endTime', e.target.value)}
-                  className="form-select"
+                  value={formData.priority}
+                  onChange={(e) => handleInputChange('priority', e.target.value)}
+                  className="modern-select"
                 >
-                  {generateTimeOptions().map(time => (
-                    <option key={time} value={time}>{time}</option>
+                  {Object.values(NewsPriority).map(priority => (
+                    <option key={priority} value={priority}>{getPriorityDisplayName(priority)}</option>
                   ))}
                 </select>
               </div>
             </div>
-          </div>
 
-          {/* Options */}
-          <div className="form-section">
-            <h3 className="section-title">Seçenekler</h3>
-            <div className="form-row">
-              <div className="form-group">
-                <label className="checkbox-container">
+            <div className="form-section">
+              <h3>📅 Yayın Süresi</h3>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Başlangıç Tarihi</label>
                   <input
-                    type="checkbox"
-                    checked={formData.allowFeedback}
-                    onChange={(e) => handleInputChange('allowFeedback', e.target.checked)}
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    className={`modern-input ${errors.startDate ? 'error' : ''}`}
                   />
-                  <span className="checkmark"></span>
-                  Geri Bildirime İzin Ver
-                </label>
-              </div>
+                  {errors.startDate && <span className="error-message">{errors.startDate}</span>}
+                </div>
 
-              <div className="form-group">
-                <label className="checkbox-container">
+                <div className="form-group">
+                  <label className="form-label">Başlangıç Saati</label>
+                  <select 
+                    value={formData.startTime}
+                    onChange={(e) => handleInputChange('startTime', e.target.value)}
+                    className="modern-select"
+                  >
+                    {generateTimeOptions().map(time => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Bitiş Tarihi</label>
                   <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => handleInputChange('active', e.target.checked)}
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    className={`modern-input ${errors.endDate ? 'error' : ''}`}
                   />
-                  <span className="checkmark"></span>
-                  Aktif
-                </label>
+                  {errors.endDate && <span className="error-message">{errors.endDate}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Bitiş Saati</label>
+                  <select 
+                    value={formData.endTime}
+                    onChange={(e) => handleInputChange('endTime', e.target.value)}
+                    className="modern-select"
+                  >
+                    {generateTimeOptions().map(time => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
+        );
 
+      case 4:
+        return (
+          <div className="step-content">
+            <div className="step-header">
+              <h2>✅ Önizleme & Onay</h2>
+              <p>Haberin son halini kontrol edin ve yayınlayın</p>
+            </div>
+            
+            <div className="news-preview">
+              <div className="preview-card">
+                <div className="preview-header">
+                  <div className="preview-meta">
+                    <span className="preview-type">{getTypeDisplayName(formData.type)}</span>
+                    <span className="preview-platform">{formData.platform}</span>
+                    <span className="preview-priority">{getPriorityDisplayName(formData.priority)}</span>
+                  </div>
+                </div>
+                
+                <h3 className="preview-title">{formData.title}</h3>
+                
+                {imagePreview && (
+                  <div className="preview-image">
+                    <img src={imagePreview} alt="Preview" />
+                  </div>
+                )}
+                
+                <div className="preview-content">
+                  {formData.content}
+                </div>
+                
+                <div className="preview-footer">
+                  <div className="preview-dates">
+                    <strong>Yayın Süresi:</strong> {formData.startDate} {formData.startTime} - {formData.endDate} {formData.endTime}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="final-options">
+              <label className="checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={formData.allowFeedback}
+                  onChange={(e) => handleInputChange('allowFeedback', e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                💬 Geri Bildirime İzin Ver
+              </label>
+
+              <label className="checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={formData.active}
+                  onChange={(e) => handleInputChange('active', e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                🟢 Aktif Olarak Yayınla
+              </label>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="news-add-container">
+      <div className="news-add-header">
+        <div className="header-top">
+          <h1 className="page-title">✨ Yeni Haber Oluştur</h1>
+          <button 
+            onClick={() => navigate('/news')}
+            className="btn btn-secondary"
+          >
+            ← Haber Listesi
+          </button>
+        </div>
+        
+        {/* Progress Steps */}
+        <div className="progress-steps">
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
+            <div 
+              key={step}
+              className={`progress-step ${currentStep === step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
+              onClick={() => goToStep(step)}
+            >
+              <div className="step-number">
+                {currentStep > step ? '✓' : step}
+              </div>
+              <div className="step-label">
+                {step === 1 && 'Temel Bilgiler'}
+                {step === 2 && 'Görsel'}
+                {step === 3 && 'Ayarlar'}
+                {step === 4 && 'Önizleme'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="news-add-form-container">
+        <div className="wizard-content">
+          {/* Render current step content */}
+          {renderStepContent()}
+          
           {/* Message */}
           {message.text && (
             <div className={`message ${message.isError ? 'error' : 'success'}`}>
               {message.text}
             </div>
           )}
-
-          {/* Form Actions */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-            >
-              {isLoading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Kaydediliyor...
-                </>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M2 3a1 1 0 011-1h10l3 3v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" stroke="none"/>
-                    <rect x="5" y="1" width="6" height="5" fill="var(--white)"/>
-                    <rect x="4" y="8" width="8" height="6" fill="var(--white)"/>
-                  </svg>
-                  <span>Haberi Kaydet</span>
-                </>
+          
+          {/* Navigation */}
+          <div className="wizard-navigation">
+            <div className="nav-left">
+              {currentStep > 1 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="btn btn-outline"
+                  disabled={isLoading}
+                >
+                  ← Önceki
+                </button>
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={clearForm}
-              className="btn btn-outline"
-              disabled={isLoading}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M3 3l1-2h8l1 2m-10 0h10m-9 1v9a1 1 0 001 1h6a1 1 0 001-1V4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 7v4m4-4v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <span>Formu Temizle</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate('/news')}
-              className="btn btn-secondary"
-              disabled={isLoading}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M12 4L4 12m0-8l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>İptal</span>
-            </button>
+            </div>
+            
+            <div className="nav-right">
+              {currentStep < totalSteps ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="btn btn-primary"
+                  disabled={isLoading}
+                >
+                  Sonraki →
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className={`btn btn-success ${isLoading ? 'loading' : ''}`}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="loading-spinner"></span>
+                      Yayınlanıyor...
+                    </>
+                  ) : (
+                    <>
+                      🚀 Haberi Yayınla
+                    </>
+                  )}
+                </button>
+              )}
+              
+              <button
+                type="button"
+                onClick={() => navigate('/news')}
+                className="btn btn-secondary"
+                disabled={isLoading}
+              >
+                ✕ İptal
+              </button>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
