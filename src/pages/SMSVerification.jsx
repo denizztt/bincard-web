@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/EnhancedAuthContext';
 import '../styles/SMSVerification.css';
 
 const SMSVerification = () => {
@@ -60,6 +60,14 @@ const SMSVerification = () => {
     // Auto-focus next input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-verify when 6th digit is entered
+    if (value && index === 5) {
+      // Wait a bit for the UI to update, then trigger verification
+      setTimeout(() => {
+        handleVerify();
+      }, 200);
     }
   };
 
@@ -126,7 +134,29 @@ const SMSVerification = () => {
       }
     } catch (error) {
       console.error('❌ VERIFICATION CATCH ERROR:', error);
-      setError('Doğrulama sırasında bir hata oluştu');
+      console.error('🔍 Detailed Error Info:', {
+        message: error.message,
+        response: error.response,
+        responseData: error.response?.data,
+        status: error.response?.status,
+        fullError: error
+      });
+      
+      // More specific error messages
+      let errorMessage = 'Doğrulama sırasında bir hata oluştu';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Geçersiz doğrulama kodu';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Telefon numarası bulunamadı';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.';
+      } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
+      }
+      
+      setError(errorMessage);
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -153,8 +183,28 @@ const SMSVerification = () => {
         setIsResendDisabled(false);
       }
     } catch (error) {
-      console.error('Resend error:', error);
-      setMessage({ text: 'Kod gönderilirken bir hata oluştu', isError: true });
+      console.error('❌ RESEND ERROR:', error);
+      console.error('🔍 Resend Error Details:', {
+        message: error.message,
+        response: error.response,
+        responseData: error.response?.data,
+        status: error.response?.status,
+        fullError: error
+      });
+      
+      // More specific error messages for resend
+      let errorMessage = 'Kod gönderilirken bir hata oluştu';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Çok fazla kod talebinde bulundunuz. Lütfen daha sonra tekrar deneyin.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Telefon numarası bulunamadı';
+      } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
+      }
+      
+      setMessage({ text: errorMessage, isError: true });
       setIsResendDisabled(false);
     }
   };

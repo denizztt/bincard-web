@@ -1,0 +1,589 @@
+/* Contract Management Styles */
+.contract-management {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Header */
+.contract-management .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.contract-management .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.contract-management .header-left h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.contract-management .back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--secondary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .back-button:hover {
+  background-color: var(--secondary-dark);
+}
+
+.contract-management .header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.contract-management .logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--danger-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .logout-btn:hover {
+  background-color: var(--danger-dark);
+}
+
+.contract-management .refresh-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .refresh-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.contract-management .refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.contract-management .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Controls */
+.contract-management .controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contract-management .controls-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.contract-management .create-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--success-color);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .create-button:hover {
+  background-color: var(--success-dark);
+}
+
+.contract-management .controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.contract-management .search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.contract-management .search-container svg {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+}
+
+.contract-management .search-container input {
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  width: 250px;
+}
+
+.contract-management .filter-select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  min-width: 150px;
+}
+
+/* Error Banner */
+.contract-management .error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  border-left: 4px solid var(--danger-color);
+}
+
+/* Content */
+.contract-management .content {
+  padding: 2rem;
+}
+
+.contract-management .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+}
+
+/* Contracts Table */
+.contract-management .contracts-table {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.contract-management .contracts-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.contract-management .contracts-table th {
+  background-color: var(--header-bg);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contract-management .contracts-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contract-management .contracts-table tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.contract-management .contract-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.contract-management .contract-type {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--info-light);
+  color: var(--info-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.contract-management .version-badge {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--secondary-light);
+  color: var(--secondary-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.contract-management .status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.contract-management .status-badge.active {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.contract-management .status-badge.inactive {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.contract-management .mandatory-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.contract-management .optional-badge {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--info-light);
+  color: var(--info-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.contract-management .action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.contract-management .action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .action-btn.view {
+  background-color: var(--info-light);
+  color: var(--info-color);
+}
+
+.contract-management .action-btn.view:hover {
+  background-color: var(--info-color);
+  color: white;
+}
+
+.contract-management .action-btn.edit {
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+}
+
+.contract-management .action-btn.edit:hover {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.contract-management .action-btn.toggle.active {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.contract-management .action-btn.toggle.active:hover {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.contract-management .action-btn.toggle.inactive {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.contract-management .action-btn.toggle.inactive:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* No Data */
+.contract-management .no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+}
+
+.contract-management .no-data svg {
+  opacity: 0.5;
+}
+
+/* Modal */
+.contract-management .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.contract-management .modal {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.contract-management .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contract-management .modal-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.contract-management .close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .close-button:hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.contract-management .modal-content {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Contract Details */
+.contract-management .contract-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contract-management .detail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contract-management .detail-group label {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.contract-management .detail-group p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.contract-management .content-preview {
+  padding: 1rem;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Contract Form */
+.contract-management .contract-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contract-management .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contract-management .form-group label {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.contract-management .form-group input,
+.contract-management .form-group select,
+.contract-management .form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-family: inherit;
+}
+
+.contract-management .form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: 'Courier New', monospace;
+}
+
+.contract-management .checkbox-group {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contract-management .checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.contract-management .checkbox-group span {
+  color: var(--text-color);
+}
+
+.contract-management .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.contract-management .cancel-button {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .cancel-button:hover {
+  background-color: var(--hover-bg);
+}
+
+.contract-management .save-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.contract-management .save-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.contract-management .save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .contract-management .header {
+    padding: 1rem;
+  }
+  
+  .contract-management .controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .contract-management .controls-right {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .contract-management .search-container input {
+    width: 100%;
+  }
+  
+  .contract-management .content {
+    padding: 1rem;
+  }
+  
+  .contract-management .contracts-table {
+    overflow-x: auto;
+  }
+  
+  .contract-management .modal {
+    width: 95%;
+    margin: 1rem;
+  }
+}

@@ -72,11 +72,16 @@ const BusList = () => {
         response = await busApi.getAllBuses(currentPage, pageSize);
       }
 
-      if (response.success && response.data) {
-        setBuses(response.data.content || []);
-        setTotalPages(response.data.totalPages || 0);
-        setTotalElements(response.data.totalElements || 0);
+      console.log('Bus API Response:', response);
+
+      if (response) {
+        const busData = response.content || [];
+        console.log('Bus data:', busData);
+        setBuses(busData);
+        setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || 0);
       } else {
+        console.log('Response structure issue:', response);
         setError('Otobüsler yüklenirken hata oluştu');
       }
     } catch (err) {

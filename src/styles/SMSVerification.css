@@ -106,21 +106,24 @@
   font-weight: 600;
   border: 2px solid var(--gray-300);
   border-radius: var(--radius-lg);
-  background: #ffffff !important;
-  color: #000000 !important;
-  transition: all var(--transition-fast);
+  background: #000000 !important;
+  color: #ffffff !important;
+  transition: none;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
 .code-input:focus {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  transform: scale(1.05);
+  transform: none;
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
 .code-input:not(:placeholder-shown) {
   border-color: var(--accent-color);
-  background: var(--success-light);
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
 .code-input:disabled {
@@ -369,14 +372,16 @@
   }
   
   .code-input {
-    background: #ffffff !important;
+    background: #000000 !important;
     border-color: var(--gray-600);
-    color: #000000 !important;
+    color: #ffffff !important;
   }
   
   .code-input:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    background: #000000 !important;
+    color: #ffffff !important;
   }
   
   .show-code-button {

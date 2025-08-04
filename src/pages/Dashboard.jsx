@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/EnhancedAuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import { 
   BarChart3, 
@@ -28,7 +28,10 @@ import {
   PieChart,
   ChevronLeft,
   Search,
-  Bus
+  Bus,
+  Route,
+  FileCheck,
+  UserSearch
 } from 'lucide-react';
 import { dashboardApi, reportsApi } from '../services/apiService';
 import '../styles/Dashboard.css';
@@ -64,7 +67,9 @@ const Dashboard = () => {
     payment: false,
     admin: false,
     wallet: false,
-    reports: false
+    reports: false,
+    contracts: false,
+    system: false
   });
 
   useEffect(() => {
@@ -72,119 +77,97 @@ const Dashboard = () => {
   }, []);
 
   const loadDashboardData = async () => {
-    console.log('📊 DASHBOARD VERİLERİ YÜKLENİYOR...');
     try {
       setLoading(true);
-      setError('');
-
-      console.log('🔄 API çağrıları başlıyor...');
-      // Paralel API çağrıları
-      const [dashboardResponse, reportsResponse] = await Promise.all([
-        dashboardApi.getDashboardStats(),
-        reportsApi.getRecentActivities()
-      ]);
-
-      console.log('📈 DASHBOARD API RESPONSE:', dashboardResponse);
-      console.log('📋 REPORTS API RESPONSE:', reportsResponse);
-
-      if (dashboardResponse && dashboardResponse.success) {
-        const data = dashboardResponse.data;
-        console.log('✅ Dashboard verisi başarılı:', data);
-        setStats({
-          totalUsers: data.totalUsers || 12450,
-          activeUsers: data.activeUsers || 8967,
-          dailyIncome: data.dailyIncome || 245680,
-          monthlyIncome: data.monthlyIncome || 7456230,
-          pendingRequests: data.pendingRequests || 23,
-          todayTransactions: data.todayTransactions || 1567,
-          systemStatus: data.systemStatus || 'Normal',
-          totalBuses: data.totalBuses || 456,
-          totalStations: data.totalStations || 89
-        });
-        console.log('💾 Dashboard stats güncellendi');
-      } else {
-        console.log('⚠️ Dashboard API response başarısız:', dashboardResponse);
-      }
-
-      if (reportsResponse && reportsResponse.success) {
-        console.log('✅ Reports verisi başarılı:', reportsResponse.data);
-        setRecentActivities(reportsResponse.data || []);
-      } else {
-        console.log('⚠️ Reports API response başarısız:', reportsResponse);
-      }
-
-      setLastUpdate(new Date());
-      setLoading(false);
-      console.log('🎯 DASHBOARD YÜKLEMESİ TAMAMLANDI');
-    } catch (err) {
-      console.error('❌ DASHBOARD VERİLERİ HATA:', err);
-      console.error('🔍 Dashboard Error Details:', {
-        message: err.message,
-        response: err.response,
-        responseData: err.response?.data,
-        status: err.response?.status,
-        fullError: err
-      });
-      setError('Bazı veriler yüklenemedi');
+      const response = await dashboardApi.getStats();
       
-      // Örnek verilerle devam et
-      console.log('🔄 Örnek verilerle devam ediliyor...');
-      setStats({
-        totalUsers: 12450,
-        activeUsers: 8967,
-        dailyIncome: 245680,
-        monthlyIncome: 7456230,
-        pendingRequests: 23,
-        todayTransactions: 1567,
-        systemStatus: 'Normal',
-        totalBuses: 456,
-        totalStations: 89
-      });
+      if (response && response.success) {
+        setStats(response.data);
+      }
+      
+      const activitiesResponse = await dashboardApi.getRecentActivities();
+      if (activitiesResponse && activitiesResponse.success) {
+        setRecentActivities(activitiesResponse.data);
+      }
+      
       setLastUpdate(new Date());
+    } catch (err) {
+      console.error('Dashboard data load error:', err);
+      setError('Dashboard verileri yüklenirken hata oluştu');
+    } finally {
       setLoading(false);
-      console.log('📊 DASHBOARD ÖRNEK VERİLERLE YÜKLENDİ');
+    }
+  };
+
+  const handleMenuClick = (path) => {
+    if (path) {
+      navigate(path);
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  const handleRefresh = () => {
+    loadDashboardData();
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+    // Sidebar açıksa kapat
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  const toggleSearch = () => {
+    setSearchVisible(!searchVisible);
+    if (!searchVisible) {
+      setSearchQuery('');
     }
   };
 
   const toggleMenu = (menuKey) => {
-    setExpandedMenus(prev => {
-      // Accordion behavior: close all other menus when opening a new one
-      const newState = {
-        news: false,
-        feedback: false,
-        station: false,
-        payment: false,
-        admin: false,
-        wallet: false,
-        reports: false
-      };
-      
-      // If the clicked menu is currently closed, open it
-      // If it's already open, keep it closed (toggle behavior)
-      if (!prev[menuKey]) {
-        newState[menuKey] = true;
-      }
-      
-      return newState;
-    });
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuKey]: !prev[menuKey]
+    }));
   };
 
-  const handleMenuClick = (path) => {
-    navigate(path);
-    setSidebarOpen(false);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  // Dashboard kartları için yardımcı fonksiyonlar
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Normal':
+        return '#10b981';
+      case 'Uyarı':
+        return '#f59e0b';
+      case 'Kritik':
+        return '#ef4444';
+      default:
+        return '#6b7280';
+    }
   };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: 'TRY',
-      minimumFractionDigits: 0
+      currency: 'TRY'
     }).format(amount);
+  };
+
+  const formatNumber = (number) => {
+    return new Intl.NumberFormat('tr-TR').format(number);
   };
 
   const formatTime = (date) => {
@@ -247,7 +230,9 @@ const Dashboard = () => {
   };
 
   const renderSubmenuItem = (label, path) => {
-    if (sidebarCollapsed) return null;
+    if (!shouldShowMenuItem(label)) {
+      return null;
+    }
     
     return (
       <div 
@@ -261,47 +246,34 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className={`dashboard-container ${sidebarOpen ? 'sidebar-open' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          {!sidebarCollapsed && <h2>🚌 Superadmin</h2>}
-          <button 
-            className="sidebar-collapse-toggle"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Menüyü genişlet' : 'Menüyü daralt'}
-          >
-            {sidebarCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
-          </button>
-        </div>
-
-        <div className="sidebar-menu">
-          {/* Expandable Search functionality */}
-          <div className={`sidebar-search ${searchVisible ? 'expanded' : ''}`}>
-            <div className="search-container">
-              <button 
-                className="search-icon"
-                onClick={() => setSearchVisible(!searchVisible)}
-                title={searchVisible ? "Aramayı kapat" : "Menüde arama yap"}
-              >
-                <Search size={20} />
-              </button>
-              {searchVisible && (
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Menüde ara..."
-                  className="search-input-expandable"
-                  autoFocus={searchVisible}
-                  style={{
-                    width: searchVisible ? '200px' : '0px',
-                    opacity: searchVisible ? 1 : 0,
-                    paddingLeft: searchVisible ? '12px' : '0px',
-                    paddingRight: searchVisible ? '12px' : '0px'
-                  }}
-                />
-              )}
+          <div className="sidebar-title">
+            {!sidebarCollapsed && <span>City Card Admin</span>}
+            <button 
+              className="sidebar-collapse-btn"
+              onClick={toggleSidebarCollapse}
+              title={sidebarCollapsed ? 'Genişlet' : 'Daralt'}
+            >
+              {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            </button>
+          </div>
+          
+          {/* Search */}
+          <div className={`sidebar-search ${searchVisible || !sidebarCollapsed ? 'visible' : ''}`}>
+            <div className="search-input-container">
+              <input
+                type="text"
+                placeholder="Menü ara..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              <div className="search-icon">
+                <Search size={16} />
+              </div>
             </div>
           </div>
 
@@ -393,6 +365,41 @@ const Dashboard = () => {
             </div>
           )}
 
+          {/* Şoför Yönetimi - YENİ */}
+          {renderMenuItem(
+            Users, 
+            'Şoför Yönetimi', 
+            null, 
+            expandedMenus.driver, 
+            true, 
+            () => toggleMenu('driver'),
+            ['Şoför Listesi', 'Yeni Şoför']
+          )}
+          {expandedMenus.driver && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Şoför Listesi', '/driver')}
+              {renderSubmenuItem('Yeni Şoför', '/driver/add')}
+            </div>
+          )}
+
+          {/* Rota Yönetimi - YENİ */}
+          {renderMenuItem(
+            Route, 
+            'Rota Yönetimi', 
+            null, 
+            expandedMenus.route, 
+            true, 
+            () => toggleMenu('route'),
+            ['Rota Listesi', 'Yeni Rota', 'Rota Haritası']
+          )}
+          {expandedMenus.route && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Rota Listesi', '/route')}
+              {renderSubmenuItem('Yeni Rota', '/route/add')}
+              {renderSubmenuItem('Rota Haritası', '/route/map')}
+            </div>
+          )}
+
           {/* Cüzdan Yönetimi - YENİ */}
           {renderMenuItem(
             Wallet, 
@@ -445,6 +452,40 @@ const Dashboard = () => {
               {renderSubmenuItem('Denetim Kayıtları', '/audit-logs')}
             </div>
           )}
+
+          {/* Sözleşmeler - YENİ */}
+          {renderMenuItem(
+            FileCheck, 
+            'Sözleşmeler', 
+            null, 
+            expandedMenus.contracts, 
+            true, 
+            () => toggleMenu('contracts'),
+            ['Sözleşme Yönetimi', 'Kullanıcı Takibi', 'Uyumluluk Kontrolü']
+          )}
+          {expandedMenus.contracts && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Sözleşme Yönetimi', '/contract-management')}
+              {renderSubmenuItem('Kullanıcı Takibi', '/user-contract-tracking')}
+              {renderSubmenuItem('Uyumluluk Kontrolü', '/compliance-check')}
+            </div>
+          )}
+
+          {/* Sistem Yönetimi - YENİ */}
+          {renderMenuItem(
+            Activity, 
+            'Sistem Yönetimi', 
+            null, 
+            expandedMenus.system, 
+            true, 
+            () => toggleMenu('system'),
+            ['Sistem Sağlığı']
+          )}
+          {expandedMenus.system && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Sistem Sağlığı', '/system-health')}
+            </div>
+          )}
         </div>
 
         <div className="sidebar-footer">
@@ -466,11 +507,11 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="main-content">
         {/* Header */}
-        <div className="header">
+        <div className="main-header">
           <div className="header-left">
             <button 
-              className="sidebar-toggle"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="mobile-menu-btn"
+              onClick={toggleSidebar}
             >
               <Menu size={24} />
             </button>
@@ -478,163 +519,209 @@ const Dashboard = () => {
           </div>
           
           <div className="header-right">
-            <ThemeToggle />
             <div className="last-update">
               <Clock size={16} />
-              <span>Son Güncelleme: {lastUpdate ? formatTime(lastUpdate) : '-'}</span>
+              <span>Son Güncelleme: {lastUpdate ? formatTime(lastUpdate) : 'Yükleniyor...'}</span>
             </div>
             <button 
-              className="refresh-button"
-              onClick={loadDashboardData}
+              className="refresh-btn"
+              onClick={handleRefresh}
               disabled={loading}
+              title="Verileri Yenile"
             >
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+              <RefreshCw className={loading ? 'spinning' : ''} size={20} />
             </button>
+            <ThemeToggle />
           </div>
         </div>
 
-        {error && (
-          <div className="error-banner">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* Welcome Section */}
-        <div className="welcome-section">
-          <h2>Hoş Geldiniz!</h2>
-          <p>Sistem durumu <strong>{stats.systemStatus}</strong> - Tüm servisler aktif</p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="stats-grid">
-          <div className="stat-card users">
-            <div className="stat-icon">
-              <Users size={24} />
+        {/* Content */}
+        <div className="dashboard-content">
+          {error && (
+            <div className="error-message">
+              <span>⚠️ {error}</span>
+              <button onClick={handleRefresh}>Tekrar Dene</button>
             </div>
-            <div className="stat-content">
-              <h3>Kullanıcılar</h3>
-              <div className="stat-number">{stats.totalUsers.toLocaleString()}</div>
-              <div className="stat-subtitle">
-                {stats.activeUsers.toLocaleString()} aktif 
-                ({Math.round((stats.activeUsers / stats.totalUsers) * 100)}%)
+          )}
+
+          {/* Stats Cards */}
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon users">
+                  <Users size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Toplam Kullanıcı</h3>
+                  <p className="stat-value">{formatNumber(stats.totalUsers)}</p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <TrendingUp size={16} />
+                  <span>Aktif: {formatNumber(stats.activeUsers)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon revenue">
+                  <BarChart3 size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Günlük Gelir</h3>
+                  <p className="stat-value">{formatCurrency(stats.dailyIncome)}</p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <ArrowLeftRight size={16} />
+                  <span>İşlem: {formatNumber(stats.todayTransactions)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon pending">
+                  <Clock size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Bekleyen İstekler</h3>
+                  <p className="stat-value">{formatNumber(stats.pendingRequests)}</p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <Edit3 size={16} />
+                  <span>İnceleme Gerekli</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon system">
+                  <Activity size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Sistem Durumu</h3>
+                  <p className="stat-value" style={{ color: getStatusColor(stats.systemStatus) }}>
+                    {stats.systemStatus}
+                  </p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <Shield size={16} />
+                  <span>Güvenli</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon buses">
+                  <Bus size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Toplam Otobüs</h3>
+                  <p className="stat-value">{formatNumber(stats.totalBuses)}</p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <Route size={16} />
+                  <span>Aktif Rotalar</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-header">
+                <div className="stat-icon stations">
+                  <MapPin size={24} />
+                </div>
+                <div className="stat-info">
+                  <h3>Toplam İstasyon</h3>
+                  <p className="stat-value">{formatNumber(stats.totalStations)}</p>
+                </div>
+              </div>
+              <div className="stat-footer">
+                <div className="stat-badge">
+                  <MapPin size={16} />
+                  <span>Hizmet Noktaları</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="stat-card income">
-            <div className="stat-icon">
-              <TrendingUp size={24} />
-            </div>
-            <div className="stat-content">
-              <h3>Gelir</h3>
-              <div className="stat-number">{formatCurrency(stats.dailyIncome)}</div>
-              <div className="stat-subtitle">Günlük / Aylık: {formatCurrency(stats.monthlyIncome)}</div>
-            </div>
-          </div>
-
-          <div className="stat-card transactions">
-            <div className="stat-icon">
-              <Activity size={24} />
-            </div>
-            <div className="stat-content">
-              <h3>İşlemler</h3>
-              <div className="stat-number">{stats.todayTransactions.toLocaleString()}</div>
-              <div className="stat-subtitle">Bugün gerçekleşen</div>
-            </div>
-          </div>
-
-          <div className="stat-card requests">
-            <div className="stat-icon">
-              <Clock size={24} />
-            </div>
-            <div className="stat-content">
-              <h3>Bekleyen İstekler</h3>
-              <div className="stat-number">{stats.pendingRequests}</div>
-              <div className="stat-subtitle">İnceleme bekliyor</div>
-            </div>
-          </div>
-
-          <div className="stat-card infrastructure">
-            <div className="stat-icon">
-              <MapPin size={24} />
-            </div>
-            <div className="stat-content">
-              <h3>Altyapı</h3>
-              <div className="stat-number">{stats.totalStations}</div>
-              <div className="stat-subtitle">{stats.totalBuses} otobüs, {stats.totalStations} istasyon</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="quick-actions">
-          <h3>Hızlı İşlemler</h3>
-          <div className="quick-actions-grid">
-            <div className="quick-action-card" onClick={() => handleMenuClick('/news/add')}>
-              <FileText size={32} />
-              <span>Haber Ekle</span>
-            </div>
-            <div className="quick-action-card" onClick={() => handleMenuClick('/station/add')}>
-              <MapPin size={32} />
-              <span>İstasyon Ekle</span>
-            </div>
-            <div className="quick-action-card" onClick={() => handleMenuClick('/admin-approvals')}>
-              <UserCheck size={32} />
-              <span>Admin Onayları</span>
-            </div>
-            <div className="quick-action-card" onClick={() => handleMenuClick('/analytics')}>
-              <BarChart3 size={32} />
-              <span>Analiz Paneli</span>
-            </div>
-            <div className="quick-action-card" onClick={() => handleMenuClick('/wallet-transfers')}>
-              <ArrowLeftRight size={32} />
-              <span>Transfer İşlemleri</span>
-            </div>
-            <div className="quick-action-card" onClick={() => handleMenuClick('/statistics')}>
-              <PieChart size={32} />
-              <span>İstatistikler</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="recent-activities">
-          <h3>Son Aktiviteler</h3>
-          {recentActivities.length > 0 ? (
-            <div className="activities-list">
-              {recentActivities.slice(0, 5).map((activity, index) => (
-                <div key={index} className="activity-item">
-                  <div className="activity-icon">
-                    <Activity size={16} />
-                  </div>
-                  <div className="activity-content">
-                    <span className="activity-text">{activity.description}</span>
-                    <span className="activity-time">{activity.timestamp}</span>
-                  </div>
+          {/* Charts Section */}
+          <div className="charts-section">
+            <div className="chart-card">
+              <div className="chart-header">
+                <h3>Aylık Gelir Trendi</h3>
+                <div className="chart-value">
+                  {formatCurrency(stats.monthlyIncome)}
                 </div>
-              ))}
+              </div>
+              <div className="chart-placeholder">
+                <PieChart size={100} />
+                <p>Grafik verileri yükleniyor...</p>
+              </div>
             </div>
-          ) : (
-            <div className="no-activities">
-              <Activity size={48} />
-              <p>Henüz aktivite bulunmuyor</p>
-            </div>
-          )}
-        </div>
 
-        {/* Summary */}
-        <div className="summary">
-          <h3>Özet</h3>
-          <p>
-            Sisteminizde <strong>{stats.totalUsers.toLocaleString()}</strong> kullanıcı bulunuyor, 
-            bunların <strong>{stats.activeUsers.toLocaleString()}</strong> tanesi aktif durumda. 
-            Bugün <strong>{stats.todayTransactions.toLocaleString()}</strong> işlem gerçekleşti ve 
-            <strong>{formatCurrency(stats.dailyIncome)}</strong> gelir elde edildi.
-          </p>
+            <div className="chart-card">
+              <div className="chart-header">
+                <h3>Kullanıcı Aktivitesi</h3>
+                <div className="chart-actions">
+                  <button className="chart-btn">7G</button>
+                  <button className="chart-btn active">30G</button>
+                  <button className="chart-btn">3A</button>
+                </div>
+              </div>
+              <div className="chart-placeholder">
+                <BarChart3 size={100} />
+                <p>Aktivite grafiği hazırlanıyor...</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activities */}
+          <div className="activities-section">
+            <div className="activities-header">
+              <h3>Son Aktiviteler</h3>
+              <button className="view-all-btn">
+                Tümünü Gör
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            <div className="activities-list">
+              {recentActivities.length > 0 ? (
+                recentActivities.map((activity, index) => (
+                  <div key={index} className="activity-item">
+                    <div className="activity-icon">
+                      <Activity size={16} />
+                    </div>
+                    <div className="activity-content">
+                      <p className="activity-text">{activity.description}</p>
+                      <span className="activity-time">{activity.timestamp}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-activities">
+                  <Activity size={48} />
+                  <p>Henüz aktivite bulunmuyor</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
           className="sidebar-overlay"

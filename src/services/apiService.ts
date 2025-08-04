@@ -2,10 +2,10 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import type { 
   ApiResponse, 
   PagedResponse, 
-  News, 
   TokenResponse,
   LoginResponse
-} from '../types';
+} from '../types/index';
+import type { News } from '../types';
 
 // Base API configuration
 const BASE_URL = 'http://localhost:8080/v1/api';
@@ -36,26 +36,56 @@ const refreshAccessToken = async (refreshToken: string): Promise<TokenResponse> 
   }
 };
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token with automatic validation
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     console.log('🚀 API REQUEST:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
       fullURL: `${config.baseURL}${config.url}`,
       data: config.data,
-      params: config.params,
-      headers: config.headers
+      params: config.params
     });
     
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Token eklendi:', token.substring(0, 20) + '...');
-    } else {
-      console.log('⚠️ Token bulunamadı');
+    // Skip token validation for auth endpoints
+    const isAuthEndpoint = config.url?.includes('/auth/');
+    
+    if (!isAuthEndpoint) {
+      try {
+        // Import token manager functions
+        const { getAccessToken, isTokenExpired, isTokenExpiring } = await import('../utils/tokenManager.js');
+        
+        // Check if token is expired or expiring
+        if (isTokenExpired()) {
+          console.log('❌ Token expired, redirecting to login...');
+          // Clear expired tokens
+          const { clearTokens } = await import('../utils/tokenManager.js');
+          clearTokens();
+          
+          // Redirect to login
+          window.location.href = '/login';
+          return Promise.reject(new Error('Token expired'));
+        }
+        
+        // Get current token
+        const token = getAccessToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 Token added to request');
+          
+          // Log warning if token is expiring soon
+          if (isTokenExpiring(60)) {
+            console.warn('⚠️ Token expiring soon (< 1 minute)');
+          }
+        } else {
+          console.log('⚠️ No token found');
+        }
+      } catch (error) {
+        console.error('❌ Token validation error:', error);
+      }
     }
+    
     return config;
   },
   (error) => {
@@ -64,17 +94,16 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor with enhanced token management
 apiClient.interceptors.response.use(
-  (response) => {
+  async (response) => {
     console.log('✅ API RESPONSE SUCCESS:', {
       status: response.status,
       statusText: response.statusText,
       url: response.config.url,
-      method: response.config.method?.toUpperCase(),
-      data: response.data,
-      headers: response.headers
+      method: response.config.method?.toUpperCase()
     });
+    
     return response;
   },
   async (error) => {
@@ -83,35 +112,20 @@ apiClient.interceptors.response.use(
       statusText: error.response?.statusText,
       url: error.config?.url,
       method: error.config?.method?.toUpperCase(),
-      responseData: error.response?.data,
-      message: error.message,
-      fullError: error
+      data: error.response?.data,
+      message: error.message
     });
     
-    const original = error.config;
-    
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
+      console.log('🔒 Unauthorized request, clearing tokens and redirecting...');
       
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const tokenResponse = await refreshAccessToken(refreshToken);
-          
-          // Update stored tokens
-          localStorage.setItem('accessToken', tokenResponse.accessToken.token);
-          localStorage.setItem('refreshToken', tokenResponse.refreshToken.token);
-          
-          // Retry original request with new token
-          original.headers.Authorization = `Bearer ${tokenResponse.accessToken.token}`;
-          return apiClient(original);
-        }
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        try {
+          const { clearTokens } = await import('../utils/tokenManager.js');
+          clearTokens();
         window.location.href = '/login';
-        return Promise.reject(refreshError);
+      } catch (importError) {
+        console.error('Failed to import token manager:', importError);
       }
     }
     
@@ -119,1200 +133,538 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Generic API service
-export const apiService = {
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await apiClient.get<T>(url, config);
+// Generic API service class
+class ApiService {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = apiClient;
+  }
+
+  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.get(url, config);
+    return response.data;
+  }
+
+  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.post(url, data, config);
+    return response.data;
+  }
+
+  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.put(url, data, config);
+    return response.data;
+  }
+
+  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.patch(url, data, config);
+    return response.data;
+  }
+
+  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.delete(url, config);
+    return response.data;
+  }
+}
+
+const apiService = new ApiService();
+
+// Auth API endpoints
+export const authApi = {
+  login: async (credentials: { telephone: string; password: string }): Promise<LoginResponse> => {
+    const response = await apiClient.post('/auth/superadmin-login', credentials);
     return response.data;
   },
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await apiClient.post<T>(url, data, config);
+  verifyPhone: async (telephone: string, verificationCode: string): Promise<LoginResponse> => {
+    const response = await apiClient.post('/auth/verify-phone', {
+      telephone,
+      verificationCode
+    });
     return response.data;
   },
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await apiClient.put<T>(url, data, config);
+  resendVerificationCode: async (telephone: string): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/auth/resend-verification-code', {
+      telephone
+    });
     return response.data;
   },
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await apiClient.delete<T>(url, config);
-    return response.data;
+  refreshToken: async (refreshToken: string): Promise<TokenResponse> => {
+    return refreshAccessToken(refreshToken);
   },
 
-  async upload<T>(url: string, formData: FormData, method: 'POST' | 'PUT' = 'POST'): Promise<T> {
-    const config: AxiosRequestConfig = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    };
-    
-    const response = method === 'POST' 
-      ? await apiClient.post<T>(url, formData, config)
-      : await apiClient.put<T>(url, formData, config);
-    
+  logout: async (): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/auth/logout');
     return response.data;
   }
 };
 
-// News API endpoints (updated from ApiClientFX.java)
+// News API endpoints
 export const newsApi = {
-  // Get all news with optional platform filter
-  async getAllNews(platform?: string): Promise<PagedResponse<News>> {
-    const params = new URLSearchParams();
-    if (platform && platform !== 'Tümü') {
-      params.append('platform', platform);
-    }
-    
-    const endpoint = params.toString() ? `/news/?${params.toString()}` : '/news/';
-    const response = await apiService.get<PagedResponse<News>>(endpoint);
-    return response;
+  getNews: async (page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    const response = await apiClient.get(`/news?page=${page}&size=${size}`);
+    return response.data;
   },
 
-  // Get news between specific dates
-  async getNewsBetweenDates(
-    startDate: string, // YYYY-MM-DD format
-    endDate: string,   // YYYY-MM-DD format
-    platform?: string,
-    page = 0,
-    size = 100
-  ): Promise<PagedResponse<News>> {
-    const params = new URLSearchParams({
-      start: startDate,
-      end: endDate,
-      page: page.toString(),
-      size: size.toString()
-    });
-    
-    if (platform && platform !== 'Tümü') {
-      params.append('platform', platform);
-    }
-    
-    const response = await apiService.get<PagedResponse<News>>(`/news/between-dates?${params.toString()}`);
-    return response;
+  getNewsById: async (id: number): Promise<News> => {
+    const response = await apiClient.get(`/news/${id}`);
+    return response.data;
   },
 
-  // Create news with image upload (multipart/form-data)
-  async createNews(data: {
-    title: string;
-    content: string;
-    image?: File | null;
-    startDate: string; // ISO date string
-    endDate?: string;  // ISO date string
-    platform: string;
-    priority: string;
-    type: string;
-    allowFeedback: boolean;
-  }): Promise<ApiResponse<News>> {
-    const formData = new FormData();
-    
-    // Required fields
-    formData.append('title', data.title);
-    formData.append('content', data.content);
-    formData.append('startDate', data.startDate);
-    formData.append('platform', data.platform);
-    formData.append('priority', data.priority);
-    formData.append('type', data.type);
-    formData.append('allowFeedback', data.allowFeedback.toString());
-    
-    // Optional fields
-    if (data.endDate) {
-      formData.append('endDate', data.endDate);
-    }
-    
-    if (data.image) {
-      formData.append('image', data.image);
-    }
-    
-    const response = await apiService.upload<ApiResponse<News>>('/news/create', formData);
-    return response;
+  createNews: async (newsData: Omit<News, 'id' | 'createdAt' | 'updatedAt'>): Promise<News> => {
+    const response = await apiClient.post('/news', newsData);
+    return response.data;
   },
 
-  // Create simple news without image (JSON)
-  async createSimpleNews(data: {
-    title: string;
-    content: string;
-    platform: string;
-    author?: string;
-  }): Promise<ApiResponse<News>> {
-    const payload = {
-      ...data,
-      priority: 'NORMAL',
-      type: 'DUYURU',
-      allowFeedback: true
-    };
-    
-    const response = await apiService.post<ApiResponse<News>>('/news/create', payload);
-    return response;
+  updateNews: async (id: number, newsData: Partial<News>): Promise<News> => {
+    const response = await apiClient.put(`/news/${id}`, newsData);
+    return response.data;
   },
 
-  // Update news with optional image upload (multipart/form-data)
-  async updateNews(data: {
-    id: number;
-    title?: string;
-    content?: string;
-    image?: File | null;
-    startDate?: string;
-    endDate?: string;
-    platform?: string;
-    priority?: string;
-    type?: string;
-    allowFeedback?: boolean;
-    active?: boolean;
-  }): Promise<ApiResponse<News>> {
-    const formData = new FormData();
-    
-    // ID is required
-    formData.append('id', data.id.toString());
-    
-    // Add only non-null/undefined fields
-    if (data.title !== undefined) formData.append('title', data.title);
-    if (data.content !== undefined) formData.append('content', data.content);
-    if (data.startDate !== undefined) formData.append('startDate', data.startDate);
-    if (data.endDate !== undefined) formData.append('endDate', data.endDate);
-    if (data.platform !== undefined) formData.append('platform', data.platform);
-    if (data.priority !== undefined) formData.append('priority', data.priority);
-    if (data.type !== undefined) formData.append('type', data.type);
-    if (data.allowFeedback !== undefined) formData.append('allowFeedback', data.allowFeedback.toString());
-    if (data.active !== undefined) formData.append('active', data.active.toString());
-    
-    if (data.image) {
-      formData.append('image', data.image);
-    }
-    
-    const response = await apiService.upload<ApiResponse<News>>('/news/update', formData, 'PUT');
-    return response;
-  },
-
-  // Soft delete news (set active = false)
-  async softDeleteNews(id: number): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiService.put<ApiResponse<{ message: string }>>(`/news/${id}/soft-delete`, {});
-    return response;
-  },
-
-  // Delete news permanently
-  async deleteNews(id: number): Promise<ApiResponse<{ message: string }>> {
-    const response = await apiService.delete<ApiResponse<{ message: string }>>(`/news/${id}`);
-    return response;
+  deleteNews: async (id: number): Promise<void> => {
+    await apiClient.delete(`/news/${id}`);
   }
 };
 
-// Payment Point API endpoints
-export const paymentPointApi = {
-  // Get all payment points with pagination
-  async getAllPaymentPoints(page = 0, size = 10, sort = 'name'): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      size: size.toString(),
-      sort: sort
-    });
-    const response = await apiService.get<ApiResponse<any>>(`/payment-point?${params.toString()}`);
-    return response;
+// Dashboard API endpoints
+export const dashboardApi = {
+  getStats: async () => {
+    const response = await apiClient.get('/dashboard/stats');
+    return response.data;
   },
 
-  // Get payment point by ID
-  async getPaymentPointById(id: number): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/payment-point/${id}`);
-    return response;
-  },
-
-  // Create payment point
-  async createPaymentPoint(data: {
-    name: string;
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-    address: {
-      city: string;
-      district: string;
-      street: string;
-      postalCode?: string;
-      fullAddress: string;
-    };
-    contactNumber?: string;
-    workingHours?: string;
-    paymentMethods: string[];
-    description?: string;
-    active?: boolean;
-  }): Promise<ApiResponse<any>> {
-    const response = await apiService.post<ApiResponse<any>>('/payment-point', data);
-    return response;
-  },
-
-  // Update payment point
-  async updatePaymentPoint(id: number, data: {
-    name: string;
-    location?: {
-      latitude: number;
-      longitude: number;
-    };
-    address?: {
-      city: string;
-      district: string;
-      street: string;
-      postalCode?: string;
-      fullAddress: string;
-    };
-    contactNumber?: string;
-    workingHours?: string;
-    paymentMethods: string[];
-    description?: string;
-    active?: boolean;
-  }): Promise<ApiResponse<any>> {
-    const response = await apiService.put<ApiResponse<any>>(`/payment-point/${id}`, data);
-    return response;
-  },
-
-  // Search payment points
-  async searchPaymentPoints(query: string, latitude: number, longitude: number, page = 0, size = 10): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      query,
-      latitude: latitude.toString(),
-      longitude: longitude.toString(),
-      page: page.toString(),
-      size: size.toString()
-    });
-    const response = await apiService.post<ApiResponse<any>>(`/payment-point/search?${params.toString()}`);
-    return response;
-  },
-
-  // Toggle payment point status
-  async togglePaymentPointStatus(id: number, active: boolean): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      active: active.toString()
-    });
-    const response = await apiServiceExtended.patch<ApiResponse<any>>(`/payment-point/${id}/status?${params.toString()}`);
-    return response;
-  },
-
-  // Delete payment point
-  async deletePaymentPoint(id: number): Promise<ApiResponse<any>> {
-    const response = await apiService.delete<ApiResponse<any>>(`/payment-point/${id}`);
-    return response;
-  },
-
-  // Add photos to payment point
-  async addPaymentPointPhotos(id: number, files: File[]): Promise<ApiResponse<any>> {
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append('files', file);
-    });
-    
-    const response = await apiService.upload<ApiResponse<any>>(`/payment-point/${id}/photos`, formData);
-    return response;
-  },
-
-  // Delete photo from payment point
-  async deletePaymentPointPhoto(id: number, photoId: number): Promise<ApiResponse<any>> {
-    const response = await apiService.delete<ApiResponse<any>>(`/payment-point/${id}/photos/${photoId}`);
-    return response;
-  }
-};
-
-// Superadmin API endpoints (from ApiClientFX.java)
-export const superadminApi = {
-  // Get pending admin requests
-  async getPendingAdminRequests(page = 0, size = 20): Promise<PagedResponse<any>> {
-    const response = await apiService.get<PagedResponse<any>>(`/superadmin/admin-requests/pending?page=${page}&size=${size}&sort=createdAt&direction=DESC`);
-    return response;
-  },
-
-  // Approve admin request
-  async approveAdminRequest(adminId: number): Promise<ApiResponse<any>> {
-    const response = await apiService.post<ApiResponse<any>>(`/superadmin/admin-requests/${adminId}/approve`, {});
-    return response;
-  },
-
-  // Reject admin request
-  async rejectAdminRequest(adminId: number): Promise<ApiResponse<any>> {
-    const response = await apiService.post<ApiResponse<any>>(`/superadmin/admin-requests/${adminId}/reject`, {});
-    return response;
-  },
-
-  // Get income summary
-  async getIncomeSummary(): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>('/superadmin/income-summary');
-    return response;
-  },
-
-  // Get daily bus income
-  async getDailyBusIncome(date: string): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/superadmin/bus-income/daily?date=${date}`);
-    return response;
-  },
-
-  // Get weekly bus income
-  async getWeeklyBusIncome(startDate: string, endDate: string): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/superadmin/bus-income/weekly?startDate=${startDate}&endDate=${endDate}`);
-    return response;
-  },
-
-  // Get monthly bus income
-  async getMonthlyBusIncome(year: number, month: number): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/superadmin/bus-income/monthly?year=${year}&month=${month}`);
-    return response;
-  },
-
-  // Get audit logs
-  async getAuditLogs(fromDate?: string, toDate?: string, action?: string): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams();
-    if (fromDate) params.append('fromDate', fromDate);
-    if (toDate) params.append('toDate', toDate);
-    if (action) params.append('action', action);
-    
-    const queryString = params.toString();
-    const endpoint = queryString ? `/superadmin/audit-logs?${queryString}` : '/superadmin/audit-logs';
-    
-    const response = await apiService.get<ApiResponse<any>>(endpoint);
-    return response;
-  }
-};
-
-// Wallet API endpoints (from ApiClientFX.java)
-export const walletApi = {
-  // Update wallet status
-  async updateWalletStatus(isActive: boolean): Promise<ApiResponse<any>> {
-    const response = await apiService.put<ApiResponse<any>>(`/wallet/toggleWalletStatus?isActive=${isActive}`, {});
-    return response;
-  },
-
-  // Get all wallets
-  async getAllWallets(page = 0, size = 20): Promise<PagedResponse<any>> {
-    const response = await apiService.get<PagedResponse<any>>(`/wallet/admin/all?page=${page}&size=${size}&sort=id,desc`);
-    return response;
-  },
-
-  // Download transfer Excel
-  async downloadTransferExcel(): Promise<Blob> {
-    const response = await apiClient.get('/wallet/admin/export/transactions/excel', {
-      responseType: 'blob'
-    });
+  getRecentActivities: async () => {
+    const response = await apiClient.get('/dashboard/recent-activities');
     return response.data;
   }
 };
 
-// Feedback API endpoints (from FeedbackApiClient.java)
-export const feedbackApi = {
-  // Get all feedbacks with filtering and pagination
-  async getAllFeedbacks(params: {
-    page?: number;
-    size?: number;
-    sort?: string; // "submittedAt,desc"
-    type?: string; // "Tümü" or FeedbackType
-    source?: string; // "Tümü" or FeedbackSource  
-    start?: string; // YYYY-MM-DD format
-    end?: string; // YYYY-MM-DD format
-  } = {}): Promise<PagedResponse<any>> {
-    const searchParams = new URLSearchParams();
-    
-    // Default values
-    searchParams.append('page', (params.page || 0).toString());
-    searchParams.append('size', (params.size || 20).toString());
-    searchParams.append('sort', params.sort || 'submittedAt,desc');
-    
-    // Optional filters
-    if (params.type && params.type !== 'Tümü') {
-      searchParams.append('type', params.type);
-    }
-    if (params.source && params.source !== 'Tümü') {
-      searchParams.append('source', params.source);
-    }
-    if (params.start) {
-      searchParams.append('start', params.start);
-    }
-    if (params.end) {
-      searchParams.append('end', params.end);
-    }
-    
-    const response = await apiService.get<PagedResponse<any>>(`/feedback/admin/all?${searchParams.toString()}`);
-    return response;
+// Reports API endpoints
+export const reportsApi = {
+  getDailyReport: async (date: string) => {
+    const response = await apiClient.get(`/reports/daily?date=${date}`);
+    return response.data;
   },
 
-  // Get feedback by ID
-  async getFeedbackById(id: number): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/feedback/admin/${id}`);
-    return response;
+  getWeeklyReport: async (week: string) => {
+    const response = await apiClient.get(`/reports/weekly?week=${week}`);
+    return response.data;
+  },
+
+  getMonthlyReport: async (month: string) => {
+    const response = await apiClient.get(`/reports/monthly?month=${month}`);
+    return response.data;
+  }
+};
+
+// Feedback API endpoints
+export const feedbackApi = {
+  getAllFeedback: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/feedback?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getFeedbackById: async (id: number) => {
+    const response = await apiClient.get(`/feedback/${id}`);
+    return response.data;
+  },
+
+  deleteFeedback: async (id: number) => {
+    const response = await apiClient.delete(`/feedback/${id}`);
+    return response.data;
   }
 };
 
 // Station API endpoints
 export const stationApi = {
-  // Create new station
-  async createStation(data: {
-    name: string;
-    latitude: number;
-    longitude: number;
-    type: string; // StationType enum
-    city: string;
-    district: string;
-    street: string;
-    postalCode?: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await apiService.post<ApiResponse<any>>('/station', data);
-    return response;
+  getAllStations: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/stations?page=${page}&size=${size}`);
+    return response.data;
   },
 
-  // Get station by ID
-  async getStationById(id: number): Promise<ApiResponse<any>> {
-    const response = await apiService.get<ApiResponse<any>>(`/station/${id}`);
-    return response;
+  getStationById: async (id: number) => {
+    const response = await apiClient.get(`/stations/${id}`);
+    return response.data;
   },
 
-  // Update station
-  async updateStation(data: {
-    id: number;
-    name?: string;
-    latitude?: number;
-    longitude?: number;
-    type?: string;
-    city?: string;
-    district?: string;
-    street?: string;
-    postalCode?: string;
-    active?: boolean;
-  }): Promise<ApiResponse<any>> {
-    const response = await apiService.put<ApiResponse<any>>('/station', data);
-    return response;
+  createStation: async (stationData: any) => {
+    const response = await apiClient.post('/stations', stationData);
+    return response.data;
   },
 
-  // Change station status
-  async changeStationStatus(id: number, active: boolean): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      active: active.toString()
-    });
-    const response = await apiServiceExtended.patch<ApiResponse<any>>(`/station/${id}/status?${params.toString()}`);
-    return response;
+  updateStation: async (id: number, stationData: any) => {
+    const response = await apiClient.put(`/stations/${id}`, stationData);
+    return response.data;
   },
 
-  // Delete station
-  async deleteStation(id: number): Promise<ApiResponse<any>> {
-    const response = await apiService.delete<ApiResponse<any>>(`/station/${id}`);
-    return response;
-  },
-
-  // Get all stations with location-based filtering
-  async getAllStations(
-    latitude: number, 
-    longitude: number, 
-    type?: string, 
-    page = 0, 
-    size = 10
-  ): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      latitude: latitude.toString(),
-      longitude: longitude.toString(),
-      page: page.toString(),
-      size: size.toString()
-    });
-    
-    if (type && type !== 'ALL') {
-      params.append('type', type);
-    }
-    
-    const response = await apiService.get<ApiResponse<any>>(`/station?${params.toString()}`);
-    return response;
-  },
-
-  // Search stations by name
-  async searchStationsByName(name: string, page = 0, size = 10): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({
-      name: name,
-      page: page.toString(),
-      size: size.toString()
-    });
-    
-    const response = await apiService.get<ApiResponse<any>>(`/station/search?${params.toString()}`);
-    return response;
-  },
-
-  // Get matching keywords for search suggestions
-  async getMatchingKeywords(query: string): Promise<Set<string>> {
-    const params = new URLSearchParams({
-      query: query
-    });
-    
-    const response = await apiService.get<Set<string>>(`/station/keywords?${params.toString()}`);
-    return response;
-  },
-
-  // Search nearby stations (legacy compatibility)
-  async searchNearbyStations(location: {
-    latitude: number;
-    longitude: number;
-    type?: string;
-  }, page: number = 0, size: number = 20): Promise<ApiResponse<any>> {
-    return this.getAllStations(location.latitude, location.longitude, location.type, page, size);
-  }
-};
-
-// Add PATCH method to apiService
-export const apiServiceExtended = {
-  ...apiService,
-  
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await apiClient.patch<T>(url, data, config);
+  deleteStation: async (id: number) => {
+    const response = await apiClient.delete(`/stations/${id}`);
     return response.data;
   }
 };
 
-// Auth API endpoints (from AuthApiClient.java)
-export const authApi = {
-  // Superadmin signup
-  async signup(data: {
-    name: string;
-    surname: string;
-    telephone: string;
-    password: string;
-    email: string;
-  }): Promise<LoginResponse> {
-    // Add device and IP info automatically
-    const deviceInfo = navigator.userAgent.substring(0, 50);
-    const ipAddress = '127.0.0.1'; // Will be detected by backend
-    
-    const payload = {
-      ...data,
-      ipAddress,
-      deviceInfo,
-      appVersion: '1.0',
-      platform: 'WEB'
-    };
-    
-    const response = await apiClient.post('/auth/superadmin-signup', payload);
+// Payment Point API endpoints
+export const paymentPointApi = {
+  getAllPaymentPoints: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/payment-points?page=${page}&size=${size}`);
     return response.data;
   },
 
-  // Superadmin login (returns success message, triggers SMS)
-  async login(data: {
-    telephone: string;
-    password: string;
-  }): Promise<LoginResponse> {
-    const deviceInfo = navigator.userAgent.substring(0, 50);
-    const ipAddress = '127.0.0.1'; // Will be detected by backend
-    
-    const payload = {
-      ...data,
-      ipAddress,
-      deviceInfo,
-      appVersion: '1.0',
-      platform: 'WEB'
-    };
-    
-    const response = await apiClient.post('/auth/superadmin-login', payload);
+  getPaymentPointById: async (id: number) => {
+    const response = await apiClient.get(`/payment-points/${id}`);
     return response.data;
   },
 
-  // Phone verification (returns tokens)
-  async phoneVerify(data: {
-    telephone: string;
-    code: string;
-  }): Promise<TokenResponse> {
-    const deviceInfo = navigator.userAgent.substring(0, 50);
-    const ipAddress = '127.0.0.1'; // Will be detected by backend
-    
-    const payload = {
-      ...data,
-      ipAddress,
-      deviceInfo,
-      appVersion: '1.0',
-      platform: 'WEB'
-    };
-    
-    const response = await apiClient.post('/auth/phone-verify', payload);
-    
-    // Store tokens in localStorage
-    if (response.data.accessToken && response.data.refreshToken) {
-      localStorage.setItem('accessToken', response.data.accessToken.token);
-      localStorage.setItem('refreshToken', response.data.refreshToken.token);
-      localStorage.setItem('accessTokenExpiry', response.data.accessToken.expiresAt);
-      localStorage.setItem('refreshTokenExpiry', response.data.refreshToken.expiresAt);
-    }
-    
+  createPaymentPoint: async (paymentPointData: any) => {
+    const response = await apiClient.post('/payment-points', paymentPointData);
     return response.data;
   },
 
-  // Refresh access token
-  async refreshToken(refreshToken: string): Promise<TokenResponse> {
-    const payload = { refreshToken };
-    const response = await apiClient.post('/auth/refresh', payload);
-    
-    // Update stored access token
-    if (response.data.accessToken) {
-      localStorage.setItem('accessToken', response.data.accessToken.token);
-      localStorage.setItem('accessTokenExpiry', response.data.accessToken.expiresAt);
-    }
-    
+  updatePaymentPoint: async (id: number, paymentPointData: any) => {
+    const response = await apiClient.put(`/payment-points/${id}`, paymentPointData);
     return response.data;
   },
 
-  // Resend verification code
-  async resendVerificationCode(telephone: string): Promise<ApiResponse<{ message: string }>> {
-    const url = `/auth/resend-verify-code?telephone=${telephone}`;
-    const response = await apiClient.post(url, {});
-    return response.data;
-  },
-
-  // Logout (clear tokens)
-  logout(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('accessTokenExpiry');
-    localStorage.removeItem('refreshTokenExpiry');
-    localStorage.removeItem('verificationPhone');
-  },
-
-  // Check if user is authenticated
-  isAuthenticated(): boolean {
-    const token = localStorage.getItem('accessToken');
-    const expiry = localStorage.getItem('accessTokenExpiry');
-    
-    if (!token || !expiry) {
-      return false;
-    }
-    
-    // Check if token is expired
-    const expiryDate = new Date(expiry);
-    const now = new Date();
-    
-    return now < expiryDate;
-  },
-
-  // Get stored tokens
-  getStoredTokens(): {
-    accessToken: string | null;
-    refreshToken: string | null;
-    accessTokenExpiry: string | null;
-    refreshTokenExpiry: string | null;
-  } {
-    return {
-      accessToken: localStorage.getItem('accessToken'),
-      refreshToken: localStorage.getItem('refreshToken'),
-      accessTokenExpiry: localStorage.getItem('accessTokenExpiry'),
-      refreshTokenExpiry: localStorage.getItem('refreshTokenExpiry')
-    };
-  },
-
-  // Check if access token should be refreshed (2 minutes before expiry)
-  shouldRefreshToken(): boolean {
-    const expiry = localStorage.getItem('accessTokenExpiry');
-    if (!expiry) return false;
-    
-    const expiryDate = new Date(expiry);
-    const refreshThreshold = new Date(expiryDate.getTime() - 2 * 60 * 1000); // 2 minutes before
-    const now = new Date();
-    
-    return now > refreshThreshold;
-  }
-};
-
-// Dashboard API
-export const dashboardApi = {
-  // Dashboard istatistikleri - SuperadminDashboardFX'teki loadDashboardData metoduna benzer
-  getDashboardStats: async () => {
-    const response = await apiService.get('/admin/dashboard/stats');
-    return response.data;
-  },
-
-  // Dashboard hoşgeldiniz verisi
-  getWelcomeData: async () => {
-    const response = await apiService.get('/admin/dashboard/welcome');
-    return response.data;
-  },
-
-  // Son aktiviteler
-  getRecentActivities: async (limit = 10) => {
-    const response = await apiService.get(`/admin/dashboard/activities?limit=${limit}`);
-    return response.data;
-  },
-
-  // Sistem durumu
-  getSystemStatus: async () => {
-    const response = await apiService.get('/admin/dashboard/system-status');
+  deletePaymentPoint: async (id: number) => {
+    const response = await apiClient.delete(`/payment-points/${id}`);
     return response.data;
   }
 };
 
-// Reports API - IncomeReportsPage'e benzer
-export const reportsApi = {
-  // Gelir özeti - ApiClientFX.getIncomeSummary'ye benzer
-  getIncomeSummary: async () => {
-    const response = await apiService.get('/admin/reports/income/summary');
-    return response.data;
-  },
-
-  // Günlük gelir raporu
-  getDailyIncomeReport: async (startDate?: string, endDate?: string) => {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/admin/reports/income/daily?${params.toString()}`);
-    return response.data;
-  },
-
-  // Haftalık gelir raporu
-  getWeeklyIncomeReport: async (weeks = 12) => {
-    const response = await apiService.get(`/admin/reports/income/weekly?weeks=${weeks}`);
-    return response.data;
-  },
-
-  // Aylık gelir raporu
-  getMonthlyIncomeReport: async (months = 12) => {
-    const response = await apiService.get(`/admin/reports/income/monthly?months=${months}`);
-    return response.data;
-  },
-
-  // Gelir trend analizi
-  getIncomeTrend: async (period = 'monthly') => {
-    const response = await apiService.get(`/admin/reports/income/trend?period=${period}`);
-    return response.data;
-  },
-
-  // Gelir kategorileri dağılımı
-  getIncomeCategories: async () => {
-    const response = await apiService.get('/admin/reports/income/categories');
-    return response.data;
-  },
-
-  // Excel export
-  exportIncomeReport: async (type: 'daily' | 'weekly' | 'monthly', startDate?: string, endDate?: string) => {
-    const params = new URLSearchParams();
-    params.append('type', type);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/admin/reports/income/export?${params.toString()}`, {
-      responseType: 'blob'
-    });
-    return response.data;
-  }
-};
-
-// Analytics API - gelişmiş analitik
-export const analyticsApi = {
-  // Genel analitik veriler
-  getAnalyticsData: async (period = 'today') => {
-    const response = await apiService.get(`/admin/analytics/overview?period=${period}`);
-    return response.data;
-  },
-
-  // Kullanıcı analitikleri
-  getUserAnalytics: async () => {
-    const response = await apiService.get('/admin/analytics/users');
-    return response.data;
-  },
-
-  // Otobüs kullanım analitikleri
-  getBusAnalytics: async () => {
-    const response = await apiService.get('/admin/analytics/buses');
-    return response.data;
-  },
-
-  // Durak analitikleri
-  getStationAnalytics: async () => {
-    const response = await apiService.get('/admin/analytics/stations');
-    return response.data;
-  },
-
-  // İşlem analitikleri
-  getTransactionAnalytics: async (period = 'today') => {
-    const response = await apiService.get(`/admin/analytics/transactions?period=${period}`);
-    return response.data;
-  },
-
-  // Performans metrikleri
-  getPerformanceMetrics: async () => {
-    const response = await apiService.get('/admin/analytics/performance');
-    return response.data;
-  }
-};
-
-// Admin Approvals API - AdminApprovalsPage.java'daki API çağrılarına benzer
-export const adminApprovalsApi = {
-  // Bekleyen admin onay isteklerini getir - ApiClientFX.getPendingAdminRequests'e benzer
-  getPendingAdminRequests: async (page = 0, size = 50) => {
-    const response = await apiService.get(`/admin/approvals/pending?page=${page}&size=${size}`);
-    return response.data;
-  },
-
-  // Admin isteğini onayla - ApiClientFX.approveAdminRequest'e benzer
-  approveAdminRequest: async (adminId: number) => {
-    const response = await apiService.post(`/admin/approvals/${adminId}/approve`);
-    return response.data;
-  },
-
-  // Admin isteğini reddet - ApiClientFX.rejectAdminRequest'e benzer
-  rejectAdminRequest: async (adminId: number) => {
-    const response = await apiService.post(`/admin/approvals/${adminId}/reject`);
-    return response.data;
-  },
-
-  // Tüm admin istekleri (onaylanmış, reddedilmiş dahil)
-  getAllAdminRequests: async (page = 0, size = 50, status?: string) => {
-    const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    if (status) params.append('status', status);
-    
-    const response = await apiService.get(`/admin/approvals?${params.toString()}`);
-    return response.data;
-  }
-};
-
-// Identity Requests API - IdentityRequestsPage.java'daki WalletApiClient çağrılarına benzer
-export const identityRequestsApi = {
-  // Kimlik doğrulama isteklerini getir - WalletApiClient.getIdentityRequests'e benzer
-  getIdentityRequests: async (
-    status?: string,
-    startDate?: string,
-    endDate?: string,
-    page = 0,
-    size = 100,
-    sort = 'requestedAt',
-    direction = 'desc'
-  ) => {
-    const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    params.append('sort', sort);
-    params.append('direction', direction);
-    
-    if (status) params.append('status', status);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/wallet/identity-requests?${params.toString()}`);
-    return response.data;
-  },
-
-  // Kimlik isteğini işle (onayla/reddet) - WalletApiClient.processIdentityRequest'e benzer
-  processIdentityRequest: async (requestId: number, approve: boolean, note?: string) => {
-    const payload = {
-      approve,
-      note: note || ''
-    };
-    
-    const response = await apiService.post(`/wallet/identity-requests/${requestId}/process`, payload);
-    return response.data;
-  },
-
-  // Kimlik isteği detayını getir
-  getIdentityRequestById: async (requestId: number) => {
-    const response = await apiService.get(`/wallet/identity-requests/${requestId}`);
-    return response.data;
-  },
-
-  // Kimlik istekleri istatistiklerini getir
-  getIdentityRequestsStats: async () => {
-    const response = await apiService.get('/wallet/identity-requests/stats');
-    return response.data;
-  },
-
-  // Excel export
-  exportIdentityRequests: async (
-    status?: string,
-    startDate?: string,
-    endDate?: string
-  ) => {
-    const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/wallet/identity-requests/export?${params.toString()}`, {
-      responseType: 'blob'
-    });
-    return response.data;
-  }
-};
-
-// Audit Logs API - AuditLogsPage.java'daki ApiClientFX.getAuditLogs'a benzer
-export const auditLogsApi = {
-  // Denetim kayıtlarını getir
-  getAuditLogs: async (fromDate?: string, toDate?: string, action?: string) => {
-    const params = new URLSearchParams();
-    if (fromDate) params.append('fromDate', fromDate);
-    if (toDate) params.append('toDate', toDate);
-    if (action && action !== 'Tümü') params.append('action', action);
-    
-    const response = await apiService.get(`/admin/audit-logs?${params.toString()}`);
-    return response.data;
-  }
-};
-
-// Wallet Stats API - StatisticsPage.java'daki WalletApiClient.getWalletAdminStats'a benzer
-export const walletStatsApi = {
-  // Cüzdan sistem istatistikleri
-  getWalletAdminStats: async () => {
-    const response = await apiService.get('/wallet/admin/stats');
-    return response.data;
-  }
-};
-
-// All Wallets API - AllWalletsPage.java'daki WalletApiClient.getAllWallets'a benzer
-export const walletsApi = {
-  // Tüm cüzdanları getir (sayfalama ile)
-  getAllWallets: async (page = 0, size = 10) => {
-    const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    params.append('sort', 'id,desc');
-    
-    const response = await apiService.get(`/wallet/admin/all?${params.toString()}`);
-    return response.data;
-  }
-};
-
-// Wallet Transfers API - WalletTransfersPage.java'daki WalletApiClient.getWalletTransfers'a benzer
-export const walletTransfersApi = {
-  // Transfer işlemlerini getir
-  getWalletTransfers: async (
-    status?: string,
-    startDate?: string,
-    endDate?: string,
-    page = 0,
-    size = 100,
-    sortBy = 'timestamp',
-    sortDir = 'desc'
-  ) => {
-    const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('size', size.toString());
-    params.append('sortBy', sortBy);
-    params.append('sortDir', sortDir);
-    
-    if (status && status !== 'Tümü') params.append('status', status);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/wallet/transfers?${params.toString()}`);
-    return response.data;
-  },
-
-  // Transfer Excel raporu indir
-  exportTransferExcel: async (
-    status?: string,
-    startDate?: string,
-    endDate?: string
-  ) => {
-    const params = new URLSearchParams();
-    if (status && status !== 'Tümü') params.append('status', status);
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    
-    const response = await apiService.get(`/wallet/transfers/export?${params.toString()}`, {
-      responseType: 'blob'
-    });
-    return response.data;
-  }
-};
-
-// Wallet Status Update API - WalletStatusUpdatePage.java'daki ApiClientFX.updateWalletStatus'a benzer
-export const walletStatusApi = {
-  // Cüzdan durumunu güncelle
-  updateWalletStatus: async (phoneNumber: string, isActive: boolean) => {
-    const payload = {
-      phoneNumber,
-      isActive
-    };
-    
-    const response = await apiService.post('/wallet/status/update', payload);
-    return response.data;
-  }
-};
-
-// Bus API - BusController.java endpoints
+// Bus API endpoints
 export const busApi = {
-  // === GENEL SORGULAMA ENDPOİNTLERİ ===
-  
-  // Tüm otobüsleri getir
-  getAllBuses: async (page = 0, size = 10) => {
-    const response = await apiService.get(`/bus/all?page=${page}&size=${size}`);
+  getAllBuses: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/bus/all?page=${page}&size=${size}`);
     return response.data;
   },
 
-  // ID'ye göre otobüs getir
-  getBusById: async (busId: number) => {
-    const response = await apiService.get(`/bus/${busId}`);
+  getBusById: async (id: number) => {
+    const response = await apiClient.get(`/bus/${id}`);
     return response.data;
   },
 
-  // Aktif otobüsleri getir
-  getActiveBuses: async (page = 0, size = 10) => {
-    const response = await apiService.get(`/bus/active?page=${page}&size=${size}`);
+  searchBuses: async (searchParams: any) => {
+    const response = await apiClient.get('/bus/search', { params: searchParams });
     return response.data;
   },
 
-  // === CRUD İŞLEMLERİ ===
-  
-  // Yeni otobüs oluştur
-  createBus: async (busData: {
-    numberPlate: string;
-    routeId?: number;
-    driverId?: number;
-    baseFare: number;
-    capacity?: number;
-    notes?: string;
-  }) => {
-    const response = await apiService.post('/bus/create', busData);
+  getBusesByStatus: async (status: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/bus/status/${status}?page=${page}&size=${size}`);
     return response.data;
   },
 
-  // Otobüs güncelle
-  updateBus: async (busId: number, busData: {
-    numberPlate?: string;
-    routeId?: number;
-    driverId?: number;
-    baseFare?: number;
-    capacity?: number;
-    active?: boolean;
-    status?: string;
-    notes?: string;
-  }) => {
-    const response = await apiService.put(`/bus/update/${busId}`, busData);
+  createBus: async (busData: any) => {
+    const response = await apiClient.post('/bus', busData);
     return response.data;
   },
 
-  // Otobüs sil
-  deleteBus: async (busId: number) => {
-    const response = await apiService.delete(`/bus/delete/${busId}`);
+  updateBus: async (id: number, busData: any) => {
+    const response = await apiClient.put(`/bus/${id}`, busData);
     return response.data;
   },
 
-  // Otobüs aktif/pasif durumunu değiştir
-  toggleActiveStatus: async (busId: number) => {
-    const response = await apiService.put(`/bus/${busId}/toggle-active`);
+  deleteBus: async (id: number) => {
+    const response = await apiClient.delete(`/bus/${id}`);
     return response.data;
   },
 
-  // === ŞOFÖR YÖNETİMİ ===
-  
-  // Otobüse şoför ata
-  assignDriver: async (busId: number, driverId: number) => {
-    const response = await apiService.put(`/bus/${busId}/assign-driver`, { driverId });
+  toggleActiveStatus: async (id: number) => {
+    const response = await apiClient.patch(`/bus/${id}/toggle-active`);
     return response.data;
   },
 
-  // === KONUM YÖNETİMİ ===
-  
-  // Mevcut otobüs konumunu getir
-  getCurrentLocation: async (busId: number) => {
-    const response = await apiService.get(`/bus/${busId}/location`);
-    return response.data;
-  },
-
-  // Otobüs konumunu güncelle
-  updateLocation: async (busId: number, locationData: {
-    latitude: number;
-    longitude: number;
-    speed?: number;
-    accuracy?: number;
-  }) => {
-    const response = await apiService.post(`/bus/${busId}/location`, locationData);
-    return response.data;
-  },
-
-  // Konum geçmişini getir
-  getLocationHistory: async (busId: number, date?: string, page = 0, size = 10) => {
-    let url = `/bus/${busId}/location-history?page=${page}&size=${size}`;
-    if (date) url += `&date=${date}`;
-    const response = await apiService.get(url);
-    return response.data;
-  },
-
-  // === ROTA YÖNETİMİ ===
-  
-  // Otobüse rota ata
-  assignRoute: async (busId: number, routeId: number) => {
-    const response = await apiService.put(`/bus/${busId}/route`, { routeId });
-    return response.data;
-  },
-
-  // Rota istasyonlarını getir
-  getRouteStations: async (busId: number) => {
-    const response = await apiService.get(`/bus/${busId}/route/stations`);
-    return response.data;
-  },
-
-  // Otobüs yönünü değiştir
-  switchDirection: async (busId: number) => {
-    const response = await apiService.put(`/bus/${busId}/switch-direction`);
-    return response.data;
-  },
-
-  // === İSTATİSTİKLER ===
-  
-  // Otobüs istatistiklerini getir
-  getStatistics: async () => {
-    const response = await apiService.get('/bus/statistics');
-    return response.data;
-  },
-
-  // === ARAMA VE FİLTRELEME ===
-  
-  // Otobüs ara
-  searchBuses: async (filters: {
-    numberPlate?: string;
-    routeId?: number;
-    driverId?: number;
-    status?: string;
-    page?: number;
-    size?: number;
-  }) => {
-    const params = new URLSearchParams();
-    if (filters.numberPlate) params.append('numberPlate', filters.numberPlate);
-    if (filters.routeId) params.append('routeId', filters.routeId.toString());
-    if (filters.driverId) params.append('driverId', filters.driverId.toString());
-    if (filters.status) params.append('status', filters.status);
-    params.append('page', (filters.page || 0).toString());
-    params.append('size', (filters.size || 10).toString());
-    
-    const response = await apiService.get(`/bus/search?${params.toString()}`);
-    return response.data;
-  },
-
-  // Rotaya göre otobüsleri getir
-  getBusesByRoute: async (routeId: number, page = 0, size = 10) => {
-    const response = await apiService.get(`/bus/route/${routeId}?page=${page}&size=${size}`);
-    return response.data;
-  },
-
-  // Şoföre göre otobüsleri getir
-  getBusesByDriver: async (driverId: number, page = 0, size = 10) => {
-    const response = await apiService.get(`/bus/driver/${driverId}?page=${page}&size=${size}`);
-    return response.data;
-  },
-
-  // Duruma göre otobüsleri getir
-  getBusesByStatus: async (status: string, page = 0, size = 10) => {
-    const response = await apiService.get(`/bus/status/${status}?page=${page}&size=${size}`);
-    return response.data;
-  },
-
-  // === DURUM YÖNETİMİ ===
-  
-  // Otobüs durumunu güncelle
-  updateStatus: async (busId: number, statusData: {
-    status: string;
-    reason?: string;
-    estimatedDurationMinutes?: number;
-  }) => {
-    const response = await apiService.put(`/bus/${busId}/status`, statusData);
-    return response.data;
-  },
-
-  // === TOPLU İŞLEMLER ===
-  
-  // Toplu aktifleştir
   bulkActivate: async (busIds: number[]) => {
-    const response = await apiService.put('/bus/bulk/activate', busIds);
+    const response = await apiClient.patch('/bus/bulk-activate', { busIds });
     return response.data;
   },
 
-  // Toplu pasifleştir
   bulkDeactivate: async (busIds: number[]) => {
-    const response = await apiService.put('/bus/bulk/deactivate', busIds);
+    const response = await apiClient.patch('/bus/bulk-deactivate', { busIds });
+    return response.data;
+  }
+};
+
+// Driver API endpoints
+export const driverApi = {
+  getAllDrivers: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getDriverById: async (id: number) => {
+    const response = await apiClient.get(`/drivers/${id}`);
+    return response.data;
+  },
+
+  searchDrivers: async (searchTerm: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/search?q=${searchTerm}&page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  createDriver: async (driverData: any) => {
+    const response = await apiClient.post('/drivers', driverData);
+    return response.data;
+  },
+
+  updateDriver: async (id: number, driverData: any) => {
+    const response = await apiClient.put(`/drivers/${id}`, driverData);
+    return response.data;
+  },
+
+  deleteDriver: async (id: number) => {
+    const response = await apiClient.delete(`/drivers/${id}`);
+    return response.data;
+  }
+};
+
+// Route API endpoints
+export const routeApi = {
+  getAllRoutes: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/routes?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getRouteById: async (id: number) => {
+    const response = await apiClient.get(`/routes/${id}`);
+    return response.data;
+  },
+
+  searchRoutes: async (searchTerm: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/routes/search?q=${searchTerm}&page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  createRoute: async (routeData: any) => {
+    const response = await apiClient.post('/routes', routeData);
+    return response.data;
+  },
+
+  updateRoute: async (id: number, routeData: any) => {
+    const response = await apiClient.put(`/routes/${id}`, routeData);
+    return response.data;
+  },
+
+  deleteRoute: async (id: number) => {
+    const response = await apiClient.delete(`/routes/${id}`);
+    return response.data;
+  }
+};
+
+// Wallet API endpoints
+export const walletApi = {
+  getAllWallets: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallets?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getWalletById: async (id: number) => {
+    const response = await apiClient.get(`/wallets/${id}`);
+    return response.data;
+  },
+
+  searchWallets: async (searchTerm: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallets/search?q=${searchTerm}&page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  updateWalletStatus: async (id: number, status: string) => {
+    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    return response.data;
+  },
+
+  getWalletTransfers: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallet-transfers?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  createTransfer: async (transferData: any) => {
+    const response = await apiClient.post('/wallet-transfers', transferData);
+    return response.data;
+  }
+};
+
+// Admin API endpoints
+export const adminApi = {
+  getAdminApprovals: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/admin/approvals?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  approveRequest: async (id: number) => {
+    const response = await apiClient.patch(`/admin/approvals/${id}/approve`);
+    return response.data;
+  },
+
+  rejectRequest: async (id: number, reason: string) => {
+    const response = await apiClient.patch(`/admin/approvals/${id}/reject`, { reason });
+    return response.data;
+  },
+
+  getIdentityRequests: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/admin/identity-requests?page=${page}&size=${size}`);
+    return response.data;
+  }
+};
+
+// Analytics API endpoints
+export const analyticsApi = {
+  getDashboardStats: async () => {
+    const response = await apiClient.get('/analytics/dashboard');
+    return response.data;
+  },
+
+  getUserAnalytics: async (timeRange: string = '7d') => {
+    const response = await apiClient.get(`/analytics/users?range=${timeRange}`);
+    return response.data;
+  },
+
+  getTransactionAnalytics: async (timeRange: string = '7d') => {
+    const response = await apiClient.get(`/analytics/transactions?range=${timeRange}`);
+    return response.data;
+  },
+
+  getRevenueAnalytics: async (timeRange: string = '7d') => {
+    const response = await apiClient.get(`/analytics/revenue?range=${timeRange}`);
+    return response.data;
+  },
+
+  getSystemPerformance: async () => {
+    const response = await apiClient.get('/analytics/system-performance');
+    return response.data;
+  }
+};
+
+// Statistics API endpoints
+export const statisticsApi = {
+  getGeneralStats: async () => {
+    const response = await apiClient.get('/statistics/general');
+    return response.data;
+  },
+
+  getUserStats: async () => {
+    const response = await apiClient.get('/statistics/users');
+    return response.data;
+  },
+
+  getTransactionStats: async () => {
+    const response = await apiClient.get('/statistics/transactions');
+    return response.data;
+  },
+
+  getSystemStats: async () => {
+    const response = await apiClient.get('/statistics/system');
+    return response.data;
+  }
+};
+
+// Audit API endpoints
+export const auditApi = {
+  getAuditLogs: async (page: number = 0, size: number = 10, filters?: any) => {
+    const response = await apiClient.get('/audit-logs', {
+      params: { page, size, ...filters }
+    });
+    return response.data;
+  },
+
+  getAuditLogById: async (id: number) => {
+    const response = await apiClient.get(`/audit-logs/${id}`);
+    return response.data;
+  },
+
+  exportAuditLogs: async (filters?: any) => {
+    const response = await apiClient.get('/audit-logs/export', {
+      params: filters,
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+};
+
+// Contract API endpoints
+export const contractApi = {
+  // Admin Contract Management
+  createContract: async (contractData: any) => {
+    const response = await apiClient.post('/admin/contract/contracts', contractData);
+    return response.data;
+  },
+
+  updateContract: async (contractId: number, contractData: any) => {
+    const response = await apiClient.put(`/admin/contract/contracts/${contractId}`, contractData);
+    return response.data;
+  },
+
+  deactivateContract: async (contractId: number) => {
+    const response = await apiClient.patch(`/admin/contract/contracts/${contractId}/deactivate`);
+    return response.data;
+  },
+
+  activateContract: async (contractId: number) => {
+    const response = await apiClient.patch(`/admin/contract/contracts/${contractId}/activate`);
+    return response.data;
+  },
+
+  getAllContracts: async () => {
+    const response = await apiClient.get('/admin/contract/contracts');
+    return response.data;
+  },
+
+  getActiveContracts: async () => {
+    const response = await apiClient.get('/admin/contract/contracts/active');
+    return response.data;
+  },
+
+  getContractById: async (contractId: number) => {
+    const response = await apiClient.get(`/admin/contract/contracts/${contractId}`);
+    return response.data;
+  },
+
+  getContractsByType: async (contractType: string) => {
+    const response = await apiClient.get(`/admin/contract/contracts/type/${contractType}`);
+    return response.data;
+  },
+
+  getUserAcceptedContracts: async (username: string) => {
+    const response = await apiClient.get(`/admin/contract/users/${username}/accepted-contracts`);
+    return response.data;
+  },
+
+  checkUserMandatoryStatus: async (username: string) => {
+    const response = await apiClient.get(`/admin/contract/users/${username}/mandatory-status`);
+    return response.data;
+  }
+};
+
+// Health API endpoints
+export const healthApi = {
+  getHealthStatus: async () => {
+    const response = await apiClient.get('/health/status');
+    return response.data;
+  },
+
+  getDatabaseDetails: async () => {
+    const response = await apiClient.get('/health/database-details');
+    return response.data;
+  },
+
+  getSecurityAudit: async () => {
+    const response = await apiClient.get('/health/security-audit');
+    return response.data;
+  },
+
+  getApisStatus: async () => {
+    const response = await apiClient.get('/health/apis-status');
+    return response.data;
+  },
+
+  getPerformanceMetrics: async () => {
+    const response = await apiClient.get('/health/performance-metrics');
+    return response.data;
+  },
+
+  getFullSystemReport: async () => {
+    const response = await apiClient.get('/health/full-system-report');
     return response.data;
   }
 };

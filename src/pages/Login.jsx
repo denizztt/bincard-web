@@ -1,79 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Phone, Lock, Clock, Zap, Palette, Bus, Car, Truck } from 'lucide-react';
+import { useAuth } from '../context/EnhancedAuthContext';
+import { Eye, EyeOff, Phone, Lock, ArrowLeft } from 'lucide-react';
 import '../styles/Login.css';
-
-// Enhanced Color themes with more variety
-const colorThemes = {
-  neon: {
-    name: "Neon City",
-    bg: "neon-gradient",
-    accent1: "neon-accent-1",
-    accent2: "neon-accent-2", 
-    accent3: "neon-accent-3",
-    primary: "neon-primary",
-    button: "neon-button",
-    secondary: "neon-secondary",
-  },
-  fire: {
-    name: "Fire Storm",
-    bg: "fire-gradient",
-    accent1: "fire-accent-1",
-    accent2: "fire-accent-2",
-    accent3: "fire-accent-3", 
-    primary: "fire-primary",
-    button: "fire-button",
-    secondary: "fire-secondary",
-  },
-  ice: {
-    name: "Ice Crystal",
-    bg: "ice-gradient",
-    accent1: "ice-accent-1",
-    accent2: "ice-accent-2",
-    accent3: "ice-accent-3",
-    primary: "ice-primary", 
-    button: "ice-button",
-    secondary: "ice-secondary",
-  },
-  galaxy: {
-    name: "Galaxy Dream",
-    bg: "galaxy-gradient",
-    accent1: "galaxy-accent-1",
-    accent2: "galaxy-accent-2",
-    accent3: "galaxy-accent-3",
-    primary: "galaxy-primary",
-    button: "galaxy-button", 
-    secondary: "galaxy-secondary",
-  },
-  earth: {
-    name: "Earth Tone",
-    bg: "earth-gradient",
-    accent1: "earth-accent-1",
-    accent2: "earth-accent-2",
-    accent3: "earth-accent-3",
-    primary: "earth-primary",
-    button: "earth-button",
-    secondary: "earth-secondary",
-  },
-  ocean: {
-    name: "Ocean Breeze", 
-    bg: "ocean-gradient",
-    accent1: "ocean-accent-1",
-    accent2: "ocean-accent-2",
-    accent3: "ocean-accent-3",
-    primary: "ocean-primary",
-    button: "ocean-button",
-    secondary: "ocean-secondary",
-  },
-};
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
-  const [currentTheme, setCurrentTheme] = useState('neon'); // Neon default
-  const theme = colorThemes[currentTheme];
-
+  
   // Form states
   const [formData, setFormData] = useState({
     countryCode: 'TR +90',
@@ -85,14 +19,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
 
-  // Country code options
-  const countryCodes = [
-    'TR +90',
-    'US +1', 
-    'DE +49',
-    'FR +33',
-    'GB +44'
-  ];
+  const countryCodes = ['TR +90', 'US +1', 'DE +49', 'FR +33', 'GB +44'];
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -102,9 +29,9 @@ const Login = () => {
   }, [isAuthenticated, navigate]);
 
   // Format phone number as user types (Turkish format)
-  const formatPhoneNumber = (value, isDeleting = false) => {
+  const formatPhoneNumber = (value) => {
     const digits = value.replace(/\D/g, '');
-    if (digits.length > 10) return formData.telephone; // Don't allow more than 10 digits
+    if (digits.length > 10) return formData.telephone;
     
     let formatted = '';
     if (digits.length > 0) {
@@ -119,43 +46,6 @@ const Login = () => {
     }
     
     return formatted;
-  };
-
-  // Handle phone input with proper backspace support
-  const handlePhoneInput = (e) => {
-    const inputValue = e.target.value;
-    const cursorPosition = e.target.selectionStart;
-    const isDeleting = e.nativeEvent.inputType === 'deleteContentBackward';
-    
-    if (isDeleting) {
-      // If deleting and cursor is after a space or ), delete the digit before it
-      const beforeCursor = inputValue.substring(0, cursorPosition);
-      const afterCursor = inputValue.substring(cursorPosition);
-      
-      // Check if we're deleting a space or ) character
-      if (beforeCursor.length > 0 && [' ', ')'].includes(beforeCursor[beforeCursor.length - 1])) {
-        // Remove the space/bracket and the digit before it
-        const newValue = beforeCursor.substring(0, beforeCursor.length - 2) + afterCursor;
-        const formattedValue = formatPhoneNumber(newValue, true);
-        setFormData(prev => ({ ...prev, telephone: formattedValue }));
-        
-        // Set cursor position after formatting
-        setTimeout(() => {
-          const newCursorPos = Math.max(0, cursorPosition - 2);
-          e.target.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
-        return;
-      }
-    }
-    
-    // Normal formatting
-    const formattedValue = formatPhoneNumber(inputValue, isDeleting);
-    setFormData(prev => ({ ...prev, telephone: formattedValue }));
-    
-    // Clear error when user starts typing
-    if (errors.telephone) {
-      setErrors(prev => ({ ...prev, telephone: '' }));
-    }
   };
 
   // Format password (only numbers, max 6 digits)
@@ -232,24 +122,62 @@ const Login = () => {
       console.log('📞 Temizlenmiş telefon numarası:', phoneDigits);
       console.log('🔐 Şifre uzunluğu:', formData.password.length);
       
-      const result = await login(phoneDigits, formData.password);
-      console.log('📤 LOGIN SONUCU:', result);
+      // Call API directly for login with token response expected
+      const loginPayload = {
+        telephone: phoneDigits,
+        password: formData.password
+      };
       
-      if (result.success) {
-        console.log('✅ Login başarılı - SMS sayfasına yönlendiriliyor');
-        // Store phone for SMS verification
-        sessionStorage.setItem('verificationPhone', phoneDigits);
-        console.log('💾 Telefon numarası session storage\'a kaydedildi');
-        setMessage({ text: result.message, isError: false });
+      console.log('🚀 API login call yapılıyor...', loginPayload);
+      
+      // Direct API call to get tokens (backend should return accessToken and refreshToken)
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginPayload)
+      });
+      
+      const result = await response.json();
+      console.log('📤 LOGIN API RESPONSE:', result);
+      
+      if (response.ok && result.success) {
+        // Expect backend to return: { success: true, accessToken: "...", refreshToken: "...", user: {...} }
+        const { accessToken, refreshToken, user } = result;
         
-        // Navigate to SMS verification page
-        setTimeout(() => {
-          console.log('🚀 SMS verification sayfasına yönlendiriliyor...');
-          navigate('/verify-sms');
-        }, 1500);
+        if (accessToken && refreshToken) {
+          console.log('✅ Tokens received, storing securely...');
+          
+          // Use enhanced auth context login with tokens
+          const loginSuccess = await login(accessToken, refreshToken, user || { telephone: phoneDigits });
+          
+          if (loginSuccess) {
+            console.log('✅ Enhanced login successful - redirecting to dashboard');
+            setMessage({ text: 'Giriş başarılı!', isError: false });
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+              console.log('🚀 Dashboard\'a yönlendiriliyor...');
+              navigate('/dashboard');
+            }, 1500);
+          } else {
+            throw new Error('Token storage failed');
+          }
+        } else {
+          // If no tokens, might be SMS verification required
+          console.log('📱 SMS verification required');
+          sessionStorage.setItem('verificationPhone', phoneDigits);
+          setMessage({ text: result.message || 'SMS doğrulama gerekli', isError: false });
+          
+          setTimeout(() => {
+            console.log('🚀 SMS verification sayfasına yönlendiriliyor...');
+            navigate('/verify-sms');
+          }, 1500);
+        }
       } else {
-        console.log('❌ Login başarısız:', result.error);
-        setMessage({ text: result.error || 'Giriş başarısız', isError: true });
+        console.log('❌ Login başarısız:', result.message || result.error);
+        setMessage({ text: result.message || result.error || 'Giriş başarısız', isError: true });
       }
     } catch (error) {
       console.error('❌ LOGIN CATCH ERROR:', error);
@@ -264,280 +192,130 @@ const Login = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
-  const getCurrentTime = () => {
-    return new Date().toLocaleString('tr-TR', {
-      day: '2-digit',
-      month: 'long', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  const [currentTime, setCurrentTime] = useState(getCurrentTime());
-
-  // Update clock every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(getCurrentTime());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
   return (
-    <div className={`modern-login-container ${theme.bg}`}>
-      {/* Theme Selector */}
-      <div className="theme-selector">
-        <div className="theme-selector-button">
-          <Palette size={16} />
-          <select 
-            value={currentTheme} 
-            onChange={(e) => setCurrentTheme(e.target.value)}
-            className="theme-select"
-          >
-            {Object.entries(colorThemes).map(([key, themeData]) => (
-              <option key={key} value={key}>
-                {themeData.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Moving Buses Background Animation */}
-      <div className="background-animation">
-        <div className="moving-vehicle bus-1">
-          <Bus size={32} />
-        </div>
-        <div className="moving-vehicle car-1">
-          <Car size={24} />
-        </div>
-        <div className="moving-vehicle truck-1">
-          <Truck size={40} />
-        </div>
-        <div className="moving-vehicle bus-2">
-          <Bus size={24} />
-        </div>
-        <div className="moving-vehicle car-2">
-          <Car size={20} />
-        </div>
-      </div>
-
-      {/* Enhanced Background Elements */}
-      <div className="background-elements">
-        <div className={`accent-blob blob-1 ${theme.accent1}`}></div>
-        <div className={`accent-blob blob-2 ${theme.accent2}`}></div>
-        <div className={`accent-blob blob-3 ${theme.accent3}`}></div>
-      </div>
-
-      {/* Enhanced Grid Pattern */}
-      <div className="grid-pattern"></div>
-
-      <div className="login-content">
-        {/* Enhanced Welcome Section */}
-        <div className="welcome-section">
-          <div className="logo-container">
-            {/* Multiple Glow Layers */}
-            <div className={`glow-layer glow-primary ${theme.primary}`}></div>
-            <div className={`glow-layer glow-secondary ${theme.secondary}`}></div>
-            <div className={`logo-icon ${theme.primary}`}>
-              <Bus size={40} />
-              {/* Smoke Effect */}
-              <div className="smoke-effects">
-                <div className="smoke-particle smoke-1"></div>
-                <div className="smoke-particle smoke-2"></div>
-                <div className="smoke-particle smoke-3"></div>
-                <div className="smoke-particle smoke-4"></div>
-                <div className="smoke-particle smoke-5"></div>
-              </div>
-            </div>
-          </div>
-
-          <h1 className="welcome-title">
-            Merhaba <span className="wave-emoji">👋</span>
+    <div className="modern-login-container">
+      <div className="w-full max-w-md relative z-10">
+        {/* Welcome Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4">
+            Merhaba 👋
           </h1>
-
-          <div className={`time-display ${theme.primary}`}>
-            <div className="time-icon-container">
-              <Clock size={20} />
-              <Bus size={8} className="mini-bus" />
-            </div>
-            <p className="current-time">{currentTime}</p>
-          </div>
+          <p className="text-lg text-gray-600">
+            Yönetici paneline güvenli erişim
+          </p>
         </div>
 
-        {/* Enhanced Login Card */}
+        {/* Login Card */}
         <div className="modern-login-card">
-          {/* Enhanced Card Glow Effect */}
-          <div className={`card-glow card-glow-primary ${theme.primary}`}></div>
-          <div className={`card-glow card-glow-secondary ${theme.secondary}`}></div>
-
-          <div className="card-header">
-            <div className="header-icon-container">
-              <div className="header-icon-glow">
-                <Zap size={28} className="header-zap" />
-                <Bus size={12} className="header-mini-bus" />
-              </div>
-              <h2 className={`card-title ${theme.primary}`}>
-                Superadmin Girişi
-              </h2>
-            </div>
-            <p className="card-description">
-              <Bus size={16} className="desc-bus" />
-              <span>Yönetici paneline güvenli erişim</span>
+          <div className="text-center pb-8 pt-8">
+            <h2 className="text-3xl font-bold mb-2">
+              Superadmin Girişi
+            </h2>
+            <p className="text-gray-600">
+              Yönetici paneline güvenli erişim
             </p>
           </div>
 
-          <div className="card-content">
-            <form onSubmit={handleSubmit} className="modern-form">
-              {/* Enhanced Phone Number Section */}
-              <div className="form-section">
-                <label className="modern-label">
-                  <div className={`label-icon ${theme.primary}`}>
-                    <Phone size={20} />
-                    <Bus size={8} className="label-mini-bus" />
-                  </div>
-                  <span>Telefon (Kullanıcı Adı)</span>
+          <div className="space-y-8 px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Phone Number Section */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Phone className="inline w-4 h-4 mr-2" />
+                  Telefon (Kullanıcı Adı)
                 </label>
 
-                <div className="phone-input-row">
-                  {/* Enhanced Country Code Selector */}
+                <div className="flex gap-4">
                   <select
                     value={formData.countryCode}
                     onChange={(e) => handleInputChange('countryCode', e.target.value)}
-                    className="modern-country-select"
+                    className="w-32 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {countryCodes.map((code) => (
                       <option key={code} value={code}>
-                        <Bus size={12} /> {code}
+                        {code}
                       </option>
                     ))}
                   </select>
 
-                  {/* Enhanced Phone Number Input */}
-                  <div className="modern-input-container">
-                    <input
-                      type="text"
-                      value={formData.telephone}
-                      onChange={handlePhoneInput}
-                      placeholder="(5xx) xxx xx xx"
-                      className={`modern-input ${errors.telephone ? 'error' : ''}`}
-                    />
-                    {formData.telephone && (
-                      <button
-                        type="button"
-                        className="clear-input-btn"
-                        onClick={() => handleInputChange('telephone', '')}
-                        title="Telefon numarasını temizle"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
+                  <input
+                    type="text"
+                    value={formData.telephone}
+                    onChange={(e) => handleInputChange('telephone', e.target.value)}
+                    placeholder="(5xx) xxx xx xx"
+                    className="flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
 
                 {errors.telephone && (
-                  <p className="modern-error">
-                    <Bus size={16} />
-                    <span>{errors.telephone}</span>
+                  <p className="text-red-500 text-sm">
+                    {errors.telephone}
                   </p>
                 )}
               </div>
 
-              {/* Enhanced Password Section */}
-              <div className="form-section">
-                <label className="modern-label">
-                  <div className={`label-icon ${theme.secondary}`}>
-                    <Lock size={20} />
-                    <Truck size={8} className="label-mini-bus" />
-                  </div>
-                  <span>Şifre</span>
+              {/* Password Section */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Lock className="inline w-4 h-4 mr-2" />
+                  Şifre
                 </label>
 
-                <div className="modern-input-container">
+                <div className="relative">
                   <input
                     type={isPasswordVisible ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     placeholder="6 haneli şifre giriniz"
                     maxLength={6}
-                    className={`modern-input ${errors.password ? 'error' : ''}`}
+                    className="w-full px-3 py-3 pr-14 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-
-                  {formData.password && (
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange('password', '')}
-                      className="clear-password-btn"
-                      title="Şifreyi temizle"
-                    >
-                      ✕
-                    </button>
-                  )}
 
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="password-visibility-btn"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 p-0 text-gray-500 hover:text-gray-700"
                   >
-                    <div className="visibility-icon-container">
-                      {isPasswordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
-                      <Car size={8} className="visibility-mini-car" />
-                    </div>
+                    {isPasswordVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
 
                 {errors.password && (
-                  <p className="modern-error">
-                    <Truck size={16} />
-                    <span>{errors.password}</span>
+                  <p className="text-red-500 text-sm">
+                    {errors.password}
                   </p>
                 )}
               </div>
 
-              {/* Enhanced Submit Button */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`modern-submit-btn ${theme.button} ${isLoading ? 'loading' : ''}`}
+                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl text-base transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <div className="loading-content">
-                    <Bus size={24} className="loading-bus" />
-                    <span>Giriş yapılıyor...</span>
-                  </div>
-                ) : (
-                  <div className="submit-content">
-                    <div className="submit-icon-container">
-                      <Zap size={20} />
-                      <Bus size={8} className="submit-mini-bus" />
-                    </div>
-                    <span>Giriş Yap</span>
-                  </div>
-                )}
+                {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
               </button>
 
-              {/* Enhanced Message Display */}
+              {/* Message Display */}
               {message.text && (
-                <div className={`modern-message ${message.isError ? 'error' : 'success'}`}>
-                  <div className="message-content">
-                    <Bus size={20} className="message-bus" />
-                    <span>{message.text}</span>
-                  </div>
+                <div className={`p-4 rounded-xl ${message.isError ? 'bg-red-100 border border-red-400' : 'bg-green-100 border border-green-400'}`}>
+                  <p className={`font-semibold text-base ${message.isError ? 'text-red-700' : 'text-green-700'}`}>
+                    {message.text}
+                  </p>
                 </div>
               )}
+
+              {/* Back Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="w-full text-gray-600 hover:text-gray-800 font-semibold border border-gray-300 rounded-xl py-3 text-base flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Ana Menü
+              </button>
             </form>
           </div>
-        </div>
-
-        {/* Enhanced Footer */}
-        <div className="modern-footer">
-          <p>
-            <Truck size={16} />
-            <span>🔒 Güvenli yönetici erişimi</span>
-          </p>
         </div>
       </div>
     </div>

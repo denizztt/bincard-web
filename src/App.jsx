@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/EnhancedAuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles/common-components.css';
@@ -32,6 +32,15 @@ import AllWallets from './pages/AllWallets';
 import WalletTransfers from './pages/WalletTransfers';
 import BusList from './pages/BusList';
 import BusMap from './pages/BusMap';
+import DriverList from './pages/DriverList';
+import RouteList from './pages/RouteList';
+import RouteAdd from './pages/RouteAdd';
+import DriverAdd from './pages/DriverAdd';
+import DriverEdit from './pages/DriverEdit';
+import ContractManagement from './pages/ContractManagement';
+import UserContractTracking from './pages/UserContractTracking';
+import ComplianceCheck from './pages/ComplianceCheck';
+import SystemHealth from './pages/SystemHealth';
 import './App.css';
 
 function App() {
@@ -82,8 +91,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
-            {/* Feedback Management Routes */}
+
+            {/* Feedback Routes */}
             <Route
               path="/feedback"
               element={
@@ -93,15 +102,15 @@ function App() {
               }
             />
             <Route
-              path="/feedback/detail/:id"
+              path="/feedback/:id"
               element={
                 <ProtectedRoute>
                   <FeedbackDetail />
                 </ProtectedRoute>
               }
             />
-            
-            {/* Payment Point Management Routes */}
+
+            {/* Payment Point Routes */}
             <Route
               path="/payment-point"
               element={
@@ -127,25 +136,17 @@ function App() {
               }
             />
             <Route
-              path="/payment-point/detail/:id"
+              path="/payment-point/:id"
               element={
                 <ProtectedRoute>
                   <PaymentPointDetail />
                 </ProtectedRoute>
               }
             />
-            
-            {/* Station Management Routes */}
+
+            {/* Station Routes */}
             <Route
               path="/station"
-              element={
-                <ProtectedRoute>
-                  <StationList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/station/search"
               element={
                 <ProtectedRoute>
                   <StationList />
@@ -169,7 +170,7 @@ function App() {
               }
             />
             <Route
-              path="/station/detail/:id"
+              path="/station/:id"
               element={
                 <ProtectedRoute>
                   <StationDetail />
@@ -184,7 +185,113 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
+
+            {/* Bus Routes */}
+            <Route
+              path="/bus"
+              element={
+                <ProtectedRoute>
+                  <BusList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bus/map"
+              element={
+                <ProtectedRoute>
+                  <BusMap />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Driver Routes */}
+            <Route
+              path="/driver"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/add"
+              element={
+                <ProtectedRoute>
+                  <DriverAdd />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <DriverEdit />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Route Management Routes */}
+            <Route
+              path="/route"
+              element={
+                <ProtectedRoute>
+                  <RouteList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/route/add"
+              element={
+                <ProtectedRoute>
+                  <RouteAdd />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Wallet Routes */}
+            <Route
+              path="/all-wallets"
+              element={
+                <ProtectedRoute>
+                  <AllWallets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wallet-transfers"
+              element={
+                <ProtectedRoute>
+                  <WalletTransfers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wallet-status-update"
+              element={
+                <ProtectedRoute>
+                  <WalletStatusUpdate />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin-approvals"
+              element={
+                <ProtectedRoute>
+                  <AdminApprovals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/identity-requests"
+              element={
+                <ProtectedRoute>
+                  <IdentityRequests />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Analytics & Reports Routes */}
             <Route
               path="/analytics"
@@ -202,24 +309,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
-            {/* Admin Management Routes */}
-            <Route
-              path="/admin-approvals"
-              element={
-                <ProtectedRoute>
-                  <AdminApprovals />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/identity-requests"
-              element={
-                <ProtectedRoute>
-                  <IdentityRequests />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/audit-logs"
               element={
@@ -228,61 +317,50 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
-            {/* Wallet Management Routes */}
+
+            {/* Contract Routes */}
             <Route
-              path="/wallet-status-update"
+              path="/contract-management"
               element={
                 <ProtectedRoute>
-                  <WalletStatusUpdate />
+                  <ContractManagement />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/all-wallets"
+              path="/user-contract-tracking"
               element={
                 <ProtectedRoute>
-                  <AllWallets />
+                  <UserContractTracking />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/wallet-transfers"
+              path="/compliance-check"
               element={
                 <ProtectedRoute>
-                  <WalletTransfers />
+                  <ComplianceCheck />
                 </ProtectedRoute>
               }
             />
 
-            {/* Bus Management Routes */}
+            {/* System Health Route */}
             <Route
-              path="/bus"
+              path="/system-health"
               element={
                 <ProtectedRoute>
-                  <BusList />
+                  <SystemHealth />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/bus/map"
-              element={
-                <ProtectedRoute>
-                  <BusMap />
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+
+            {/* Default Route */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
-  </ThemeProvider>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
