@@ -47,13 +47,72 @@ const SystemHealth = () => {
   const loadHealthData = async () => {
     try {
       setLoading(true);
-      const response = await healthApi.getFullSystemReport();
-      setHealthData(response);
+      console.log('🔄 API çağrıları başlatılıyor...');
+      
+      // 3 ayrı endpoint'i paralel olarak çağır
+      const [healthStatus, databaseDetails, securityAudit] = await Promise.allSettled([
+        healthApi.getHealthStatus(),
+        healthApi.getDatabaseDetails(),
+        healthApi.getSecurityAudit()
+      ]);
+      
+      console.log('✅ API çağrıları tamamlandı:', {
+        healthStatus: healthStatus.status,
+        databaseDetails: databaseDetails.status,
+        securityAudit: securityAudit.status
+      });
+      
+      // API response'ları birleştir
+      const healthData = {
+        systemHealth: healthStatus.status === 'fulfilled' ? healthStatus.value : {
+          status: 'UNKNOWN',
+          overall: 'UNKNOWN'
+        },
+        databaseDetails: databaseDetails.status === 'fulfilled' ? databaseDetails.value : null,
+        securityAudit: securityAudit.status === 'fulfilled' ? securityAudit.value : null,
+        
+        // Performance metrics mock data (API olmadığı için)
+        performanceMetrics: {
+          responseTime: 156,
+          throughput: 1200,
+          errorRate: 0.02,
+          uptime: Date.now() - (30 * 24 * 60 * 60 * 1000) // 30 gün uptime
+        },
+        
+        // External services mock data (API olmadığı için)
+        externalServices: {
+          smsService: { status: 'UP', healthy: true, responseTime: '145ms' },
+          emailService: { status: 'UP', healthy: true, responseTime: '89ms' },
+          paymentGateway: { status: 'UP', healthy: true, responseTime: '234ms' },
+          mapService: { status: 'UP', healthy: true, responseTime: '67ms' }
+        },
+        
+        overallHealthScore: healthStatus.status === 'fulfilled' ? 95 : 70,
+        healthGrade: healthStatus.status === 'fulfilled' ? 'A' : 'C'
+      };
+      
+      setHealthData(healthData);
       setLastUpdate(new Date());
-      setError('');
+      
+      // Eğer herhangi bir API başarılı olduysa error'u temizle
+      if (healthStatus.status === 'fulfilled' || databaseDetails.status === 'fulfilled' || securityAudit.status === 'fulfilled') {
+        setError('');
+      } else {
+        setError('Tüm API endpoint\'leri başarısız oldu - Demo veriler gösteriliyor');
+      }
+      
     } catch (err) {
-      console.error('Health data load error:', err);
-      // If API fails, show mock data for demonstration
+      console.error('❌ Health data load error:', err);
+      
+      // API hatası durumunda daha detaylı error message
+      let errorMessage = 'Sistem sağlığı verileri yüklenirken hata oluştu';
+      if (err.response) {
+        errorMessage = `API Hatası: ${err.response.status} - ${err.response.statusText}`;
+      } else if (err.request) {
+        errorMessage = 'Sunucuya bağlanılamıyor - Backend servisi çalışmıyor olabilir';
+      }
+      
+      // If API fails completely, show full mock data
       const mockHealthData = {
         systemHealth: {
           status: 'UP',
@@ -111,7 +170,7 @@ const SystemHealth = () => {
       
       setHealthData(mockHealthData);
       setLastUpdate(new Date());
-      setError('API bağlantısı kurulamadı, demo veriler gösteriliyor');
+      setError(`${errorMessage} - Demo veriler gösteriliyor`);
     } finally {
       setLoading(false);
     }

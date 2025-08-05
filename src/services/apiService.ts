@@ -251,27 +251,15 @@ export const dashboardApi = {
 // Health API endpoints
 export const healthApi = {
   getHealthStatus: async () => {
-    const response = await apiClient.get('/v1/api/health/status');
+    const response = await apiClient.get('/health/status');
     return response.data;
   },
   getDatabaseDetails: async () => {
-    const response = await apiClient.get('/v1/api/health/database-details');
+    const response = await apiClient.get('/health/database-details');
     return response.data;
   },
   getSecurityAudit: async () => {
-    const response = await apiClient.get('/v1/api/health/security-audit');
-    return response.data;
-  },
-  getApisStatus: async () => {
-    const response = await apiClient.get('/v1/api/health/apis-status');
-    return response.data;
-  },
-  getPerformanceMetrics: async () => {
-    const response = await apiClient.get('/v1/api/health/performance-metrics');
-    return response.data;
-  },
-  getFullSystemReport: async () => {
-    const response = await apiClient.get('/v1/api/health/full-system-report');
+    const response = await apiClient.get('/health/security-audit');
     return response.data;
   }
 };
