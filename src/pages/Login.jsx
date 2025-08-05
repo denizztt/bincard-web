@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import { Eye, EyeOff, Phone, Lock, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, ArrowLeft, Shield, User, Sparkles } from 'lucide-react';
 import '../styles/Login.css';
 
 const Login = () => {
@@ -194,42 +194,57 @@ const Login = () => {
 
   return (
     <div className="modern-login-container">
-      <div className="w-full max-w-md relative z-10">
-        {/* Welcome Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">
-            Merhaba 👋
-          </h1>
-          <p className="text-lg text-gray-600">
-            Yönetici paneline güvenli erişim
-          </p>
+      {/* Animated Background */}
+      <div className="animated-background">
+        <div className="floating-shapes">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+          <div className="shape shape-3"></div>
+          <div className="shape shape-4"></div>
+        </div>
+      </div>
+
+      <div className="login-content">
+        {/* Logo and Brand Section */}
+        <div className="brand-section">
+          <div className="logo-container">
+            <div className="logo-icon">
+              <Shield className="logo-shield" />
+              <Sparkles className="logo-sparkles" />
+            </div>
+            <h1 className="brand-title">BinCard</h1>
+            <p className="brand-subtitle">Yönetici Paneli</p>
+          </div>
         </div>
 
-        {/* Login Card */}
-        <div className="modern-login-card">
-          <div className="text-center pb-8 pt-8">
-            <h2 className="text-3xl font-bold mb-2">
-              Superadmin Girişi
-            </h2>
-            <p className="text-gray-600">
-              Yönetici paneline güvenli erişim
-            </p>
+        {/* Login Form Card */}
+        <div className="login-card">
+          <div className="card-header">
+            <div className="welcome-section">
+              <h2 className="welcome-title">
+                <User className="welcome-icon" />
+                Hoş Geldiniz
+              </h2>
+              <p className="welcome-subtitle">
+                Güvenli yönetici erişimi için giriş yapın
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-8 px-8 pb-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Phone Number Section */}
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  <Phone className="inline w-4 h-4 mr-2" />
-                  Telefon (Kullanıcı Adı)
+          <div className="card-body">
+            <form onSubmit={handleSubmit} className="login-form">
+              {/* Phone Number Field */}
+              <div className="form-group">
+                <label className="form-label">
+                  <Phone className="label-icon" />
+                  Telefon Numarası
                 </label>
-
-                <div className="flex gap-4">
+                
+                <div className="phone-input-group">
                   <select
                     value={formData.countryCode}
                     onChange={(e) => handleInputChange('countryCode', e.target.value)}
-                    className="w-32 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="country-select"
                   >
                     {countryCodes.map((code) => (
                       <option key={code} value={code}>
@@ -243,47 +258,47 @@ const Login = () => {
                     value={formData.telephone}
                     onChange={(e) => handleInputChange('telephone', e.target.value)}
                     placeholder="(5xx) xxx xx xx"
-                    className="flex-1 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`form-input phone-input ${errors.telephone ? 'error' : ''}`}
                   />
                 </div>
 
                 {errors.telephone && (
-                  <p className="text-red-500 text-sm">
+                  <div className="error-message">
                     {errors.telephone}
-                  </p>
+                  </div>
                 )}
               </div>
 
-              {/* Password Section */}
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  <Lock className="inline w-4 h-4 mr-2" />
+              {/* Password Field */}
+              <div className="form-group">
+                <label className="form-label">
+                  <Lock className="label-icon" />
                   Şifre
                 </label>
-
-                <div className="relative">
+                
+                <div className="password-input-group">
                   <input
                     type={isPasswordVisible ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="6 haneli şifre giriniz"
+                    placeholder="6 haneli şifre"
                     maxLength={6}
-                    className="w-full px-3 py-3 pr-14 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`form-input password-input ${errors.password ? 'error' : ''}`}
                   />
 
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 p-0 text-gray-500 hover:text-gray-700"
+                    className="password-toggle"
                   >
-                    {isPasswordVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {isPasswordVisible ? <EyeOff className="toggle-icon" /> : <Eye className="toggle-icon" />}
                   </button>
                 </div>
 
                 {errors.password && (
-                  <p className="text-red-500 text-sm">
+                  <div className="error-message">
                     {errors.password}
-                  </p>
+                  </div>
                 )}
               </div>
 
@@ -291,31 +306,56 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl text-base transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="submit-button"
               >
-                {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+                {isLoading ? (
+                  <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <span>Giriş yapılıyor...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Shield className="button-icon" />
+                    Giriş Yap
+                  </>
+                )}
               </button>
 
               {/* Message Display */}
               {message.text && (
-                <div className={`p-4 rounded-xl ${message.isError ? 'bg-red-100 border border-red-400' : 'bg-green-100 border border-green-400'}`}>
-                  <p className={`font-semibold text-base ${message.isError ? 'text-red-700' : 'text-green-700'}`}>
+                <div className={`message-container ${message.isError ? 'error' : 'success'}`}>
+                  <div className="message-icon">
+                    {message.isError ? '⚠️' : '✅'}
+                  </div>
+                  <p className="message-text">
                     {message.text}
                   </p>
                 </div>
               )}
-
-              {/* Back Button */}
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="w-full text-gray-600 hover:text-gray-800 font-semibold border border-gray-300 rounded-xl py-3 text-base flex items-center justify-center gap-2"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                Ana Menü
-              </button>
             </form>
           </div>
+
+          {/* Card Footer */}
+          <div className="card-footer">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="back-button"
+            >
+              <ArrowLeft className="back-icon" />
+              Ana Menüye Dön
+            </button>
+          </div>
+        </div>
+
+        {/* Security Notice */}
+        <div className="security-notice">
+          <div className="security-icon">
+            <Shield className="shield-icon" />
+          </div>
+          <p className="security-text">
+            SSL şifreleme ile korunan güvenli bağlantı
+          </p>
         </div>
       </div>
     </div>

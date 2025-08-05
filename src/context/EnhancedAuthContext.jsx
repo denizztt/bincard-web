@@ -363,38 +363,74 @@ export function AuthProvider({ children }) {
   const verifyPhone = async (telephone, code) => {
     console.log('📱 SMS VERIFICATION BAŞLADI:', { telephone, code });
     try {
-      const response = await authApi.phoneVerify({ telephone, code });
+      const response = await authApi.verifyPhone(telephone, code);
       console.log('✅ SMS VERIFICATION RESPONSE:', response);
+      console.log('🔍 Full Response Structure:', {
+        keys: Object.keys(response),
+        hasAccessToken: 'accessToken' in response,
+        hasRefreshToken: 'refreshToken' in response,
+        hasToken: 'token' in response,
+        hasData: 'data' in response,
+        responseType: typeof response,
+        isArray: Array.isArray(response)
+      });
       console.log('🔑 Token Details:', {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
+        token: response.token,
+        data: response.data,
         tokenExpiry: response.accessToken?.expiresAt,
         fullResponse: response
       });
       
+      // Check different possible response formats
+      let accessToken = null;
+      let refreshToken = null;
+      
       if (response.accessToken && response.refreshToken) {
-        // Extract token strings from response objects
-        const accessTokenString = response.accessToken.token || response.accessToken;
-        const refreshTokenString = response.refreshToken.token || response.refreshToken;
-        
-        // Calculate expiry time from token string or use response expiresAt
-        let expiryTime;
-        if (response.accessToken.expiresAt) {
-          // Use backend-provided expiry time
-          expiryTime = new Date(response.accessToken.expiresAt);
-        } else {
-          // Fallback: parse from JWT token
-          expiryTime = parseTokenExpiry(accessTokenString) || new Date(Date.now() + 30 * 60 * 1000);
-        }
-        
-        console.log('🔧 Token extraction:', {
-          accessTokenString: accessTokenString?.substring(0, 50) + '...',
-          refreshTokenString: refreshTokenString?.substring(0, 50) + '...',
-          expiryTime: expiryTime
-        });
-        
-        // Store tokens using enhanced method
-        const stored = storeTokens(accessTokenString, refreshTokenString, expiryTime);
+        // Format 1: Direct token properties
+        accessToken = response.accessToken;
+        refreshToken = response.refreshToken;
+      } else if (response.token) {
+        // Format 2: Single token property
+        accessToken = response.token;
+        refreshToken = response.token; // Use same token as refresh token temporarily
+      } else if (response.data && response.data.accessToken) {
+        // Format 3: Nested in data property
+        accessToken = response.data.accessToken;
+        refreshToken = response.data.refreshToken;
+      } else if (response.success && response.data) {
+        // Format 4: Success with data
+        accessToken = response.data.accessToken || response.data.token;
+        refreshToken = response.data.refreshToken || response.data.token;
+      }
+      
+              if (accessToken && refreshToken) {
+          // Extract token strings from response objects
+          const accessTokenString = typeof accessToken === 'string' ? accessToken : (accessToken.token || accessToken);
+          const refreshTokenString = typeof refreshToken === 'string' ? refreshToken : (refreshToken.token || refreshToken);
+          
+          // Calculate expiry time from token string or use response expiresAt
+          let expiryTime;
+          if (response.accessToken?.expiresAt) {
+            // Use backend-provided expiry time
+            expiryTime = new Date(response.accessToken.expiresAt);
+          } else if (response.data?.accessToken?.expiresAt) {
+            // Use nested data expiry time
+            expiryTime = new Date(response.data.accessToken.expiresAt);
+          } else {
+            // Fallback: parse from JWT token
+            expiryTime = parseTokenExpiry(accessTokenString) || new Date(Date.now() + 30 * 60 * 1000);
+          }
+          
+          console.log('🔧 Token extraction:', {
+            accessTokenString: accessTokenString?.substring(0, 50) + '...',
+            refreshTokenString: refreshTokenString?.substring(0, 50) + '...',
+            expiryTime: expiryTime
+          });
+          
+          // Store tokens using enhanced method
+          const stored = storeTokens(accessTokenString, refreshTokenString, expiryTime);
         
         if (stored) {
           // Store user data
@@ -413,20 +449,37 @@ export function AuthProvider({ children }) {
       } else {
         throw new Error('Invalid token response');
       }
-    } catch (error) {
-      console.error('❌ SMS VERIFICATION FAILED:', error);
-      console.error('🔍 Verification Error Details:', {
-        message: error.message,
-        response: error.response,
-        responseData: error.response?.data,
-        status: error.response?.status,
-        fullError: error
-      });
-      return { 
-        success: false, 
-        error: error.response?.data?.message || error.message || 'Verification failed' 
-      };
-    }
+         } catch (error) {
+       console.error('❌ SMS VERIFICATION FAILED:', error);
+       console.error('🔍 Verification Error Details:', {
+         message: error.message,
+         response: error.response,
+         responseData: error.response?.data,
+         status: error.response?.status,
+         fullError: error
+       });
+       
+       // Handle specific backend errors
+       let errorMessage = 'Doğrulama sırasında bir hata oluştu';
+       
+       if (error.response?.data?.message) {
+         // Backend'den gelen hata mesajını kullan
+         errorMessage = error.response.data.message;
+       } else if (error.response?.status === 400) {
+         errorMessage = 'Geçersiz doğrulama kodu';
+       } else if (error.response?.status === 404) {
+         errorMessage = 'Telefon numarası bulunamadı';
+       } else if (error.response?.status === 429) {
+         errorMessage = 'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.';
+       } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
+         errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
+       }
+       
+       return { 
+         success: false, 
+         error: errorMessage
+       };
+     }
   };
 
   /**

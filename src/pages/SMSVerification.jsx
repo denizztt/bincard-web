@@ -61,14 +61,6 @@ const SMSVerification = () => {
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
-
-    // Auto-verify when 6th digit is entered
-    if (value && index === 5) {
-      // Wait a bit for the UI to update, then trigger verification
-      setTimeout(() => {
-        handleVerify();
-      }, 200);
-    }
   };
 
   const handleKeyDown = (index, e) => {
@@ -76,9 +68,12 @@ const SMSVerification = () => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-    // Handle paste
+    // Handle Enter key - only verify if 6 digits are entered
     else if (e.key === 'Enter') {
-      handleVerify();
+      const verificationCode = code.join('');
+      if (verificationCode.length === 6) {
+        handleVerify();
+      }
     }
   };
 

@@ -177,10 +177,17 @@ export const authApi = {
   },
 
   verifyPhone: async (telephone: string, verificationCode: string): Promise<LoginResponse> => {
-    const response = await apiClient.post('/auth/verify-phone', {
-      telephone,
-      verificationCode
+    const response = await apiClient.post('/auth/phone-verify', {
+      code: verificationCode,
+      deviceInfo: 'Web Browser',
+      platform: 'Web',
+      appVersion: '1.0.0',
+      deviceUuid: 'web-' + Date.now(),
+      fcmToken: '',
+      latitude: null,
+      longitude: null
     });
+    console.log('🔍 Backend Response:', response.data);
     return response.data;
   },
 
@@ -237,6 +244,34 @@ export const dashboardApi = {
 
   getRecentActivities: async () => {
     const response = await apiClient.get('/dashboard/recent-activities');
+    return response.data;
+  }
+};
+
+// Health API endpoints
+export const healthApi = {
+  getHealthStatus: async () => {
+    const response = await apiClient.get('/v1/api/health/status');
+    return response.data;
+  },
+  getDatabaseDetails: async () => {
+    const response = await apiClient.get('/v1/api/health/database-details');
+    return response.data;
+  },
+  getSecurityAudit: async () => {
+    const response = await apiClient.get('/v1/api/health/security-audit');
+    return response.data;
+  },
+  getApisStatus: async () => {
+    const response = await apiClient.get('/v1/api/health/apis-status');
+    return response.data;
+  },
+  getPerformanceMetrics: async () => {
+    const response = await apiClient.get('/v1/api/health/performance-metrics');
+    return response.data;
+  },
+  getFullSystemReport: async () => {
+    const response = await apiClient.get('/v1/api/health/full-system-report');
     return response.data;
   }
 };
@@ -636,35 +671,148 @@ export const contractApi = {
   }
 };
 
-// Health API endpoints
-export const healthApi = {
-  getHealthStatus: async () => {
-    const response = await apiClient.get('/health/status');
+// Admin Approvals API endpoints
+export const adminApprovalsApi = {
+  getAdminApprovals: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/admin/approvals?page=${page}&size=${size}`);
     return response.data;
   },
 
-  getDatabaseDetails: async () => {
-    const response = await apiClient.get('/health/database-details');
+  approveRequest: async (id: number) => {
+    const response = await apiClient.patch(`/admin/approvals/${id}/approve`);
     return response.data;
   },
 
-  getSecurityAudit: async () => {
-    const response = await apiClient.get('/health/security-audit');
+  rejectRequest: async (id: number, reason: string) => {
+    const response = await apiClient.patch(`/admin/approvals/${id}/reject`, { reason });
+    return response.data;
+  }
+};
+
+// Wallets API endpoints
+export const walletsApi = {
+  getAllWallets: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallets?page=${page}&size=${size}`);
     return response.data;
   },
 
-  getApisStatus: async () => {
-    const response = await apiClient.get('/health/apis-status');
+  getWalletById: async (id: number) => {
+    const response = await apiClient.get(`/wallets/${id}`);
     return response.data;
   },
 
-  getPerformanceMetrics: async () => {
-    const response = await apiClient.get('/health/performance-metrics');
+  searchWallets: async (searchTerm: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallets/search?q=${searchTerm}&page=${page}&size=${size}`);
     return response.data;
   },
 
-  getFullSystemReport: async () => {
-    const response = await apiClient.get('/health/full-system-report');
+  updateWalletStatus: async (id: number, status: string) => {
+    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    return response.data;
+  }
+};
+
+// Audit Logs API endpoints
+export const auditLogsApi = {
+  getAuditLogs: async (page: number = 0, size: number = 10, filters?: any) => {
+    const response = await apiClient.get('/audit-logs', {
+      params: { page, size, ...filters }
+    });
+    return response.data;
+  },
+
+  getAuditLogById: async (id: number) => {
+    const response = await apiClient.get(`/audit-logs/${id}`);
+    return response.data;
+  },
+
+  exportAuditLogs: async (filters?: any) => {
+    const response = await apiClient.get('/audit-logs/export', {
+      params: filters,
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+};
+
+// Identity Requests API endpoints
+export const identityRequestsApi = {
+  getIdentityRequests: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/admin/identity-requests?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  approveIdentityRequest: async (id: number) => {
+    const response = await apiClient.patch(`/admin/identity-requests/${id}/approve`);
+    return response.data;
+  },
+
+  rejectIdentityRequest: async (id: number, reason: string) => {
+    const response = await apiClient.patch(`/admin/identity-requests/${id}/reject`, { reason });
+    return response.data;
+  }
+};
+
+// Wallet Stats API endpoints
+export const walletStatsApi = {
+  getWalletStats: async () => {
+    const response = await apiClient.get('/statistics/wallets');
+    return response.data;
+  },
+
+  getWalletStatsByPeriod: async (period: string) => {
+    const response = await apiClient.get(`/statistics/wallets/period/${period}`);
+    return response.data;
+  },
+
+  getWalletStatsByStatus: async (status: string) => {
+    const response = await apiClient.get(`/statistics/wallets/status/${status}`);
+    return response.data;
+  }
+};
+
+// Wallet Status API endpoints
+export const walletStatusApi = {
+  updateWalletStatus: async (id: number, status: string) => {
+    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    return response.data;
+  },
+
+  getWalletStatusHistory: async (id: number) => {
+    const response = await apiClient.get(`/wallets/${id}/status-history`);
+    return response.data;
+  },
+
+  bulkUpdateWalletStatus: async (walletIds: number[], status: string) => {
+    const response = await apiClient.patch('/wallets/bulk-status-update', { walletIds, status });
+    return response.data;
+  }
+};
+
+// Wallet Transfers API endpoints
+export const walletTransfersApi = {
+  getWalletTransfers: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/wallet-transfers?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getTransferById: async (id: number) => {
+    const response = await apiClient.get(`/wallet-transfers/${id}`);
+    return response.data;
+  },
+
+  createTransfer: async (transferData: any) => {
+    const response = await apiClient.post('/wallet-transfers', transferData);
+    return response.data;
+  },
+
+  updateTransfer: async (id: number, transferData: any) => {
+    const response = await apiClient.put(`/wallet-transfers/${id}`, transferData);
+    return response.data;
+  },
+
+  deleteTransfer: async (id: number) => {
+    const response = await apiClient.delete(`/wallet-transfers/${id}`);
     return response.data;
   }
 };

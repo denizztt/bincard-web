@@ -53,7 +53,65 @@ const SystemHealth = () => {
       setError('');
     } catch (err) {
       console.error('Health data load error:', err);
-      setError('Sistem sağlığı verileri yüklenirken hata oluştu');
+      // If API fails, show mock data for demonstration
+      const mockHealthData = {
+        systemHealth: {
+          status: 'UP',
+          overall: 'HEALTHY',
+          database: {
+            status: 'UP',
+            healthy: true,
+            databaseSize: '2.5 GB',
+            activeConnections: 12,
+            slowQueries: 2
+          },
+          redis: {
+            status: 'UP',
+            healthy: true,
+            usedMemory: '128 MB',
+            keyCount: 1547,
+            connectedClients: 8
+          },
+          memory: {
+            status: 'OK',
+            used: '4.2 GB',
+            total: '8.0 GB',
+            percentage: 52.5
+          },
+          disk: {
+            status: 'OK',
+            used: '45.8 GB',
+            total: '100 GB',
+            percentage: 45.8
+          },
+          activeUsers: 234
+        },
+        overallHealthScore: 92,
+        healthGrade: 'A',
+        externalServices: {
+          smsService: { status: 'UP', healthy: true, responseTime: '145ms' },
+          emailService: { status: 'UP', healthy: true, responseTime: '89ms' },
+          paymentGateway: { status: 'UP', healthy: true, responseTime: '234ms' },
+          mapService: { status: 'UP', healthy: true, responseTime: '67ms' }
+        },
+        performanceMetrics: {
+          responseTime: 156,
+          throughput: 1200,
+          errorRate: 0.02,
+          uptime: 2592000000
+        },
+        securityAudit: {
+          vulnerabilityCount: 0,
+          lastSecurityScan: '2025-01-15T10:30:00Z',
+          secureHeaders: true,
+          suspiciousIPCount: 3,
+          tokensWithoutIP: 0
+        }
+      };
+      
+      setHealthData(mockHealthData);
+      setLastUpdate(new Date());
+      setError('API bağlantısı kurulamadı, demo veriler gösteriliyor');
     } finally {
       setLoading(false);
     }
