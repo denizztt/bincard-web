@@ -1,52 +1,87 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Eye, 
+  Edit3, 
+  Trash2, 
+  RefreshCw, 
+  Calendar, 
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  AlertCircle
+} from 'lucide-react';
 import { newsApi } from '../services/apiService';
-import { NewsPlatform, NewsPriority, NewsType } from '../types';
 import '../styles/NewsList.css';
 
-const NewsList = () => {
+const NewsManagement = () => {
   const navigate = useNavigate();
   
   // State management
   const [news, setNews] = useState([]);
-  const [filteredNews, setFilteredNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   
   // Filter states
   const [filters, setFilters] = useState({
-    platform: 'Tümü',
-    type: 'Tümü',
-    priority: 'Tümü',
-    active: 'Tümü',
-    dateRange: 'Tümü'
+    platform: '',
+    type: '',
+    active: 'AKTIF', // Default olarak aktif haberler
+    dateRange: '',
+    search: ''
   });
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   
-  // Load news data
+  // UI states
+  const [selectedNews, setSelectedNews] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [previewNews, setPreviewNews] = useState(null);
+  const [showStatistics, setShowStatistics] = useState(false);
+
   useEffect(() => {
     loadNews();
-  }, [currentPage]);
-
-  // Apply filters when filters change
-  useEffect(() => {
-    applyFilters();
-  }, [news, filters]);
+  }, [currentPage, filters]);
 
   const loadNews = async () => {
     try {
       setLoading(true);
-      const response = await newsApi.getAllNews();
+      setError('');
+      
+      let response;
+      
+      // Aktif haberleri getir (default)
+      if (filters.active === 'AKTIF') {
+        response = await newsApi.getActiveNewsForAdmin(
+          filters.platform || undefined,
+          filters.type || undefined,
+          currentPage,
+          pageSize
+        );
+      } else {
+        // Tüm haberleri getir
+        response = await newsApi.getAllNews(
+          filters.platform || undefined,
+          currentPage,
+          pageSize
+        );
+      }
       
       if (response && response.content) {
         setNews(response.content);
         setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || 0);
       }
-      setError('');
     } catch (err) {
       console.error('News loading failed:', err);
       setError('Haberler yüklenirken hata oluştu: ' + (err.message || err));
@@ -55,58 +90,10 @@ const NewsList = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...news];
-    
-    // Platform filter
-    if (filters.platform !== 'Tümü') {
-      filtered = filtered.filter(item => item.platform === filters.platform);
-    }
-    
-    // Type filter
-    if (filters.type !== 'Tümü') {
-      filtered = filtered.filter(item => item.type === filters.type);
-    }
-    
-    // Priority filter
-    if (filters.priority !== 'Tümü') {
-      filtered = filtered.filter(item => item.priority === filters.priority);
-    }
-    
-    // Active filter
-    if (filters.active !== 'Tümü') {
-      const isActive = filters.active === 'Aktif';
-      filtered = filtered.filter(item => item.active === isActive);
-    }
-    
-    // Date range filter
-    if (filters.dateRange !== 'Tümü') {
-      const now = new Date();
-      const filterDate = new Date();
-      
-      switch (filters.dateRange) {
-        case 'Bugün':
-          filterDate.setHours(0, 0, 0, 0);
-          filtered = filtered.filter(item => 
-            new Date(item.createdAt) >= filterDate
-          );
-          break;
-        case 'Bu Hafta':
-          filterDate.setDate(now.getDate() - 7);
-          filtered = filtered.filter(item => 
-            new Date(item.createdAt) >= filterDate
-          );
-          break;
-        case 'Bu Ay':
-          filterDate.setMonth(now.getMonth() - 1);
-          filtered = filtered.filter(item => 
-            new Date(item.createdAt) >= filterDate
-          );
-          break;
-      }
-    }
-    
-    setFilteredNews(filtered);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadNews();
+    setRefreshing(false);
   };
 
   const handleFilterChange = (filterName, value) => {
@@ -114,6 +101,7 @@ const NewsList = () => {
       ...prev,
       [filterName]: value
     }));
+    setCurrentPage(0); // Reset to first page when filters change
   };
 
   const handleSoftDelete = async (id) => {
@@ -123,7 +111,7 @@ const NewsList = () => {
     
     try {
       await newsApi.softDeleteNews(id);
-      await loadNews(); // Reload data
+      await loadNews();
     } catch (err) {
       setError('Haber silinirken hata oluştu: ' + (err.message || err));
     }
@@ -131,6 +119,15 @@ const NewsList = () => {
 
   const handleEdit = (newsItem) => {
     navigate(`/news/edit/${newsItem.id}`, { state: { newsItem } });
+  };
+
+  const handlePreview = async (newsItem) => {
+    try {
+      const fullNews = await newsApi.getNewsById(newsItem.id);
+      setPreviewNews(fullNews);
+    } catch (err) {
+      setError('Haber önizleme yüklenirken hata oluştu');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -154,7 +151,7 @@ const NewsList = () => {
       'COK_YUKSEK': '#e84393',
       'KRITIK': '#d63031'
     };
-    return colors[priority] || '#95a5a6';
+    return colors[priority] || '#00b894';
   };
 
   const getTypeDisplayName = (type) => {
@@ -165,7 +162,12 @@ const NewsList = () => {
       'BILGILENDIRME': 'Bilgilendirme',
       'GUNCELLEME': 'Güncelleme',
       'UYARI': 'Uyarı',
-      'ETKINLIK': 'Etkinlik'
+      'ETKINLIK': 'Etkinlik',
+      'BASIN_BULTENI': 'Basın Bülteni',
+      'GUVENLIK': 'Güvenlik',
+      'OZELLIK': 'Özellik',
+      'HATIRLATMA': 'Hatırlatma',
+      'KESINTI': 'Kesinti'
     };
     return typeNames[type] || type;
   };
@@ -183,9 +185,22 @@ const NewsList = () => {
     return priorityNames[priority] || priority;
   };
 
+  const getPlatformDisplayName = (platform) => {
+    const platformNames = {
+      'WEB': 'Web',
+      'MOBILE': 'Mobil',
+      'DESKTOP': 'Masaüstü',
+      'TABLET': 'Tablet',
+      'SMART_TV': 'Smart TV',
+      'KIOSK': 'Kiosk',
+      'ALL': 'Tümü'
+    };
+    return platformNames[platform] || platform;
+  };
+
   if (loading) {
     return (
-      <div className="news-list-container">
+      <div className="news-management-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
           <p>Haberler yükleniyor...</p>
@@ -195,259 +210,318 @@ const NewsList = () => {
   }
 
   return (
-    <div className="news-list-container">
-      <div className="news-list-header">
-        <div className="header-top">
-          <h1 className="page-title">📰 Haber Yönetimi</h1>
-          <div className="header-actions">
-            <button 
-              onClick={() => navigate('/news/add')}
-              className="btn btn-primary"
-            >
-              ➕ Yeni Haber Ekle
-            </button>
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="btn btn-secondary"
-            >
-              ← Dashboard
-            </button>
-          </div>
+    <div className="news-management-container">
+      {/* Header */}
+      <div className="news-management-header">
+        <div className="header-left">
+          <h1>Haber Yönetimi</h1>
+          <span className="news-count">
+            {totalElements} haber
+            {filters.active === 'AKTIF' && ' (aktif)'}
+          </span>
         </div>
-
-        {/* Filters */}
-        <div className="filters-container">
-          <div className="filters-header">
-            <h3 className="filters-title">
-              <span className="filter-icon">🔍</span>
-              Filtreleme Seçenekleri
-            </h3>
-            <div className="filters-count">
-              Toplam: {news.length} | Gösterilen: {filteredNews.length}
-            </div>
-          </div>
+        
+        <div className="header-right">
+          <button 
+            className="btn-secondary"
+            onClick={() => setShowStatistics(!showStatistics)}
+          >
+            <BarChart3 size={20} />
+            <span>İstatistikler</span>
+          </button>
           
+          <button 
+            className="btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter size={20} />
+            <span>Filtreler</span>
+          </button>
+          
+          <button 
+            className={`btn-secondary ${refreshing ? 'spinning' : ''}`}
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw size={20} />
+            <span>Yenile</span>
+          </button>
+          
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/news/add')}
+          >
+            <Plus size={20} />
+            <span>Yeni Haber</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="error-banner">
+          <AlertCircle size={20} />
+          <span>{error}</span>
+          <button onClick={() => setError('')}>Kapat</button>
+        </div>
+      )}
+
+      {/* Filters */}
+      {showFilters && (
+        <div className="filters-section">
           <div className="filters-grid">
-            <div className="filter-card">
-              <label className="filter-label">
-                <span className="label-icon">🌐</span>
-                Platform
-              </label>
-              <div className="filter-select-wrapper">
-                <select 
-                  value={filters.platform}
-                  onChange={(e) => handleFilterChange('platform', e.target.value)}
-                  className="modern-select"
-                >
-                  <option value="Tümü">Tüm Platformlar</option>
-                  {Object.values(NewsPlatform).map(platform => (
-                    <option key={platform} value={platform}>{platform}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="filter-group">
+              <label>Durum</label>
+              <select 
+                value={filters.active}
+                onChange={(e) => handleFilterChange('active', e.target.value)}
+              >
+                <option value="AKTIF">Aktif</option>
+                <option value="PASIF">Pasif</option>
+                <option value="TUMÜ">Tümü</option>
+              </select>
             </div>
 
-            <div className="filter-card">
-              <label className="filter-label">
-                <span className="label-icon">📂</span>
-                Kategori
-              </label>
-              <div className="filter-select-wrapper">
-                <select 
-                  value={filters.type}
-                  onChange={(e) => handleFilterChange('type', e.target.value)}
-                  className="modern-select"
-                >
-                  <option value="Tümü">Tüm Kategoriler</option>
-                  {Object.values(NewsType).map(type => (
-                    <option key={type} value={type}>{getTypeDisplayName(type)}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="filter-group">
+              <label>Platform</label>
+              <select 
+                value={filters.platform}
+                onChange={(e) => handleFilterChange('platform', e.target.value)}
+              >
+                <option value="">Tümü</option>
+                <option value="WEB">Web</option>
+                <option value="MOBILE">Mobil</option>
+                <option value="DESKTOP">Masaüstü</option>
+                <option value="ALL">Tüm Platformlar</option>
+              </select>
             </div>
 
-            <div className="filter-card">
-              <label className="filter-label">
-                <span className="label-icon">⚡</span>
-                Öncelik
-              </label>
-              <div className="filter-select-wrapper">
-                <select 
-                  value={filters.priority}
-                  onChange={(e) => handleFilterChange('priority', e.target.value)}
-                  className="modern-select"
-                >
-                  <option value="Tümü">Tüm Öncelikler</option>
-                  {Object.values(NewsPriority).map(priority => (
-                    <option key={priority} value={priority}>{getPriorityDisplayName(priority)}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="filter-group">
+              <label>Tür</label>
+              <select 
+                value={filters.type}
+                onChange={(e) => handleFilterChange('type', e.target.value)}
+              >
+                <option value="">Tümü</option>
+                <option value="DUYURU">Duyuru</option>
+                <option value="KAMPANYA">Kampanya</option>
+                <option value="BAKIM">Bakım</option>
+                <option value="BILGILENDIRME">Bilgilendirme</option>
+                <option value="GUNCELLEME">Güncelleme</option>
+                <option value="UYARI">Uyarı</option>
+                <option value="ETKINLIK">Etkinlik</option>
+              </select>
             </div>
 
-            <div className="filter-card">
-              <label className="filter-label">
-                <span className="label-icon">🔘</span>
-                Durum
-              </label>
-              <div className="filter-select-wrapper">
-                <select 
-                  value={filters.active}
-                  onChange={(e) => handleFilterChange('active', e.target.value)}
-                  className="modern-select"
-                >
-                  <option value="Tümü">Tüm Durumlar</option>
-                  <option value="Aktif">Aktif</option>
-                  <option value="Pasif">Pasif</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="filter-card">
-              <label className="filter-label">
-                <span className="label-icon">📅</span>
-                Tarih
-              </label>
-              <div className="filter-select-wrapper">
-                <select 
-                  value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                  className="modern-select"
-                >
-                  <option value="Tümü">Tüm Tarihler</option>
-                  <option value="Bugün">Bugün</option>
-                  <option value="Bu Hafta">Bu Hafta</option>
-                  <option value="Bu Ay">Bu Ay</option>
-                </select>
+            <div className="filter-group">
+              <label>Ara</label>
+              <div className="search-input-container">
+                <Search size={20} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Haber başlığı ara..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="search-input"
+                />
               </div>
             </div>
           </div>
         </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="error-banner">
-            ⚠️ {error}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* News Table */}
       <div className="news-table-container">
-        <table className="news-table">
-          <thead>
-            <tr>
-              <th>Başlık</th>
-              <th>Kategori</th>
-              <th>Platform</th>
-              <th>Öncelik</th>
-              <th>Durum</th>
-              <th>Tarih</th>
-              <th>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredNews.map((newsItem) => (
-              <tr key={newsItem.id} className={!newsItem.active ? 'inactive-row' : ''}>
-                <td className="title-cell">
-                  <div className="title-content">
-                    <h4>{newsItem.title}</h4>
-                    <p className="content-preview">
-                      {newsItem.content.length > 100 
-                        ? newsItem.content.substring(0, 100) + '...'
-                        : newsItem.content
-                      }
-                    </p>
-                  </div>
-                </td>
-                <td>
-                  <span className="type-badge">
-                    {getTypeDisplayName(newsItem.type)}
-                  </span>
-                </td>
-                <td>
-                  <span className="platform-badge">
-                    {newsItem.platform}
-                  </span>
-                </td>
-                <td>
-                  <span 
-                    className="priority-badge"
-                    style={{ backgroundColor: getPriorityColor(newsItem.priority) }}
-                  >
-                    {getPriorityDisplayName(newsItem.priority)}
-                  </span>
-                </td>
-                <td>
-                  <span className={`status-badge ${newsItem.active ? 'active' : 'inactive'}`}>
-                    {newsItem.active ? 'Aktif' : 'Pasif'}
-                  </span>
-                </td>
-                <td className="date-cell">
-                  <div>
-                    <strong>Oluşturma:</strong> {formatDate(newsItem.createdAt)}
-                  </div>
-                  {newsItem.updatedAt && (
-                    <div>
-                      <strong>Güncelleme:</strong> {formatDate(newsItem.updatedAt)}
-                    </div>
-                  )}
-                </td>
-                <td className="actions-cell">
-                  <div className="action-buttons">
-                    <button 
-                      onClick={() => handleEdit(newsItem)}
-                      className="btn btn-edit"
-                      title="Düzenle"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      onClick={() => handleSoftDelete(newsItem.id)}
-                      className="btn btn-delete"
-                      title="Pasif Yap"
-                      disabled={!newsItem.active}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredNews.length === 0 && !loading && (
-          <div className="no-data">
-            <p>Gösterilecek haber bulunamadı.</p>
+        {news.length === 0 ? (
+          <div className="empty-state">
+            <FileText size={48} />
+            <h3>Henüz haber bulunmamaktadır</h3>
+            <p>İlk haberi eklemek için "Yeni Haber" butonuna tıklayın.</p>
+            <button 
+              className="btn-primary"
+              onClick={() => navigate('/news/add')}
+            >
+              <Plus size={20} />
+              <span>Yeni Haber Ekle</span>
+            </button>
+          </div>
+        ) : (
+          <div className="news-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Başlık</th>
+                  <th>Tür</th>
+                  <th>Platform</th>
+                  <th>Öncelik</th>
+                  <th>Durum</th>
+                  <th>Tarih</th>
+                  <th>İstatistikler</th>
+                  <th>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {news.map((item) => (
+                  <tr key={item.id} className={!item.active ? 'inactive' : ''}>
+                    <td>
+                      <div className="news-title">
+                        {item.thumbnail && (
+                          <img 
+                            src={item.thumbnail} 
+                            alt="thumbnail" 
+                            className="news-thumbnail"
+                          />
+                        )}
+                        <div>
+                          <h4>{item.title}</h4>
+                          <p>{item.content?.substring(0, 100)}...</p>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    <td>
+                      <span className="news-type">
+                        {getTypeDisplayName(item.type)}
+                      </span>
+                    </td>
+                    
+                    <td>
+                      <span className="platform-badge">
+                        {getPlatformDisplayName(item.platform)}
+                      </span>
+                    </td>
+                    
+                    <td>
+                      <span 
+                        className="priority-badge"
+                        style={{ backgroundColor: getPriorityColor(item.priority) }}
+                      >
+                        {getPriorityDisplayName(item.priority)}
+                      </span>
+                    </td>
+                    
+                    <td>
+                      <span className={`status-badge ${item.active ? 'active' : 'inactive'}`}>
+                        {item.active ? 'Aktif' : 'Pasif'}
+                      </span>
+                    </td>
+                    
+                    <td className="date-cell">
+                      {formatDate(item.createdAt || item.startDate)}
+                    </td>
+                    
+                    <td className="stats-cell">
+                      <div className="stats-row">
+                        <span><Eye size={16} /> {item.viewCount || 0}</span>
+                        <span>👍 {item.likeCount || 0}</span>
+                      </div>
+                    </td>
+                    
+                    <td className="actions-cell">
+                      <div className="action-buttons">
+                        <button
+                          className="btn-action btn-preview"
+                          onClick={() => handlePreview(item)}
+                          title="Önizle"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        
+                        <button
+                          className="btn-action btn-edit"
+                          onClick={() => handleEdit(item)}
+                          title="Düzenle"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        
+                        {item.active && (
+                          <button
+                            className="btn-action btn-delete"
+                            onClick={() => handleSoftDelete(item.id)}
+                            title="Pasif Yap"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="pagination-container">
-          <button 
-            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+        <div className="pagination">
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
             disabled={currentPage === 0}
-            className="btn btn-pagination"
           >
-            ← Önceki
+            <ChevronLeft size={20} />
+            <span>Önceki</span>
           </button>
-          <span className="page-info">
+          
+          <span className="pagination-info">
             Sayfa {currentPage + 1} / {totalPages}
           </span>
-          <button 
-            onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-            disabled={currentPage >= totalPages - 1}
-            className="btn btn-pagination"
+          
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+            disabled={currentPage === totalPages - 1}
           >
-            Sonraki →
+            <span>Sonraki</span>
+            <ChevronRight size={20} />
           </button>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewNews && (
+        <div className="modal-overlay" onClick={() => setPreviewNews(null)}>
+          <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Haber Önizleme</h2>
+              <button onClick={() => setPreviewNews(null)}>×</button>
+            </div>
+            
+            <div className="modal-content">
+              {previewNews.image && (
+                <img src={previewNews.image} alt="Haber görseli" className="preview-image" />
+              )}
+              
+              <h1>{previewNews.title}</h1>
+              
+              <div className="preview-meta">
+                <span className="preview-type">{getTypeDisplayName(previewNews.type)}</span>
+                <span className="preview-platform">{getPlatformDisplayName(previewNews.platform)}</span>
+                <span 
+                  className="preview-priority"
+                  style={{ backgroundColor: getPriorityColor(previewNews.priority) }}
+                >
+                  {getPriorityDisplayName(previewNews.priority)}
+                </span>
+              </div>
+              
+              <div className="preview-content">
+                {previewNews.content}
+              </div>
+              
+              <div className="preview-stats">
+                <span><Eye size={16} /> {previewNews.viewCount || 0} görüntülenme</span>
+                <span>👍 {previewNews.likeCount || 0} beğeni</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default NewsList; 
+export default NewsManagement;

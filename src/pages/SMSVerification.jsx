@@ -1,37 +1,64 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import '../styles/SMSVerification.css';
+import { ArrowLeft, MessageSquare, RefreshCw, Clock, Shield, Zap, Loader2, Sparkles } from 'lucide-react';
+import '../styles/Login.css';
 
-const SMSVerification = () => {
+export default function SMSVerification() {
   const navigate = useNavigate();
   const { verifyPhone, resendVerificationCode, isAuthenticated } = useAuth();
-  
+
+  // Loading state for initial page load
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
   const [verificationSuccess, setVerificationSuccess] = useState(false);
-  
+
   // Resend functionality
   const [isResendDisabled, setIsResendDisabled] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [countdownTimer, setCountdownTimer] = useState(null);
-  
-  const inputRefs = useRef([]);
-  const phone = sessionStorage.getItem('verificationPhone');
 
-  // Redirect to login if no phone number
+  const inputRefs = useRef([]);
+  const [phone, setPhone] = useState(null);
+
+  // Initialize phone number from sessionStorage safely
   useEffect(() => {
-    if (!phone) {
-      navigate('/login');
-    }
-  }, [phone, navigate]);
+    const initializePhone = () => {
+      try {
+        const storedPhone = sessionStorage.getItem('verificationPhone');
+        setPhone(storedPhone);
+        setIsPageLoading(false);
+        
+        // Redirect to login if no phone number after a short delay
+        if (!storedPhone) {
+          setTimeout(() => {
+            navigate('/login');
+          }, 100);
+        }
+      } catch (error) {
+        console.error('Error accessing sessionStorage:', error);
+        setIsPageLoading(false);
+        setTimeout(() => {
+          navigate('/login');
+        }, 100);
+      }
+    };
+
+    initializePhone();
+  }, [navigate]);
 
   // Navigation after successful verification
   useEffect(() => {
     if (verificationSuccess && isAuthenticated) {
-      sessionStorage.removeItem('verificationPhone');
+      try {
+        sessionStorage.removeItem('verificationPhone');
+      } catch (error) {
+        console.error('Error removing from sessionStorage:', error);
+      }
       navigate('/dashboard');
     }
   }, [isAuthenticated, verificationSuccess, navigate]);
@@ -61,6 +88,13 @@ const SMSVerification = () => {
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
+
+    // Auto-verify when 6th digit is entered
+    if (value && index === 5) {
+      setTimeout(() => {
+        handleVerify();
+      }, 200);
+    }
   };
 
   const handleKeyDown = (index, e) => {
@@ -68,12 +102,9 @@ const SMSVerification = () => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-    // Handle Enter key - only verify if 6 digits are entered
+    // Handle enter
     else if (e.key === 'Enter') {
-      const verificationCode = code.join('');
-      if (verificationCode.length === 6) {
-        handleVerify();
-      }
+      handleVerify();
     }
   };
 
@@ -81,14 +112,14 @@ const SMSVerification = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
     const digits = pastedData.replace(/\D/g, '').slice(0, 6);
-    
+
     if (digits.length > 0) {
       const newCode = [...code];
       for (let i = 0; i < 6; i++) {
         newCode[i] = digits[i] || '';
       }
       setCode(newCode);
-      
+
       // Focus the next empty input or the last one
       const nextIndex = Math.min(digits.length, 5);
       inputRefs.current[nextIndex]?.focus();
@@ -96,62 +127,39 @@ const SMSVerification = () => {
   };
 
   const handleVerify = async () => {
-    console.log('📱 SMS VERIFICATION BAŞLADI');
     const verificationCode = code.join('');
-    console.log('🔢 Girilen kod:', verificationCode);
-    console.log('📞 Doğrulanacak telefon:', phone);
-    
+
     if (verificationCode.length !== 6) {
-      console.log('❌ Kod uzunluğu hatalı:', verificationCode.length);
       setError('6 haneli doğrulama kodunu giriniz');
       return;
     }
 
-    console.log('✅ Kod uzunluğu doğru - API çağrısı yapılıyor');
+    if (!phone) {
+      setError('Telefon numarası bulunamadı');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setMessage({ text: '', isError: false });
 
     try {
       const result = await verifyPhone(phone, verificationCode);
-      console.log('📤 VERIFICATION SONUCU:', result);
-      
+
       if (result.success) {
-        console.log('✅ Verification başarılı - Dashboard\'a yönlendiriliyor');
         setVerificationSuccess(true);
         setMessage({ text: 'Doğrulama başarılı! Dashboard açılıyor...', isError: false });
-        // useEffect will handle the navigation when isAuthenticated becomes true
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       } else {
-        console.log('❌ Verification başarısız:', result.error);
         setError(result.error || 'Doğrulama kodu hatalı');
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error('❌ VERIFICATION CATCH ERROR:', error);
-      console.error('🔍 Detailed Error Info:', {
-        message: error.message,
-        response: error.response,
-        responseData: error.response?.data,
-        status: error.response?.status,
-        fullError: error
-      });
-      
-      // More specific error messages
-      let errorMessage = 'Doğrulama sırasında bir hata oluştu';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 400) {
-        errorMessage = 'Geçersiz doğrulama kodu';
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Telefon numarası bulunamadı';
-      } else if (error.response?.status === 429) {
-        errorMessage = 'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.';
-      } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
-        errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
-      }
-      
-      setError(errorMessage);
+      console.error('Verification error:', error);
+      setError('Doğrulama sırasında bir hata oluştu');
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -169,7 +177,7 @@ const SMSVerification = () => {
 
     try {
       const result = await resendVerificationCode(phone);
-      
+
       if (result.success) {
         setMessage({ text: result.message || 'Doğrulama kodu tekrar gönderildi', isError: false });
         startCountdown(180); // 3 minutes countdown
@@ -178,28 +186,8 @@ const SMSVerification = () => {
         setIsResendDisabled(false);
       }
     } catch (error) {
-      console.error('❌ RESEND ERROR:', error);
-      console.error('🔍 Resend Error Details:', {
-        message: error.message,
-        response: error.response,
-        responseData: error.response?.data,
-        status: error.response?.status,
-        fullError: error
-      });
-      
-      // More specific error messages for resend
-      let errorMessage = 'Kod gönderilirken bir hata oluştu';
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 429) {
-        errorMessage = 'Çok fazla kod talebinde bulundunuz. Lütfen daha sonra tekrar deneyin.';
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Telefon numarası bulunamadı';
-      } else if (error.message?.includes('network') || error.code === 'NETWORK_ERROR') {
-        errorMessage = 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.';
-      }
-      
-      setMessage({ text: errorMessage, isError: true });
+      console.error('Resend error:', error);
+      setMessage({ text: 'Kod gönderilirken bir hata oluştu', isError: true });
       setIsResendDisabled(false);
     }
   };
@@ -236,98 +224,283 @@ const SMSVerification = () => {
     return phoneNumber;
   };
 
+  // Show loading screen while initializing
+  if (isPageLoading) {
+    return (
+      <div className="modern-login-container">
+        <div className="animated-background">
+          <div className="floating-shapes">
+            <div className="shape shape-1"></div>
+            <div className="shape shape-2"></div>
+            <div className="shape shape-3"></div>
+            <div className="shape shape-4"></div>
+          </div>
+        </div>
+        <div className="login-content">
+          <div className="login-card" style={{ textAlign: 'center' }}>
+            <Loader2 className="logo-shield" style={{ 
+              width: '48px', 
+              height: '48px', 
+              margin: '0 auto 1rem', 
+              animation: 'spin 1s linear infinite' 
+            }} />
+            <p style={{ fontSize: '1.125rem', color: '#374151' }}>Sayfa yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no phone number
+  if (!phone) {
+    return (
+      <div className="modern-login-container">
+        <div className="animated-background">
+          <div className="floating-shapes">
+            <div className="shape shape-1"></div>
+            <div className="shape shape-2"></div>
+            <div className="shape shape-3"></div>
+            <div className="shape shape-4"></div>
+          </div>
+        </div>
+        <div className="login-content">
+          <div className="login-card" style={{ textAlign: 'center' }}>
+            <Shield className="logo-shield" style={{ 
+              width: '64px', 
+              height: '64px', 
+              color: '#dc2626', 
+              margin: '0 auto 1rem' 
+            }} />
+            <h2 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: 'bold', 
+              color: '#374151', 
+              marginBottom: '1rem' 
+            }}>
+              Hata
+            </h2>
+            <p style={{ 
+              color: '#6b7280', 
+              marginBottom: '1.5rem', 
+              lineHeight: '1.6' 
+            }}>
+              Telefon numarası bulunamadı. Lütfen giriş sayfasından tekrar deneyin.
+            </p>
+            <button 
+              onClick={() => navigate('/login')} 
+              className="submit-button"
+              style={{ backgroundColor: '#dc2626' }}
+            >
+              Giriş Sayfasına Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="sms-verification-container">
-      <div className="sms-verification-card">
-        <div className="sms-header">
-          <div className="sms-icon">📱</div>
-          <h1 className="sms-title">Telefon Doğrulama</h1>
-          <p className="sms-subtitle">
-            <strong>{formatPhoneDisplay(phone)}</strong> numaralı telefona gönderilen 6 haneli doğrulama kodunu giriniz.
-          </p>
+    <div className="modern-login-container">
+      {/* Animated Background - Same as Login */}
+      <div className="animated-background">
+        <div className="floating-shapes">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+          <div className="shape shape-3"></div>
+          <div className="shape shape-4"></div>
+        </div>
+      </div>
+
+      <div className="login-content">
+        {/* Logo and Brand Section */}
+        <div className="brand-section">
+          <div className="logo-container">
+            <div className="logo-icon">
+              <MessageSquare className="logo-shield" />
+              <Sparkles className="logo-sparkles" />
+            </div>
+            <h1 className="brand-title">Doğrulama</h1>
+            <p className="brand-subtitle">SMS Kodu</p>
+          </div>
         </div>
 
-        <div className="sms-form">
-          <div className="code-inputs">
-            {code.map((digit, index) => (
-              <input
-                key={index}
-                ref={el => inputRefs.current[index] = el}
-                type="text"
-                inputMode="numeric"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                onPaste={handlePaste}
-                className="code-input"
-                autoComplete="off"
-              />
-            ))}
+        {/* SMS Verification Card */}
+        <div className="login-card">
+          <div className="card-header">
+            <div className="welcome-section">
+              <h2 className="welcome-title">
+                <Shield className="welcome-icon" />
+                Telefon Doğrulama
+              </h2>
+              <div className="welcome-subtitle" style={{ lineHeight: '1.6' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <Shield style={{ width: '16px', height: '16px', color: '#9333ea' }} />
+                  <span style={{ fontWeight: '600', color: '#9333ea' }}>
+                    {formatPhoneDisplay(phone)}
+                  </span>
+                </div>
+                <span style={{ opacity: '0.8' }}>
+                  numaralı telefona gönderilen 6 haneli doğrulama kodunu giriniz.
+                </span>
+              </div>
+            </div>
           </div>
 
-          {error && (
-            <div className="error-message">
-              <span className="error-icon">⚠️</span>
-              {error}
-            </div>
-          )}
+          <div className="card-body">
+            <form className="login-form">
+              {/* Code Input */}
+              <div className="form-group">
+                <label className="form-label">
+                  <MessageSquare className="label-icon" />
+                  Doğrulama Kodu
+                </label>
+                
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '1rem' }}>
+                  {code.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => (inputRefs.current[index] = el)}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleInputChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={handlePaste}
+                      className="form-input"
+                      style={{ 
+                        width: '56px', 
+                        height: '64px', 
+                        textAlign: 'center', 
+                        fontSize: '1.5rem', 
+                        fontWeight: 'bold',
+                        borderRadius: '12px'
+                      }}
+                      autoComplete="off"
+                    />
+                  ))}
+                </div>
 
-          {message.text && (
-            <div className={`message ${message.isError ? 'error' : 'success'}`}>
-              <span className="message-icon">
-                {message.isError ? '❌' : '✅'}
-              </span>
-              {message.text}
-            </div>
-          )}
+                {/* Error Message */}
+                {error && (
+                  <div className="error-message" style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    {error}
+                  </div>
+                )}
 
-          <button
-            type="button"
-            onClick={handleVerify}
-            disabled={isLoading || code.join('').length !== 6}
-            className={`verify-button ${isLoading ? 'loading' : ''}`}
-          >
-            {isLoading ? (
-              <>
-                <span className="loading-spinner"></span>
-                Doğrulanıyor...
-              </>
-            ) : (
-              'Doğrula'
-            )}
-          </button>
+                {/* Success/Info Message */}
+                {message.text && (
+                  <div className={`message-container ${message.isError ? 'error' : 'success'}`}>
+                    <div className="message-icon">
+                      {message.isError ? '⚠️' : '✅'}
+                    </div>
+                    <p className="message-text">
+                      {message.text}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-          <div className="resend-section">
+              {/* Verify Button */}
+              <button
+                type="button"
+                onClick={handleVerify}
+                disabled={isLoading || code.join('').length !== 6}
+                className="submit-button"
+              >
+                {isLoading ? (
+                  <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <span>Doğrulanıyor...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Shield className="button-icon" />
+                    Doğrula
+                  </>
+                )}
+              </button>
+
+              {/* Divider */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                margin: '1.5rem 0',
+                opacity: '0.6'
+              }}>
+                <div style={{ height: '1px', flex: '1', backgroundColor: '#d1d5db', maxWidth: '120px' }}></div>
+                <span style={{ padding: '0 1rem', fontSize: '0.875rem', color: '#6b7280' }}>veya</span>
+                <div style={{ height: '1px', flex: '1', backgroundColor: '#d1d5db', maxWidth: '120px' }}></div>
+              </div>
+
+              {/* Resend Button */}
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={isResendDisabled}
+                className="back-button"
+                style={{ 
+                  width: '100%', 
+                  backgroundColor: '#f9fafb',
+                  border: '2px solid #e5e7eb',
+                  color: '#374151',
+                  marginBottom: '1rem'
+                }}
+              >
+                <RefreshCw className={`back-icon ${isResendDisabled ? 'animate-spin' : ''}`} />
+                {isResendDisabled ? 'Kod Gönderildi' : 'Yeniden Kod Gönder'}
+              </button>
+
+              {/* Countdown */}
+              {countdown > 0 && (
+                <div style={{ 
+                  textAlign: 'center', 
+                  color: '#6b7280', 
+                  opacity: '0.8', 
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '1rem'
+                }}>
+                  <Clock style={{ width: '16px', height: '16px' }} />
+                  <span>
+                    Yeni kod isteyebilmeniz için{" "}
+                    <span style={{ fontWeight: 'bold', color: '#9333ea' }}>
+                      {formatCountdown(countdown)}
+                    </span>{" "}
+                    beklemeniz gerekiyor
+                  </span>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Card Footer */}
+          <div className="card-footer" style={{ paddingTop: '3rem' }}>
             <button
               type="button"
-              onClick={handleResendCode}
-              disabled={isResendDisabled}
-              className={`resend-button ${isResendDisabled ? 'disabled' : ''}`}
+              onClick={() => navigate('/login')}
+              className="back-button"
             >
-              {isResendDisabled ? 'Kod Gönderildi' : 'Yeniden Kod Gönder'}
+              <ArrowLeft className="back-icon" />
+              Giriş Sayfasına Dön
             </button>
-            
-            {countdown > 0 && (
-              <p className="countdown-text">
-                Yeni kod isteyebilmeniz için {formatCountdown(countdown)} beklemeniz gerekiyor
-              </p>
-            )}
           </div>
         </div>
 
-        <div className="sms-footer">
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="back-button"
-          >
-            ← Giriş Sayfasına Dön
-          </button>
+        {/* Security Notice */}
+        <div className="security-notice">
+          <div className="security-icon">
+            <Shield className="shield-icon" />
+          </div>
+          <p className="security-text">
+            🔒 Güvenli doğrulama sistemi
+          </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default SMSVerification;
+}

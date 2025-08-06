@@ -210,28 +210,91 @@ export const authApi = {
 
 // News API endpoints
 export const newsApi = {
-  getNews: async (page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
-    const response = await apiClient.get(`/news?page=${page}&size=${size}`);
+  // Admin endpoints
+  getAllNews: async (platform?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    const params = new URLSearchParams();
+    if (platform) params.append('platform', platform);
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    
+    const response = await apiClient.get(`/news/?${params.toString()}`);
+    return response.data;
+  },
+
+  getActiveNewsForAdmin: async (platform?: string, type?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    const params = new URLSearchParams();
+    if (platform) params.append('platform', platform);
+    if (type) params.append('type', type);
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    
+    const response = await apiClient.get(`/news/active-admin?${params.toString()}`);
     return response.data;
   },
 
   getNewsById: async (id: number): Promise<News> => {
-    const response = await apiClient.get(`/news/${id}`);
+    const response = await apiClient.get(`/news/admin/${id}`);
     return response.data;
   },
 
-  createNews: async (newsData: Omit<News, 'id' | 'createdAt' | 'updatedAt'>): Promise<News> => {
-    const response = await apiClient.post('/news', newsData);
+  createNews: async (formData: FormData): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/news/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   },
 
-  updateNews: async (id: number, newsData: Partial<News>): Promise<News> => {
-    const response = await apiClient.put(`/news/${id}`, newsData);
+  updateNews: async (formData: FormData): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put('/news/update', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
+  },
+
+  softDeleteNews: async (id: number): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put(`/news/${id}/soft-delete`);
+    return response.data;
+  },
+
+  getNewsStatistics: async (page: number = 0, size: number = 10): Promise<PagedResponse<any>> => {
+    const response = await apiClient.get(`/news/statistics?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getNewsByCategory: async (category: string, platform?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    const params = new URLSearchParams();
+    params.append('category', category);
+    if (platform) params.append('platform', platform);
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    
+    const response = await apiClient.get(`/news/admin/by-category?${params.toString()}`);
+    return response.data;
+  },
+
+  getNewsBetweenDates: async (start: string, end: string, platform?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    const params = new URLSearchParams();
+    params.append('start', start);
+    params.append('end', end);
+    if (platform) params.append('platform', platform);
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    
+    const response = await apiClient.get(`/news/between-dates?${params.toString()}`);
+    return response.data;
+  },
+
+  // Legacy methods for backward compatibility
+  getNews: async (page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+    return newsApi.getAllNews(undefined, page, size);
   },
 
   deleteNews: async (id: number): Promise<void> => {
-    await apiClient.delete(`/news/${id}`);
+    await newsApi.softDeleteNews(id);
   }
 };
 

@@ -398,11 +398,11 @@ const Dashboard = () => {
             expandedMenus.news, 
             true, 
             () => toggleMenu('news'),
-            ['Haber Listesi', 'Haber Ekle']
+            ['Haberler', 'Haber Ekle']
           )}
           {expandedMenus.news && !sidebarCollapsed && (
             <div className="submenu">
-              {renderSubmenuItem('Haber Listesi', '/news')}
+              {renderSubmenuItem('Haberler', '/news')}
               {renderSubmenuItem('Haber Ekle', '/news/add')}
             </div>
           )}

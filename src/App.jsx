@@ -8,7 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SMSVerification from './pages/SMSVerification';
 import Dashboard from './pages/Dashboard';
-import NewsList from './pages/NewsList';
+import NewsManagement from './pages/NewsList';
 import NewsAdd from './pages/NewsAdd';
 import NewsEdit from './pages/NewsEdit';
 import FeedbackList from './pages/FeedbackList';
@@ -71,7 +71,7 @@ function App() {
               path="/news"
               element={
                 <ProtectedRoute>
-                  <NewsList />
+                  <NewsManagement />
                 </ProtectedRoute>
               }
             />

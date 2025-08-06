@@ -10,7 +10,6 @@ const Login = () => {
   
   // Form states
   const [formData, setFormData] = useState({
-    countryCode: 'TR +90',
     telephone: '',
     password: ''
   });
@@ -19,8 +18,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', isError: false });
-
-  const countryCodes = ['TR +90', 'US +1', 'DE +49', 'FR +33', 'GB +44'];
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -86,27 +83,21 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    const { telephone, password, countryCode } = formData;
+    const { telephone, password } = formData;
     
     // Extract digits from phone number
     const phoneDigits = telephone.replace(/\D/g, '');
     
     if (!telephone.trim()) {
       newErrors.telephone = 'Telefon numarası zorunludur';
-    } else if (countryCode.startsWith('TR') && phoneDigits.length !== 10) {
-      newErrors.telephone = 'Türkiye için 10 haneli telefon numarası giriniz';
-    } else if (!countryCode.startsWith('TR') && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      newErrors.telephone = 'Geçerli bir telefon numarası giriniz';
+    } else if (phoneDigits.length !== 10) {
+      newErrors.telephone = '10 haneli telefon numarası giriniz';
     }
     
     if (!password.trim()) {
       newErrors.password = 'Şifre zorunludur';
     } else if (!/^\d{6}$/.test(password)) {
       newErrors.password = 'Şifre 6 haneli sayı olmalıdır';
-    }
-    
-    if (!countryCode) {
-      newErrors.countryCode = 'Ülke kodu seçiniz';
     }
     
     setErrors(newErrors);
@@ -206,13 +197,10 @@ const Login = () => {
 
   return (
     <div className="modern-login-container">
-      {/* Animated Background */}
+      {/* Simplified Animated Background */}
       <div className="animated-background">
         <div className="floating-shapes">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape shape-3"></div>
-          <div className="shape shape-4"></div>
+          {/* Shapes removed for better mobile performance */}
         </div>
       </div>
 
@@ -222,7 +210,6 @@ const Login = () => {
           <div className="logo-container">
             <div className="logo-icon">
               <Shield className="logo-shield" />
-              <Sparkles className="logo-sparkles" />
             </div>
             <h1 className="brand-title">BinCard</h1>
             <p className="brand-subtitle">Yönetici Paneli</p>
@@ -253,18 +240,6 @@ const Login = () => {
                 </label>
                 
                 <div className="phone-input-group">
-                  <select
-                    value={formData.countryCode}
-                    onChange={(e) => handleInputChange('countryCode', e.target.value)}
-                    className="country-select"
-                  >
-                    {countryCodes.map((code) => (
-                      <option key={code} value={code}>
-                        {code}
-                      </option>
-                    ))}
-                  </select>
-
                   <input
                     type="text"
                     inputMode="numeric"
