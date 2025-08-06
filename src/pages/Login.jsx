@@ -14,6 +14,7 @@ const Login = () => {
     telephone: '',
     password: ''
   });
+  const [rawTelephone, setRawTelephone] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -28,21 +29,26 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Format phone number as user types (Turkish format)
+  // Simple phone number formatting (xxx) xxx xx xx
   const formatPhoneNumber = (value) => {
+    // Only allow digits
     const digits = value.replace(/\D/g, '');
-    if (digits.length > 10) return formData.telephone;
     
+    // Limit to 10 digits
+    const limited = digits.substring(0, 10);
+    
+    // Apply format: (xxx) xxx xx xx
     let formatted = '';
-    if (digits.length > 0) {
-      formatted += '(';
-      formatted += digits.substring(0, Math.min(3, digits.length));
-      if (digits.length >= 3) formatted += ') ';
-      if (digits.length > 3) formatted += digits.substring(3, Math.min(6, digits.length));
-      if (digits.length >= 6) formatted += ' ';
-      if (digits.length > 6) formatted += digits.substring(6, Math.min(8, digits.length));
-      if (digits.length >= 8) formatted += ' ';
-      if (digits.length > 8) formatted += digits.substring(8, Math.min(10, digits.length));
+    if (limited.length > 0) {
+      if (limited.length <= 3) {
+        formatted = `(${limited}`;
+      } else if (limited.length <= 6) {
+        formatted = `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+      } else if (limited.length <= 8) {
+        formatted = `(${limited.slice(0, 3)}) ${limited.slice(3, 6)} ${limited.slice(6)}`;
+      } else {
+        formatted = `(${limited.slice(0, 3)}) ${limited.slice(3, 6)} ${limited.slice(6, 8)} ${limited.slice(8)}`;
+      }
     }
     
     return formatted;
@@ -56,15 +62,21 @@ const Login = () => {
 
   const handleInputChange = (field, value) => {
     if (field === 'telephone') {
-      value = formatPhoneNumber(value);
+      // Format phone number as user types
+      const formattedPhone = formatPhoneNumber(value);
+      
+      // Store both formatted and raw phone
+      setFormData(prev => ({ ...prev, telephone: formattedPhone }));
+      
+      // Store raw digits for API
+      const rawDigits = value.replace(/\D/g, '').substring(0, 10);
+      setRawTelephone(rawDigits);
     } else if (field === 'password') {
       value = formatPassword(value);
+      setFormData(prev => ({ ...prev, [field]: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
     }
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
     
     // Clear error when user starts typing
     if (errors[field]) {
@@ -255,6 +267,8 @@ const Login = () => {
 
                   <input
                     type="text"
+                    inputMode="numeric"
+                    maxLength={15}
                     value={formData.telephone}
                     onChange={(e) => handleInputChange('telephone', e.target.value)}
                     placeholder="(5xx) xxx xx xx"
