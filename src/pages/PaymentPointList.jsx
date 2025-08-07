@@ -82,45 +82,11 @@ const PaymentPointList = () => {
     } catch (error) {
       console.error('Ödeme noktaları yükleme hatası:', error);
       setError('Ödeme noktaları yüklenirken bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
-      
-      // Show some sample data in case of error for demo purposes
-      setPaymentPoints([
-        {
-          id: 1,
-          name: 'Merkez Ödeme Noktası',
-          address: {
-            fullAddress: 'Atatürk Cad. No:123 Merkez/İSTANBUL',
-            city: 'İstanbul',
-            district: 'Merkez'
-          },
-          contactNumber: '0212 555 12 34',
-          workingHours: '09:00 - 18:00',
-          paymentMethods: ['CREDIT_CARD', 'CASH'],
-          active: true,
-          createdAt: '2024-01-15T10:30:00'
-        },
-        {
-          id: 2,
-          name: 'AVM Ödeme Noktası',
-          address: {
-            fullAddress: 'Mall of İstanbul AVM Kat:2',
-            city: 'İstanbul',
-            district: 'Başakşehir'
-          },
-          contactNumber: '0212 555 67 89',
-          workingHours: '10:00 - 22:00',
-          paymentMethods: ['CREDIT_CARD', 'DEBIT_CARD', 'QR_CODE'],
-          active: true,
-          createdAt: '2024-01-16T14:20:00'
-        }
-      ]);
-      setTotalPages(1);
-      setTotalElements(2);
+      setPaymentPoints([]);
     } finally {
       setLoading(false);
     }
   };
-
   const handleToggleStatus = async (id, currentStatus) => {
     try {
       setActionLoading(prev => ({ ...prev, [id]: true }));

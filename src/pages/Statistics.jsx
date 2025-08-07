@@ -61,11 +61,8 @@ const Statistics = () => {
       setLoading(false);
     } catch (err) {
       console.error('Wallet stats yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleStats();
-      setStats(sampleData);
+      setError('İstatistik verileri yüklenemedi');
+      setStats({});
       setLastUpdate(new Date());
       setLoading(false);
     }
@@ -91,25 +88,8 @@ const Statistics = () => {
       };
     } catch (error) {
       console.error('Stats parse hatası:', error);
-      return createSampleStats();
+      return {};
     }
-  };
-
-  // Örnek veri oluşturma - API hata durumunda
-  const createSampleStats = () => {
-    return {
-      totalTransactions: 25680,
-      successfulTransactions: 24156,
-      failedTransactions: 1524,
-      totalUsers: 12450,
-      activeUsers: 8967,
-      suspendedUsers: 123,
-      totalWallets: 9854,
-      activeWallets: 8234,
-      lockedWallets: 156,
-      totalBalance: 2456780.50,
-      serverTime: new Date().toISOString()
-    };
   };
 
   // StatisticsPage'deki numberFormat'a benzer

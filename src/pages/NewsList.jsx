@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -21,6 +21,8 @@ import '../styles/NewsList.css';
 
 const NewsManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // State management
   const [news, setNews] = useState([]);
@@ -28,17 +30,17 @@ const NewsManagement = () => {
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   
-  // Filter states
+  // Filter states - URL'den parametreleri al
   const [filters, setFilters] = useState({
-    platform: '',
-    type: '',
-    active: 'AKTIF', // Default olarak aktif haberler
-    dateRange: '',
-    search: ''
+    platform: searchParams.get('platform') || '',
+    type: searchParams.get('type') || '',
+    active: searchParams.get('active') || 'AKTIF', // Default olarak aktif haberler
+    dateRange: searchParams.get('dateRange') || '',
+    search: searchParams.get('search') || ''
   });
   
   // Pagination
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 0);
   const [pageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -50,6 +52,20 @@ const NewsManagement = () => {
   const [showStatistics, setShowStatistics] = useState(false);
 
   useEffect(() => {
+    // URL parametrelerini filters state'ine senkronize et
+    const urlParams = {
+      platform: searchParams.get('platform') || '',
+      type: searchParams.get('type') || '',
+      active: searchParams.get('active') || 'AKTIF',
+      dateRange: searchParams.get('dateRange') || '',
+      search: searchParams.get('search') || ''
+    };
+    
+    setFilters(urlParams);
+    setCurrentPage(parseInt(searchParams.get('page')) || 0);
+  }, [searchParams]);
+
+  useEffect(() => {
     loadNews();
   }, [currentPage, filters]);
 
@@ -59,6 +75,7 @@ const NewsManagement = () => {
       setError('');
       
       let response;
+      let filteredNews = [];
       
       // Aktif haberleri getir (default)
       if (filters.active === 'AKTIF') {
@@ -78,7 +95,19 @@ const NewsManagement = () => {
       }
       
       if (response && response.content) {
-        setNews(response.content);
+        filteredNews = response.content;
+        
+        // Arama filtresi uygula (client-side)
+        if (filters.search.trim()) {
+          const searchTerm = filters.search.toLowerCase().trim();
+          filteredNews = filteredNews.filter(newsItem => 
+            newsItem.title?.toLowerCase().includes(searchTerm) ||
+            newsItem.content?.toLowerCase().includes(searchTerm) ||
+            newsItem.type?.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        setNews(filteredNews);
         setTotalPages(response.totalPages || 0);
         setTotalElements(response.totalElements || 0);
       }
@@ -97,11 +126,39 @@ const NewsManagement = () => {
   };
 
   const handleFilterChange = (filterName, value) => {
-    setFilters(prev => ({
-      ...prev,
+    const newFilters = {
+      ...filters,
       [filterName]: value
-    }));
+    };
+    
+    setFilters(newFilters);
     setCurrentPage(0); // Reset to first page when filters change
+    
+    // URL parametrelerini güncelle
+    const newSearchParams = new URLSearchParams();
+    Object.keys(newFilters).forEach(key => {
+      if (newFilters[key]) {
+        newSearchParams.set(key, newFilters[key]);
+      }
+    });
+    newSearchParams.set('page', '0');
+    
+    setSearchParams(newSearchParams);
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    
+    // URL parametrelerini güncelle
+    const newSearchParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) {
+        newSearchParams.set(key, filters[key]);
+      }
+    });
+    newSearchParams.set('page', newPage.toString());
+    
+    setSearchParams(newSearchParams);
   };
 
   const handleSoftDelete = async (id) => {
@@ -459,7 +516,7 @@ const NewsManagement = () => {
         <div className="pagination">
           <button
             className="pagination-btn"
-            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+            onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
             disabled={currentPage === 0}
           >
             <ChevronLeft size={20} />
@@ -472,7 +529,7 @@ const NewsManagement = () => {
           
           <button
             className="pagination-btn"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+            onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
             disabled={currentPage === totalPages - 1}
           >
             <span>Sonraki</span>

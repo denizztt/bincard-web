@@ -44,7 +44,11 @@ const FeedbackList = () => {
         sort: 'submittedAt,desc'
       });
       
-      if (response && response.content) {
+      if (response && response.data && response.data.content) {
+        setFeedbacks(response.data.content);
+        setTotalPages(response.data.totalPages || 0);
+      } else if (response && response.content) {
+        // Fallback for direct content response
         setFeedbacks(response.content);
         setTotalPages(response.totalPages || 0);
       }
@@ -120,11 +124,6 @@ const FeedbackList = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const truncateText = (text, maxLength = 100) => {
-    if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   if (loading) {

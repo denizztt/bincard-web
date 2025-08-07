@@ -226,7 +226,7 @@ const PaymentPointDetail = () => {
       {/* Error Message */}
       {error && (
         <div style={{ background: '#fff3cd', color: '#856404', padding: '15px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeaa7' }}>
-          <strong>Uyarı:</strong> {error} (Örnek veriler gösteriliyor)
+          <strong>Hata:</strong> {error}
         </div>
       )}
 

@@ -26,10 +26,16 @@ const FeedbackDetail = () => {
   const loadFeedback = async () => {
     try {
       setLoading(true);
-      // Since we don't have getFeedbackById in the API client yet,
-      // we'll redirect back if no data is provided
-      setError('Geri bildirim verisi bulunamadı. Liste sayfasına yönlendiriliyorsunuz...');
-      setTimeout(() => navigate('/feedback'), 2000);
+      const response = await feedbackApi.getFeedbackById(parseInt(id));
+      
+      if (response && (response.isSuccess || response.success)) {
+        setFeedback(response.data);
+      } else if (response && response.id) {
+        // Direct response without wrapper
+        setFeedback(response);
+      } else {
+        throw new Error(response?.message || 'Geri bildirim bulunamadı');
+      }
     } catch (err) {
       console.error('Feedback loading failed:', err);
       setError('Geri bildirim yüklenirken hata oluştu: ' + (err.message || err));

@@ -53,14 +53,10 @@ const AllWallets = () => {
       setLoading(false);
     } catch (err) {
       console.error('Wallets yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleWallets();
-      setWallets(sampleData);
-      setTotalPages(3);
-      setTotalWallets(25);
-      updateStats(sampleData);
+      setError('Cüzdan verileri yüklenemedi');
+      setWallets([]);
+      setTotalPages(0);
+      setTotalWallets(0);
       setLoading(false);
     }
   };
@@ -101,25 +97,6 @@ const AllWallets = () => {
       console.error('Wallet object parse hatası:', error);
       return null;
     }
-  };
-
-  // Örnek veri oluşturma - API hata durumunda
-  const createSampleWallets = () => {
-    const sampleWallets = [];
-    for (let i = 1; i <= pageSize; i++) {
-      const id = (currentPage * pageSize) + i;
-      sampleWallets.push({
-        walletId: id,
-        userId: id + 1000,
-        wiban: `TR${String(id).padStart(6, '0')}00001234567890`,
-        currency: 'TRY',
-        balance: Math.random() * 10000,
-        status: Math.random() > 0.8 ? 'LOCKED' : 'ACTIVE',
-        lastUpdated: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        totalTransactionCount: Math.floor(Math.random() * 100)
-      });
-    }
-    return sampleWallets;
   };
 
   // AllWalletsPage.updateStats'a benzer

@@ -188,6 +188,105 @@ export interface MenuItem {
 }
 
 // ========================
+// Feedback Types
+// ========================
+
+export interface Feedback {
+  id: number;
+  type: FeedbackType;
+  subject: string;
+  content: string;
+  status: FeedbackStatus;
+  source: FeedbackSource;
+  userPhone: string;
+  adminResponse?: string;
+  priority: FeedbackPriority;
+  isPublic: boolean;
+  createdAt: string; // ISO date string
+  lastUpdatedAt: string; // ISO date string
+  resolvedAt?: string; // ISO date string
+}
+
+export enum FeedbackType {
+  SUGGESTION = 'SUGGESTION',
+  COMPLAINT = 'COMPLAINT',
+  TECHNICAL_ISSUE = 'TECHNICAL_ISSUE',
+  OTHER = 'OTHER'
+}
+
+export enum FeedbackStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
+  REJECTED = 'REJECTED'
+}
+
+export enum FeedbackSource {
+  MOBILE_APP = 'MOBILE_APP',
+  WEB_PORTAL = 'WEB_PORTAL',
+  CALL_CENTER = 'CALL_CENTER',
+  EMAIL = 'EMAIL',
+  SOCIAL_MEDIA = 'SOCIAL_MEDIA',
+  OTHER = 'OTHER'
+}
+
+export enum FeedbackPriority {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT'
+}
+
+export const FeedbackTypeDisplayNames: Record<FeedbackType, string> = {
+  [FeedbackType.SUGGESTION]: 'Öneri',
+  [FeedbackType.COMPLAINT]: 'Şikayet',
+  [FeedbackType.TECHNICAL_ISSUE]: 'Teknik Sorun',
+  [FeedbackType.OTHER]: 'Diğer'
+};
+
+export const FeedbackStatusDisplayNames: Record<FeedbackStatus, string> = {
+  [FeedbackStatus.PENDING]: 'Beklemede',
+  [FeedbackStatus.IN_PROGRESS]: 'İşlemde',
+  [FeedbackStatus.RESOLVED]: 'Çözüldü',
+  [FeedbackStatus.CLOSED]: 'Kapatıldı',
+  [FeedbackStatus.REJECTED]: 'Reddedildi'
+};
+
+export const FeedbackSourceDisplayNames: Record<FeedbackSource, string> = {
+  [FeedbackSource.MOBILE_APP]: 'Mobil Uygulama',
+  [FeedbackSource.WEB_PORTAL]: 'Web Portalı',
+  [FeedbackSource.CALL_CENTER]: 'Çağrı Merkezi',
+  [FeedbackSource.EMAIL]: 'E-posta',
+  [FeedbackSource.SOCIAL_MEDIA]: 'Sosyal Medya',
+  [FeedbackSource.OTHER]: 'Diğer'
+};
+
+export const FeedbackPriorityDisplayNames: Record<FeedbackPriority, string> = {
+  [FeedbackPriority.LOW]: 'Düşük',
+  [FeedbackPriority.NORMAL]: 'Normal',
+  [FeedbackPriority.HIGH]: 'Yüksek',
+  [FeedbackPriority.URGENT]: 'Acil'
+};
+
+export interface FeedbackUpdateDTO {
+  status?: FeedbackStatus;
+  adminResponse?: string;
+  priority?: FeedbackPriority;
+  isPublic?: boolean;
+}
+
+export interface FeedbackFilters {
+  type?: FeedbackType;
+  status?: FeedbackStatus;
+  source?: FeedbackSource;
+  priority?: FeedbackPriority;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}
+
+// ========================
 // Helper Functions for Types
 // ========================
 

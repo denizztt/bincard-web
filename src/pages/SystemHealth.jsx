@@ -71,24 +71,8 @@ const SystemHealth = () => {
         databaseDetails: databaseDetails.status === 'fulfilled' ? databaseDetails.value : null,
         securityAudit: securityAudit.status === 'fulfilled' ? securityAudit.value : null,
         
-        // Performance metrics mock data (API olmadığı için)
-        performanceMetrics: {
-          responseTime: 156,
-          throughput: 1200,
-          errorRate: 0.02,
-          uptime: Date.now() - (30 * 24 * 60 * 60 * 1000) // 30 gün uptime
-        },
-        
-        // External services mock data (API olmadığı için)
-        externalServices: {
-          smsService: { status: 'UP', healthy: true, responseTime: '145ms' },
-          emailService: { status: 'UP', healthy: true, responseTime: '89ms' },
-          paymentGateway: { status: 'UP', healthy: true, responseTime: '234ms' },
-          mapService: { status: 'UP', healthy: true, responseTime: '67ms' }
-        },
-        
-        overallHealthScore: healthStatus.status === 'fulfilled' ? 95 : 70,
-        healthGrade: healthStatus.status === 'fulfilled' ? 'A' : 'C'
+        overallHealthScore: healthStatus.status === 'fulfilled' ? 95 : 0,
+        healthGrade: healthStatus.status === 'fulfilled' ? 'A' : 'F'
       };
       
       setHealthData(healthData);
@@ -112,65 +96,10 @@ const SystemHealth = () => {
         errorMessage = 'Sunucuya bağlanılamıyor - Backend servisi çalışmıyor olabilir';
       }
       
-      // If API fails completely, show full mock data
-      const mockHealthData = {
-        systemHealth: {
-          status: 'UP',
-          overall: 'HEALTHY',
-          database: {
-            status: 'UP',
-            healthy: true,
-            databaseSize: '2.5 GB',
-            activeConnections: 12,
-            slowQueries: 2
-          },
-          redis: {
-            status: 'UP',
-            healthy: true,
-            usedMemory: '128 MB',
-            keyCount: 1547,
-            connectedClients: 8
-          },
-          memory: {
-            status: 'OK',
-            used: '4.2 GB',
-            total: '8.0 GB',
-            percentage: 52.5
-          },
-          disk: {
-            status: 'OK',
-            used: '45.8 GB',
-            total: '100 GB',
-            percentage: 45.8
-          },
-          activeUsers: 234
-        },
-        overallHealthScore: 92,
-        healthGrade: 'A',
-        externalServices: {
-          smsService: { status: 'UP', healthy: true, responseTime: '145ms' },
-          emailService: { status: 'UP', healthy: true, responseTime: '89ms' },
-          paymentGateway: { status: 'UP', healthy: true, responseTime: '234ms' },
-          mapService: { status: 'UP', healthy: true, responseTime: '67ms' }
-        },
-        performanceMetrics: {
-          responseTime: 156,
-          throughput: 1200,
-          errorRate: 0.02,
-          uptime: 2592000000
-        },
-        securityAudit: {
-          vulnerabilityCount: 0,
-          lastSecurityScan: '2025-01-15T10:30:00Z',
-          secureHeaders: true,
-          suspiciousIPCount: 3,
-          tokensWithoutIP: 0
-        }
-      };
-      
-      setHealthData(mockHealthData);
+      // If API fails completely, show error
+      setError(errorMessage);
+      setHealthData({});
       setLastUpdate(new Date());
-      setError(`${errorMessage} - Demo veriler gösteriliyor`);
     } finally {
       setLoading(false);
     }

@@ -66,12 +66,9 @@ const AdminApprovals = () => {
       setLoading(false);
     } catch (err) {
       console.error('Admin istekleri yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleAdminRequests();
-      setAdminRequests(sampleData);
-      setStatusMessage(`${sampleData.length} adet örnek admin onay isteği (API mevcut değil)`);
+      setError('Admin onay istekleri yüklenemedi');
+      setAdminRequests([]);
+      setStatusMessage('Admin onay istekleri yüklenemedi');
       setLoading(false);
     }
   };
@@ -142,39 +139,6 @@ const AdminApprovals = () => {
     } catch (error) {
       return isoDate;
     }
-  };
-
-  // Örnek veri oluşturma - API hata durumunda
-  const createSampleAdminRequests = () => {
-    return [
-      {
-        id: '1',
-        adminId: '101',
-        name: 'Ahmet Yılmaz',
-        email: 'ahmet.yilmaz@example.com',
-        phone: '+90505376436',
-        requestDate: formatDate(new Date(Date.now() - 86400000)),
-        status: AdminRequestStatus.PENDING
-      },
-      {
-        id: '2', 
-        adminId: '102',
-        name: 'Fatma Demir',
-        email: 'fatma.demir@example.com',
-        phone: '+90505376437',
-        requestDate: formatDate(new Date(Date.now() - 172800000)),
-        status: AdminRequestStatus.PENDING
-      },
-      {
-        id: '3',
-        adminId: '103', 
-        name: 'Mehmet Kaya',
-        email: 'mehmet.kaya@example.com',
-        phone: '+90505376438',
-        requestDate: formatDate(new Date(Date.now() - 259200000)),
-        status: AdminRequestStatus.APPROVED
-      }
-    ];
   };
 
   const applyFilters = () => {

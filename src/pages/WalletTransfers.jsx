@@ -58,12 +58,8 @@ const WalletTransfers = () => {
       setLoading(false);
     } catch (err) {
       console.error('Transfers yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleTransfers();
-      setTransfers(sampleData);
-      updateStats(sampleData);
+      setError('Transfer verileri yüklenemedi');
+      setTransfers([]);
       setLoading(false);
     }
   };
@@ -101,25 +97,6 @@ const WalletTransfers = () => {
   };
 
   // Örnek veri oluşturma - API hata durumunda
-  const createSampleTransfers = () => {
-    const sampleTransfers = [];
-    const statuses = ['SUCCESS', 'PENDING', 'FAILED', 'CANCELLED'];
-    
-    for (let i = 1; i <= 20; i++) {
-      sampleTransfers.push({
-        id: i,
-        senderWiban: `TR${String(i).padStart(6, '0')}00001234567890`,
-        receiverWiban: `TR${String(i + 100).padStart(6, '0')}00009876543210`,
-        amount: Math.random() * 5000 + 100,
-        currency: 'TRY',
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        description: `Transfer işlemi #${i}`
-      });
-    }
-    return sampleTransfers;
-  };
-
   // WalletTransfersPage.updateStats'a benzer
   const updateStats = (transfersData) => {
     setTotalTransfers(transfersData.length);

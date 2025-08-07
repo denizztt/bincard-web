@@ -156,79 +156,11 @@ const Analytics = () => {
       setLoading(false);
       
     } catch (err) {
-      console.error('Analytics API hatası, örnek verilerle devam ediliyor:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et - IncomeReportsPage.createSampleIncomeData gibi
-      createSampleAnalyticsData();
+      console.error('Analytics API hatası:', err);
+      setError('Analitik verileri yüklenemedi');
+      setAnalyticsData({});
       setLoading(false);
     }
-  };
-
-  // IncomeReportsPage.createSampleIncomeData'ya benzer
-  const createSampleAnalyticsData = () => {
-    setAnalyticsData({
-      revenue: {
-        today: 45320,
-        yesterday: 42150,
-        week: 312450,
-        month: 1245600,
-        year: 14567800,
-        total: 14567800
-      },
-      transactions: {
-        today: 3421,
-        yesterday: 3156,
-        week: 24680,
-        month: 98450,
-        year: 1245600
-      },
-      users: {
-        today: 156,
-        yesterday: 142,
-        week: 1048,
-        month: 4567,
-        year: 54890
-      },
-      stations: {
-        active: 89,
-        inactive: 12,
-        total: 101
-      },
-      buses: {
-        active: 156,
-        maintenance: 24,
-        total: 180
-      }
-    });
-
-    setChartData({
-      dailyRevenue: [
-        { date: '01/01', amount: 35000, transactions: 2800 },
-        { date: '02/01', amount: 42000, transactions: 3200 },
-        { date: '03/01', amount: 38000, transactions: 2900 },
-        { date: '04/01', amount: 45000, transactions: 3400 },
-        { date: '05/01', amount: 48000, transactions: 3600 },
-        { date: '06/01', amount: 52000, transactions: 3800 },
-        { date: '07/01', amount: 45320, transactions: 3421 }
-      ],
-      monthlyTrend: [
-        { month: 1, amount: 985000 },
-        { month: 2, amount: 1125000 },
-        { month: 3, amount: 1245600 },
-        { month: 4, amount: 1156000 },
-        { month: 5, amount: 1325000 },
-        { month: 6, amount: 1456000 }
-      ],
-      incomeCategories: [
-        { name: 'Günlük İşlemler', value: 45, color: '#3498db' },
-        { name: 'Haftalık Abonelik', value: 30, color: '#27ae60' },
-        { name: 'Aylık Paketler', value: 20, color: '#e74c3c' },
-        { name: 'Diğer', value: 5, color: '#f39c12' }
-      ]
-    });
-
-    setLastUpdate(new Date());
   };
 
   const calculatePercentageChange = (current, previous) => {

@@ -94,58 +94,27 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
       
-      // Mock data for now since backend is not working
-      const mockStats = {
-        totalUsers: 1250,
-        activeUsers: 890,
-        dailyIncome: 15420.50,
-        monthlyIncome: 456780.25,
-        pendingRequests: 23,
-        todayTransactions: 156,
-        systemStatus: 'Normal',
-        totalBuses: 45,
-        totalStations: 12
-      };
-      
-      setStats(mockStats);
-      
-      const mockActivities = [
-        {
-          id: 1,
-          type: 'user_registration',
-          message: 'Yeni kullanıcı kaydı: Ahmet Yılmaz',
-          timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          icon: Users,
-          color: 'blue'
-        },
-        {
-          id: 2,
-          type: 'payment',
-          message: 'Ödeme işlemi tamamlandı: ₺25.50',
-          timestamp: new Date(Date.now() - 15 * 60 * 1000),
-          icon: DollarSign,
-          color: 'green'
-        },
-        {
-          id: 3,
-          type: 'bus_update',
-          message: 'Otobüs durumu güncellendi: 34ABC123',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000),
-          icon: Bus,
-          color: 'orange'
-        },
-        {
-          id: 4,
-          type: 'system_alert',
-          message: 'Sistem güvenlik kontrolü tamamlandı',
-          timestamp: new Date(Date.now() - 45 * 60 * 1000),
-          icon: Shield,
-          color: 'purple'
+      // Load dashboard stats from API
+      try {
+        const response = await dashboardApi.getStats();
+        if (response && response.success && response.data) {
+          setStats(response.data);
         }
-      ];
+      } catch (apiError) {
+        console.error('Dashboard stats API error:', apiError);
+        setError('Dashboard istatistikleri yüklenemedi');
+      }
       
-      setRecentActivities(mockActivities);
-      setLastUpdate(new Date());
+      // Load recent activities from API
+      try {
+        const activitiesResponse = await dashboardApi.getRecentActivities();
+        if (activitiesResponse && activitiesResponse.success && activitiesResponse.data) {
+          setRecentActivities(activitiesResponse.data);
+        }
+      } catch (apiError) {
+        console.error('Recent activities API error:', apiError);
+        setError('Son aktiviteler yüklenemedi');
+      }
       
       // Load system health data
       try {
@@ -154,44 +123,11 @@ const Dashboard = () => {
           setSystemHealth(healthResponse);
         }
       } catch (healthError) {
-        console.log('System health data not available, using mock data');
-        // Mock system health data
-        setSystemHealth({
-          status: 'UP',
-          overall: 'HEALTHY',
-          database: { healthy: true, status: 'UP' },
-          redis: { healthy: true, status: 'UP' },
-          mailService: { healthy: true, status: 'UP' },
-          cloudinary: { healthy: true, status: 'UP' },
-          googleMaps: { healthy: true, status: 'UP' },
-          iyzico: { healthy: true, status: 'UP' },
-          twilio: { healthy: true, status: 'UP' },
-          memory: { status: 'OK', heapUsagePercent: 45.2 },
-          cpu: { status: 'OK', systemLoadAverage: 0.8 },
-          disk: { status: 'OK', overallUsagePercent: 65.3 },
-          security: { healthy: true, status: 'SECURE' },
-          activeUsers: 890
-        });
+        console.error('System health API error:', healthError);
+        setError('Sistem durumu yüklenemedi');
       }
       
-      // Try to load real data if available
-      try {
-        const response = await dashboardApi.getStats();
-        if (response && response.success && response.data) {
-          setStats(response.data);
-        }
-      } catch (apiError) {
-        console.warn('Real API data not available, using mock data:', apiError);
-      }
-      
-      try {
-        const activitiesResponse = await dashboardApi.getRecentActivities();
-        if (activitiesResponse && activitiesResponse.success && activitiesResponse.data) {
-          setRecentActivities(activitiesResponse.data);
-        }
-      } catch (apiError) {
-        console.warn('Real activities data not available, using mock data:', apiError);
-      }
+      setLastUpdate(new Date());
       
     } catch (err) {
       console.error('Dashboard data load error:', err);

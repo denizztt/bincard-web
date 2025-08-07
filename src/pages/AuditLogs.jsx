@@ -64,12 +64,9 @@ const AuditLogs = () => {
       setLoading(false);
     } catch (err) {
       console.error('Audit logs yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleAuditLogs();
-      setAuditLogs(sampleData);
-      setStatusMessage(`${sampleData.length} adet örnek denetim kaydı (API mevcut değil)`);
+      setError('Denetim kayıtları yüklenemedi');
+      setAuditLogs([]);
+      setStatusMessage('Denetim kayıtları yüklenemedi');
       setLoading(false);
     }
   };
@@ -146,39 +143,6 @@ const AuditLogs = () => {
     
     // Enum'da yoksa basit formatlama yap
     return action.replace(/_/g, ' ');
-  };
-
-  // Örnek veri oluşturma - API hata durumunda
-  const createSampleAuditLogs = () => {
-    return [
-      {
-        id: '1',
-        action: 'LOGIN',
-        displayAction: '🔐 Giriş',
-        description: 'Kullanıcı sisteme giriş yaptı',
-        timestamp: formatTimestamp(new Date(Date.now() - 3600000).toISOString()),
-        ipAddress: '192.168.1.100',
-        deviceInfo: 'Chrome 120.0 / Windows 10'
-      },
-      {
-        id: '2',
-        action: 'APPROVE_ADMIN',
-        displayAction: '👨‍💼 Admin Onayı',
-        description: 'Yeni admin hesabı onaylandı',
-        timestamp: formatTimestamp(new Date(Date.now() - 7200000).toISOString()),
-        ipAddress: '192.168.1.101',
-        deviceInfo: 'Firefox 121.0 / macOS'
-      },
-      {
-        id: '3',
-        action: 'DELETE_USER',
-        displayAction: '🗑️ Kullanıcı Silme',
-        description: 'Kullanıcı hesabı silindi',
-        timestamp: formatTimestamp(new Date(Date.now() - 10800000).toISOString()),
-        ipAddress: '192.168.1.102',
-        deviceInfo: 'Edge 119.0 / Windows 11'
-      }
-    ];
   };
 
   const clearFilters = () => {

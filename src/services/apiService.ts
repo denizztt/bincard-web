@@ -192,9 +192,7 @@ export const authApi = {
   },
 
   resendVerificationCode: async (telephone: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.post('/auth/resend-verification-code', {
-      telephone
-    });
+    const response = await apiClient.post(`/auth/resend-verify-code?telephone=${telephone}`);
     return response.data;
   },
 
@@ -347,18 +345,48 @@ export const reportsApi = {
 
 // Feedback API endpoints
 export const feedbackApi = {
-  getAllFeedback: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/feedback?page=${page}&size=${size}`);
+  getAllFeedbacks: async (params: {
+    type?: string;
+    source?: string;
+    start?: string;
+    end?: string;
+    page?: number;
+    size?: number;
+    sort?: string;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    // Add parameters if they exist
+    if (params.type) queryParams.append('type', params.type);
+    if (params.source) queryParams.append('source', params.source);
+    if (params.start) queryParams.append('start', params.start);
+    if (params.end) queryParams.append('end', params.end);
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
+    if (params.size !== undefined) queryParams.append('size', params.size.toString());
+    if (params.sort) queryParams.append('sort', params.sort);
+    
+    const response = await apiClient.get(`/feedback/admin/all?${queryParams.toString()}`);
     return response.data;
   },
 
   getFeedbackById: async (id: number) => {
-    const response = await apiClient.get(`/feedback/${id}`);
+    const response = await apiClient.get(`/feedback/admin/${id}`);
     return response.data;
   },
 
   deleteFeedback: async (id: number) => {
-    const response = await apiClient.delete(`/feedback/${id}`);
+    const response = await apiClient.delete(`/feedback/admin/${id}`);
+    return response.data;
+  },
+
+  // Mark feedback as read/unread
+  markAsRead: async (id: number) => {
+    const response = await apiClient.patch(`/feedback/admin/${id}/read`);
+    return response.data;
+  },
+
+  markAsUnread: async (id: number) => {
+    const response = await apiClient.patch(`/feedback/admin/${id}/unread`);
     return response.data;
   }
 };

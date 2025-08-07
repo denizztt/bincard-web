@@ -58,139 +58,38 @@ const StationMap = () => {
       setLoading(true);
       
       // Try to load stations from API first
-      try {
-        const response = await stationApi.getAllStations(0, 1000); // Get all stations
-        console.log('Stations API Response:', response);
+      const response = await stationApi.getAllStations(0, 1000); // Get all stations
+      console.log('Stations API Response:', response);
+      
+      if (response && response.success && response.data && response.data.content) {
+        const apiStations = response.data.content.map(station => ({
+          id: station.id,
+          name: station.name,
+          type: station.type || "OTOBUS",
+          status: station.active ? "ACTIVE" : "INACTIVE",
+          location: { 
+            latitude: station.latitude || (39.9334 + (Math.random() - 0.5) * 0.1), 
+            longitude: station.longitude || (32.8597 + (Math.random() - 0.5) * 0.2)
+          },
+          address: { 
+            city: station.city || "Ankara", 
+            district: station.district || "Çankaya", 
+            street: station.street || station.name,
+            fullAddress: `${station.street || station.name}, ${station.district || 'Çankaya'}, ${station.city || 'Ankara'}`
+          },
+          description: station.name
+        }));
         
-        if (response && response.success && response.data && response.data.content) {
-          const apiStations = response.data.content.map(station => ({
-            id: station.id,
-            name: station.name,
-            type: station.type || "OTOBUS",
-            status: station.active ? "ACTIVE" : "INACTIVE",
-            location: { 
-              latitude: station.latitude || (39.9334 + (Math.random() - 0.5) * 0.1), 
-              longitude: station.longitude || (32.8597 + (Math.random() - 0.5) * 0.2)
-            },
-            address: { 
-              city: station.city || "Ankara", 
-              district: station.district || "Çankaya", 
-              street: station.street || station.name,
-              fullAddress: `${station.street || station.name}, ${station.district || 'Çankaya'}, ${station.city || 'Ankara'}`
-            },
-            description: station.name
-          }));
-          
-          setStations(apiStations);
-          calculateStats(apiStations);
-          setError('');
-          return;
-        }
-      } catch (apiError) {
-        console.error('API error, falling back to mock data:', apiError);
+        setStations(apiStations);
+        calculateStats(apiStations);
+        setError('');
+      } else {
+        throw new Error('Geçerli istasyon verisi bulunamadı');
       }
-      
-      // Fallback to mock data if API fails
-      const mockStations = [
-        {
-          id: 1,
-          name: "Taksim Meydanı Durağı",
-          type: "METRO",
-          status: "ACTIVE",
-          location: { latitude: 41.0369, longitude: 28.9851 },
-          address: { city: "İstanbul", district: "Beyoğlu", street: "Taksim Meydanı", fullAddress: "Taksim Meydanı, Beyoğlu, İstanbul" },
-          description: "Ana metro transfer noktası"
-        },
-        {
-          id: 2,
-          name: "Kadıköy İskele Durağı",
-          type: "VAPUR",
-          status: "ACTIVE",
-          location: { latitude: 40.9996, longitude: 29.0277 },
-          address: { city: "İstanbul", district: "Kadıköy", street: "İskele Caddesi", fullAddress: "İskele Caddesi, Kadıköy, İstanbul" },
-          description: "Vapur iskele durağı"
-        },
-        {
-          id: 3,
-          name: "Mecidiyeköy Metrobüs Durağı",
-          type: "METROBUS",
-          status: "ACTIVE",
-          location: { latitude: 41.0631, longitude: 28.9897 },
-          address: { city: "İstanbul", district: "Şişli", street: "Büyükdere Caddesi", fullAddress: "Büyükdere Caddesi, Şişli, İstanbul" },
-          description: "Metrobüs hattı durağı"
-        },
-        {
-          id: 4,
-          name: "Kızılay Metro Durağı",
-          type: "METRO",
-          status: "INACTIVE",
-          location: { latitude: 39.9208, longitude: 32.8541 },
-          address: { city: "Ankara", district: "Çankaya", street: "Kızılay Meydanı", fullAddress: "Kızılay Meydanı, Çankaya, Ankara" },
-          description: "Merkezi metro durağı - bakımda"
-        },
-        {
-          id: 5,
-          name: "Alsancak Terminal",
-          type: "OTOBUS",
-          status: "ACTIVE",
-          location: { latitude: 38.4237, longitude: 27.1428 },
-          address: { city: "İzmir", district: "Konak", street: "Alsancak", fullAddress: "Alsancak, Konak, İzmir" },
-          description: "Ana otobüs terminali"
-        },
-        {
-          id: 6,
-          name: "Eminönü Vapur İskelesi",
-          type: "VAPUR",
-          status: "ACTIVE",
-          location: { latitude: 41.0167, longitude: 28.9706 },
-          address: { city: "İstanbul", district: "Fatih", street: "Eminönü", fullAddress: "Eminönü, Fatih, İstanbul" },
-          description: "Tarihi vapur iskelesi"
-        },
-        // Add more demo stations for better visualization
-        {
-          id: 7,
-          name: "Kızılay Otogar",
-          type: "OTOBUS",
-          status: "ACTIVE",
-          location: { latitude: 39.9334, longitude: 32.8597 },
-          address: { city: "Ankara", district: "Çankaya", street: "Kızılay", fullAddress: "Kızılay, Çankaya, Ankara" },
-          description: "Ana otobüs durağı"
-        },
-        {
-          id: 8,
-          name: "Ulus Meydanı",
-          type: "OTOBUS",
-          status: "ACTIVE",
-          location: { latitude: 39.9454, longitude: 32.8539 },
-          address: { city: "Ankara", district: "Altındağ", street: "Ulus", fullAddress: "Ulus, Altındağ, Ankara" },
-          description: "Merkezi otobus durağı"
-        },
-        {
-          id: 9,
-          name: "Bahçelievler Durağı",
-          type: "OTOBUS",
-          status: "ACTIVE",
-          location: { latitude: 39.9100, longitude: 32.8200 },
-          address: { city: "Ankara", district: "Çankaya", street: "Bahçelievler", fullAddress: "Bahçelievler, Çankaya, Ankara" },
-          description: "Mahalle otobüs durağı"
-        },
-        {
-          id: 10,
-          name: "Tunalı Hilmi Durağı",
-          type: "OTOBUS",
-          status: "ACTIVE",
-          location: { latitude: 39.9200, longitude: 32.8500 },
-          address: { city: "Ankara", district: "Çankaya", street: "Tunalı Hilmi", fullAddress: "Tunalı Hilmi, Çankaya, Ankara" },
-          description: "Ana cadde durağı"
-        }
-      ];
-      
-      setStations(mockStations);
-      calculateStats(mockStations);
-      setError('');
-    } catch (err) {
-      console.error('Station loading failed:', err);
-      setError('Duraklar yüklenirken hata oluştu: ' + (err.message || err));
+    } catch (error) {
+      console.error('API error:', error);
+      setError('İstasyon verileri yüklenemedi: ' + (error.message || 'Bilinmeyen hata'));
+      setStations([]);
     } finally {
       setLoading(false);
     }

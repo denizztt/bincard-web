@@ -86,12 +86,8 @@ const IdentityRequests = () => {
       setLoading(false);
     } catch (err) {
       console.error('Kimlik istekleri yüklenirken hata:', err);
-      setError('API mevcut değil, örnek verilerle gösteriliyor');
-      
-      // Hata durumunda örnek verilerle devam et
-      const sampleData = createSampleIdentityRequests();
-      setAllRequests(sampleData);
-      updateStatistics(sampleData);
+      setError('Kimlik istekleri yüklenemedi');
+      setAllRequests([]);
       setLoading(false);
     }
   };
@@ -153,46 +149,6 @@ const IdentityRequests = () => {
       console.error('Identity request item parse hatası:', error);
       return null;
     }
-  };
-
-  // Örnek veri oluşturma - API hata durumunda
-  const createSampleIdentityRequests = () => {
-    const sampleRequests = [];
-    
-    for (let i = 1; i <= 15; i++) {
-      const status = i % 4 === 0 ? RequestStatus.APPROVED :
-                    i % 4 === 1 ? RequestStatus.REJECTED :
-                    RequestStatus.PENDING;
-
-      const identityInfo = {
-        id: i,
-        frontCardPhoto: `https://picsum.photos/400/250?random=${i}`,
-        backCardPhoto: `https://picsum.photos/400/250?random=${i + 100}`,
-        nationalId: `1044500013${i % 10}`,
-        serialNumber: `A1234567${i}`,
-        birthDate: `1995-08-${20 + (i % 8)}`,
-        gender: i % 2 === 0 ? 'Erkek' : 'Kadın',
-        motherName: `Anne${i}`,
-        fatherName: `Baba${i}`,
-        approvedByPhone: status !== RequestStatus.PENDING ? '+90555999888' : null,
-        approved: status === RequestStatus.APPROVED,
-        approvedAt: status !== RequestStatus.PENDING ? new Date(Date.now() - i * 86400000).toISOString() : null,
-        userPhone: `+90505376436${i % 10}`
-      };
-
-      sampleRequests.push({
-        id: i,
-        identityInfo,
-        requestedByPhone: `+90505376436${i % 10}`,
-        requestedAt: new Date(Date.now() - i * 86400000).toISOString(),
-        status,
-        adminNote: status !== RequestStatus.PENDING ? `Örnek admin notu ${i}` : null,
-        reviewedByPhone: status !== RequestStatus.PENDING ? '+90555999888' : null,
-        reviewedAt: status !== RequestStatus.PENDING ? new Date(Date.now() - (i - 1) * 86400000).toISOString() : null
-      });
-    }
-    
-    return sampleRequests;
   };
 
   const updateStatistics = (requests) => {
