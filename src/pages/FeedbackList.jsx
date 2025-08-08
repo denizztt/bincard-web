@@ -4,6 +4,8 @@ import { feedbackApi } from '../services/apiService';
 import { FeedbackType, FeedbackSource, getFeedbackTypeDisplayName, getFeedbackSourceDisplayName, getFeedbackTypeColor } from '../types';
 import '../styles/FeedbackList.css';
 
+// Helper removed: inline truncation applied in JSX
+
 const FeedbackList = () => {
   const navigate = useNavigate();
   
@@ -252,7 +254,10 @@ const FeedbackList = () => {
                   <div className="subject-content">
                     <h4>{feedback.subject}</h4>
                     <p className="message-preview">
-                      {truncateText(feedback.shortMessage || feedback.message)}
+                      {(() => {
+                        const msg = feedback.shortMessage || feedback.message || '';
+                        return msg.length > 100 ? msg.substring(0, 100) + '…' : msg;
+                      })()}
                     </p>
                   </div>
                 </td>
@@ -329,4 +334,4 @@ const FeedbackList = () => {
   );
 };
 
-export default FeedbackList; 
+export default FeedbackList;

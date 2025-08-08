@@ -90,8 +90,12 @@ const AllWallets = () => {
         currency: walletData.currency || 'TRY',
         balance: parseFloat(walletData.balance) || 0,
         status: walletData.status || 'UNKNOWN',
+        activeTransferCode: walletData.activeTransferCode || '',
+        transferCodeExpiresAt: walletData.transferCodeExpiresAt || '',
+        createdAt: walletData.createdAt || '',
         lastUpdated: walletData.lastUpdated || '',
-        totalTransactionCount: walletData.totalTransactionCount || 0
+        totalTransactionCount: walletData.totalTransactionCount || 0,
+        activities: Array.isArray(walletData.activities) ? walletData.activities : []
       };
     } catch (error) {
       console.error('Wallet object parse hatası:', error);
@@ -260,9 +264,14 @@ const AllWallets = () => {
                 <th>Cüzdan ID</th>
                 <th>Kullanıcı ID</th>
                 <th>WIBAN</th>
+                <th>Para Birimi</th>
                 <th>Bakiye</th>
                 <th>Durum</th>
                 <th>İşlem Sayısı</th>
+                <th>Transfer Kodu</th>
+                <th>Transfer Kodu Geçerlilik</th>
+                <th>Oluşturma Tarihi</th>
+                <th>Aktiviteler</th>
                 <th>Son Güncelleme</th>
               </tr>
             </thead>
@@ -283,6 +292,7 @@ const AllWallets = () => {
                       </div>
                     </td>
                     <td className="wiban-cell">{wallet.wiban}</td>
+                    <td>{wallet.currency}</td>
                     <td className="balance-cell">
                       <span className="balance-amount">
                         {formatCurrency(wallet.balance)}
@@ -295,12 +305,16 @@ const AllWallets = () => {
                         {wallet.totalTransactionCount}
                       </div>
                     </td>
+                    <td>{wallet.activeTransferCode || '-'}</td>
+                    <td>{wallet.transferCodeExpiresAt ? formatDate(wallet.transferCodeExpiresAt) : '-'}</td>
+                    <td>{wallet.createdAt ? formatDate(wallet.createdAt) : '-'}</td>
+                    <td>{wallet.activities.length}</td>
                     <td className="date-cell">{formatDate(wallet.lastUpdated)}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="no-data">
+                  <td colSpan="11" className="no-data">
                     <div className="no-data-message">
                       <Wallet size={48} className="no-data-icon" />
                       <p>Gösterilecek cüzdan bulunmuyor</p>
@@ -376,4 +390,4 @@ const AllWallets = () => {
   );
 };
 
-export default AllWallets; 
+export default AllWallets;

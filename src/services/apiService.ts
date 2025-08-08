@@ -505,27 +505,27 @@ export const stationApi = {
 // Payment Point API endpoints
 export const paymentPointApi = {
   getAllPaymentPoints: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/payment-points?page=${page}&size=${size}`);
+    const response = await apiClient.get(`/payment-point?page=${page}&size=${size}`);
     return response.data;
   },
 
   getPaymentPointById: async (id: number) => {
-    const response = await apiClient.get(`/payment-points/${id}`);
+    const response = await apiClient.get(`/payment-point/${id}`);
     return response.data;
   },
 
   createPaymentPoint: async (paymentPointData: any) => {
-    const response = await apiClient.post('/payment-points', paymentPointData);
+    const response = await apiClient.post('/payment-point', paymentPointData);
     return response.data;
   },
 
   updatePaymentPoint: async (id: number, paymentPointData: any) => {
-    const response = await apiClient.put(`/payment-points/${id}`, paymentPointData);
+    const response = await apiClient.put(`/payment-point/${id}`, paymentPointData);
     return response.data;
   },
 
   deletePaymentPoint: async (id: number) => {
-    const response = await apiClient.delete(`/payment-points/${id}`);
+    const response = await apiClient.delete(`/payment-point/${id}`);
     return response.data;
   }
 };
@@ -826,22 +826,22 @@ export const oldRouteApi = {
 // Wallet API endpoints
 export const walletApi = {
   getAllWallets: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallets?page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet?page=${page}&size=${size}`);
     return response.data;
   },
 
   getWalletById: async (id: number) => {
-    const response = await apiClient.get(`/wallets/${id}`);
+    const response = await apiClient.get(`/wallet/${id}`);
     return response.data;
   },
 
   searchWallets: async (searchTerm: string, page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallets/search?q=${searchTerm}&page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet/search?q=${searchTerm}&page=${page}&size=${size}`);
     return response.data;
   },
 
   updateWalletStatus: async (id: number, status: string) => {
-    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    const response = await apiClient.patch(`/wallet/${id}/status`, { status });
     return response.data;
   },
 
@@ -874,7 +874,7 @@ export const adminApi = {
   },
 
   getIdentityRequests: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/admin/identity-requests?page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet/identity-requests?page=${page}&size=${size}`);
     return response.data;
   }
 };
@@ -1028,22 +1028,22 @@ export const adminApprovalsApi = {
 // Wallets API endpoints
 export const walletsApi = {
   getAllWallets: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallets?page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet/admin/all?page=${page}&size=${size}`);
     return response.data;
   },
 
   getWalletById: async (id: number) => {
-    const response = await apiClient.get(`/wallets/${id}`);
+    const response = await apiClient.get(`/wallet/${id}`);
     return response.data;
   },
 
   searchWallets: async (searchTerm: string, page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallets/search?q=${searchTerm}&page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet/search?q=${searchTerm}&page=${page}&size=${size}`);
     return response.data;
   },
 
   updateWalletStatus: async (id: number, status: string) => {
-    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    const response = await apiClient.patch(`/wallet/${id}/status`, { status });
     return response.data;
   }
 };
@@ -1074,7 +1074,7 @@ export const auditLogsApi = {
 // Identity Requests API endpoints
 export const identityRequestsApi = {
   getIdentityRequests: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/admin/identity-requests?page=${page}&size=${size}`);
+    const response = await apiClient.get(`/wallet/identity-requests?page=${page}&size=${size}`);
     return response.data;
   },
 
@@ -1110,17 +1110,17 @@ export const walletStatsApi = {
 // Wallet Status API endpoints
 export const walletStatusApi = {
   updateWalletStatus: async (id: number, status: string) => {
-    const response = await apiClient.patch(`/wallets/${id}/status`, { status });
+    const response = await apiClient.patch(`/wallet/${id}/status`, { status });
     return response.data;
   },
 
   getWalletStatusHistory: async (id: number) => {
-    const response = await apiClient.get(`/wallets/${id}/status-history`);
+    const response = await apiClient.get(`/wallet/${id}/status-history`);
     return response.data;
   },
 
   bulkUpdateWalletStatus: async (walletIds: number[], status: string) => {
-    const response = await apiClient.patch('/wallets/bulk-status-update', { walletIds, status });
+    const response = await apiClient.patch('/wallet/bulk-status-update', { walletIds, status });
     return response.data;
   }
 };
