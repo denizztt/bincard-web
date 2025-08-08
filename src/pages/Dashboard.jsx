@@ -45,7 +45,7 @@ import {
   Image,
   Map
 } from 'lucide-react';
-import { dashboardApi, reportsApi, healthApi } from '../services/apiService';
+import { healthApi } from '../services/apiService';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
@@ -86,7 +86,7 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    loadDashboardData();
+  loadDashboardData(); // API calls for dashboard removed, using mock data within function
   }, []);
 
   const loadDashboardData = async () => {
@@ -94,61 +94,20 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
       
-      // Use mock stats data since dashboard/stats API doesn't exist
-      const mockStats = {
-        totalUsers: 1250,
-        activeDrivers: 89,
-        totalBuses: 45,
-        activeRoutes: 12,
-        totalStations: 156,
-        dailyTransactions: 3420,
-        monthlyRevenue: 125000,
-        systemUptime: '99.8%'
-      };
-      setStats(mockStats);
+  // Stats data removed; optionally add UI metrics here
       
-      // Load recent activities from API (if this API exists)
-      try {
-        const activitiesResponse = await dashboardApi.getRecentActivities();
-        if (activitiesResponse && activitiesResponse.success && activitiesResponse.data) {
-          setRecentActivities(activitiesResponse.data);
-        }
-      } catch (apiError) {
-        console.error('Recent activities API error:', apiError);
-        // Use mock data for activities too
-        const mockActivities = [
-          {
-            id: 1,
-            type: 'user_registration',
-            message: 'Yeni kullanıcı kaydı: test@example.com',
-            timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-          },
-          {
-            id: 2,
-            type: 'driver_login',
-            message: 'Şoför sisteme giriş yaptı: Ahmet Yılmaz',
-            timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-          },
-          {
-            id: 3,
-            type: 'route_update',
-            message: 'Rota güncellendi: Merkez - Üniversite',
-            timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-          }
-        ];
-        setRecentActivities(mockActivities);
-      }
+      // Mock recent activities
+      const mockActivities = [
+        { id: 1, message: 'Yeni kullanıcı kaydı: test@example.com', timestamp: Date.now() - 5 * 60 * 1000 },
+        { id: 2, message: 'Şoför sisteme giriş yaptı: Ahmet Yılmaz', timestamp: Date.now() - 15 * 60 * 1000 },
+        { id: 3, message: 'Rota güncellendi: Merkez - Üniversite', timestamp: Date.now() - 30 * 60 * 1000 }
+      ];
+      setRecentActivities(mockActivities);
       
       // Load system health data
-      try {
-        const healthResponse = await healthApi.getHealthStatus();
-        if (healthResponse) {
-          setSystemHealth(healthResponse);
-        }
-      } catch (healthError) {
-        console.error('System health API error:', healthError);
-        setError('Sistem durumu yüklenemedi');
-      }
+  // Mock system health data
+  const mockHealth = { status: 'online', database: 'up', uptime: '99.8%' };
+  setSystemHealth(mockHealth);
       
       setLastUpdate(new Date());
       
@@ -230,11 +189,14 @@ const Dashboard = () => {
 
   const formatTime = (date) => {
     if (!date) return 'Yükleniyor...';
+    // Handle timestamp or Date/string
+    const d = typeof date === 'number' ? new Date(date) : new Date(date);
+    if (isNaN(d.getTime())) return 'Yükleniyor...';
     return new Intl.DateTimeFormat('tr-TR', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
-    }).format(date);
+    }).format(d);
   };
 
   const shouldShowMenuItem = (label, subItems = []) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Loader } from '@googlemaps/js-api-loader';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -55,35 +56,31 @@ const StationAdd = () => {
     { value: 'DIGER', label: 'Diğer', icon: '📍' }
   ];
 
-  // Load Google Maps on component mount
+  // Load Google Maps via JS API Loader on component mount
   useEffect(() => {
-    loadGoogleMaps();
-  }, []);
-
-  const loadGoogleMaps = () => {
-    // Check if Google Maps is already loaded
+    // If already loaded, initialize map without loading again
     if (window.google && window.google.maps) {
       initializeMap();
+      setMapLoaded(true);
       return;
     }
+    const loader = new Loader({
+      apiKey: config.googleMaps.apiKey,
+      version: 'weekly',
+      libraries: config.googleMaps.libraries
+    });
+    loader.load()
+      .then(() => {
+        initializeMap();
+        setMapLoaded(true);
+      })
+      .catch(err => {
+        console.error('Google Maps loader error:', err);
+        setError('Google Maps yüklenemedi.');
+      });
+  }, []);
 
-    // Load Google Maps script
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMaps.apiKey}&libraries=${config.googleMaps.libraries.join(',')}&callback=initMapStation`;
-    script.async = true;
-    script.defer = true;
-    
-    // Set up global callback
-    window.initMapStation = () => {
-      initializeMap();
-    };
-    
-    script.onerror = () => {
-      setError('Google Maps yüklenemedi. İnternet bağlantınızı kontrol edin.');
-    };
-    
-    document.head.appendChild(script);
-  };
+  // ...existing code for initializeMap, placeMarker, getAddressFromCoordinates...
 
   const initializeMap = () => {
     if (!mapRef.current) return;
@@ -155,17 +152,13 @@ const StationAdd = () => {
     }));
   };
 
-  const getAddressFromCoordinates = async (lat, lng) => {
-    try {
-      const geocoder = new window.google.maps.Geocoder();
-      const result = await geocoder.geocode({
-        location: { lat: lat, lng: lng }
-      });
-
-      if (result.results && result.results.length > 0) {
-        const addressComponents = result.results[0].address_components;
-        
-        // Parse address components
+  // Get address components using Google Geocoder callback
+  const getAddressFromCoordinates = (lat, lng) => {
+    if (!window.google || !window.google.maps) return;
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results && results.length > 0) {
+        const addressComponents = results[0].address_components;
         let city = '', district = '', street = '', postalCode = '';
         addressComponents.forEach(component => {
           if (component.types.includes('administrative_area_level_1')) {
@@ -178,7 +171,6 @@ const StationAdd = () => {
             postalCode = component.long_name;
           }
         });
-
         setFormData(prev => ({
           ...prev,
           city: city || 'İstanbul',
@@ -186,10 +178,10 @@ const StationAdd = () => {
           street: street || '',
           postalCode: postalCode || ''
         }));
+      } else {
+        console.error('Geocoding failed:', status);
       }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-    }
+    });
   };
 
   const handleInputChange = (e) => {

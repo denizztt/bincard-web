@@ -411,7 +411,7 @@ export const stationApi = {
     queryParams.append('page', page.toString());
     queryParams.append('size', size.toString());
     
-    const response = await apiClient.get(`/v1/api/station?${queryParams.toString()}`);
+  const response = await apiClient.get(`/station?${queryParams.toString()}`);
     return response.data;
   },
 
@@ -421,7 +421,7 @@ export const stationApi = {
     queryParams.append('page', page.toString());
     queryParams.append('size', size.toString());
     
-    const response = await apiClient.get(`/v1/api/station/search?${queryParams.toString()}`);
+  const response = await apiClient.get(`/station/search?${queryParams.toString()}`);
     return response.data;
   },
 
@@ -432,45 +432,45 @@ export const stationApi = {
     }
     
     const url = queryParams.toString() 
-      ? `/v1/api/station/${id}?${queryParams.toString()}`
-      : `/v1/api/station/${id}`;
+      ? `/station/${id}?${queryParams.toString()}`
+      : `/station/${id}`;
     
     const response = await apiClient.get(url);
     return response.data;
   },
 
   createStation: async (stationData: any) => {
-    const response = await apiClient.post('/v1/api/station', stationData);
+  const response = await apiClient.post('/station', stationData);
     return response.data;
   },
 
   updateStation: async (stationData: any) => {
-    const response = await apiClient.put('/v1/api/station', stationData);
+  const response = await apiClient.put('/station', stationData);
     return response.data;
   },
 
   deleteStation: async (id: number) => {
-    const response = await apiClient.delete(`/v1/api/station/${id}`);
+  const response = await apiClient.delete(`/station/${id}`);
     return response.data;
   },
 
   changeStationStatus: async (id: number, active: boolean) => {
-    const response = await apiClient.patch(`/v1/api/station/${id}/status?active=${active}`);
+  const response = await apiClient.patch(`/station/${id}/status?active=${active}`);
     return response.data;
   },
 
   getStationRoutes: async (stationId: number) => {
-    const response = await apiClient.get(`/v1/api/station/routes?stationId=${stationId}`);
+  const response = await apiClient.get(`/station/routes?stationId=${stationId}`);
     return response.data;
   },
 
   searchKeywords: async (query: string) => {
-    const response = await apiClient.get(`/v1/api/station/keywords?query=${query}`);
+  const response = await apiClient.get(`/station/keywords?query=${query}`);
     return response.data;
   },
 
   searchNearbyStations: async (searchRequest: any, page: number = 0, size: number = 10) => {
-    const response = await apiClient.post(`/v1/api/station/search/nearby?page=${page}&size=${size}`, searchRequest);
+  const response = await apiClient.post(`/station/search/nearby?page=${page}&size=${size}`, searchRequest);
     return response.data;
   },
 
@@ -481,23 +481,23 @@ export const stationApi = {
     queryParams.append('page', page.toString());
     queryParams.append('size', size.toString());
     
-    const response = await apiClient.get(`/v1/api/station/nearby?${queryParams.toString()}`);
+  const response = await apiClient.get(`/station/nearby?${queryParams.toString()}`);
     return response.data;
   },
 
   // Favoriler için
   addFavoriteStation: async (stationId: number) => {
-    const response = await apiClient.post(`/v1/api/station/add-favorite?stationId=${stationId}`);
+  const response = await apiClient.post(`/station/add-favorite?stationId=${stationId}`);
     return response.data;
   },
 
   removeFavoriteStation: async (stationId: number) => {
-    const response = await apiClient.delete(`/v1/api/station/remove-favorite?stationId=${stationId}`);
+  const response = await apiClient.delete(`/station/remove-favorite?stationId=${stationId}`);
     return response.data;
   },
 
   getFavoriteStations: async () => {
-    const response = await apiClient.get('/v1/api/station/favorite');
+  const response = await apiClient.get('/station/favorite');
     return response.data;
   }
 };
