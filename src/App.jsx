@@ -196,6 +196,30 @@ function App() {
               }
             />
             <Route
+              path="/bus/create"
+              element={
+                <ProtectedRoute>
+                  <BusList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bus/:id"
+              element={
+                <ProtectedRoute>
+                  <BusList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bus/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <BusList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/bus/map"
               element={
                 <ProtectedRoute>
@@ -207,6 +231,62 @@ function App() {
             {/* Driver Routes */}
             <Route
               path="/driver"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/create"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/:id"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/:id/documents"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/:id/penalties"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/statistics"
+              element={
+                <ProtectedRoute>
+                  <DriverList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/reports"
               element={
                 <ProtectedRoute>
                   <DriverList />

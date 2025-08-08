@@ -1,280 +1,363 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Car,
-  Clock,
-  Calendar,
-  MapPin,
-  Phone,
-  Mail,
-  CreditCard,
-  UserCheck,
-  UserX,
-  RefreshCw,
-  Award,
-  FileText,
-  AlertTriangle
-} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { driverApi } from '../services/apiService';
+import { 
+  getDriverShiftLabel, 
+  getDriverShiftColor, 
+  getDriverShiftIcon,
+  getDriverStatusLabel,
+  getDriverStatusColor,
+  getDriverStatusIcon,
+  formatDriverExperience,
+  formatDriverRating,
+  getDriverRatingColor,
+  formatTimeAgo,
+  DRIVER_SEARCH_FILTERS,
+  DRIVER_SORT_OPTIONS
+} from '../constants/driverTypes';
 import '../styles/DriverList.css';
 
 const DriverList = () => {
   const [drivers, setDrivers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [shiftFilter, setShiftFilter] = useState('');
-  const [activeFilter, setActiveFilter] = useState('');
+  const [currentFilter, setCurrentFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('firstName');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedDrivers, setSelectedDrivers] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize] = useState(10);
+  
+  const navigate = useNavigate();
 
-  // Shift options
-  const shiftOptions = [
-    { value: '', label: 'Tüm Vardiyalar' },
-    { value: 'DAYTIME', label: 'Gündüz' },
-    { value: 'NIGHT', label: 'Gece' }
-  ];
-
-  // Active status options
-  const activeOptions = [
-    { value: '', label: 'Tüm Durumlar' },
-    { value: 'true', label: 'Aktif' },
-    { value: 'false', label: 'Pasif' }
-  ];
-
-  // Load drivers
-  const loadDrivers = async () => {
+  // Tüm sürücüleri yükle
+  const loadDrivers = async (page = 0) => {
     setLoading(true);
+    setError('');
     try {
-      const response = await driverApi.getAllDrivers(currentPage, pageSize);
+      let response;
       
-      console.log('Driver API Response:', response);
+      if (searchTerm.trim()) {
+        // Arama yapılıyorsa
+        response = await driverApi.searchDrivers(searchTerm, page, pageSize);
+      } else {
+        // Filter'a göre endpoint seç
+        switch (currentFilter) {
+          case 'ACTIVE':
+            response = await driverApi.getActiveDrivers(page, pageSize);
+            break;
+          case 'INACTIVE':
+            response = await driverApi.getAllDrivers(page, pageSize);
+            // Frontend'de inactive filtreleme yapacağız
+            break;
+          case 'DAYTIME':
+            response = await driverApi.getDriversByShift('DAYTIME', page, pageSize);
+            break;
+          case 'NIGHT':
+            response = await driverApi.getDriversByShift('NIGHT', page, pageSize);
+            break;
+          case 'WITH_PENALTIES':
+            response = await driverApi.getDriversWithPenalties(page, pageSize);
+            break;
+          default:
+            response = await driverApi.getAllDrivers(page, pageSize);
+        }
+      }
 
-      if (response && response.success && response.data) {
-        let driverData = response.data.content || [];
+      if (response.success && response.data) {
+        let driversData = response.data.content || [];
         
-        // Apply local filters
-        if (searchTerm.trim()) {
-          driverData = driverData.filter(driver => 
-            `${driver.firstName} ${driver.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            driver.nationalId?.includes(searchTerm) ||
-            driver.licenseNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+        // Inactive filter için frontend filtreleme
+        if (currentFilter === 'INACTIVE' && !searchTerm.trim()) {
+          driversData = driversData.filter(driver => !driver.active);
         }
-
-        if (shiftFilter) {
-          driverData = driverData.filter(driver => driver.shift === shiftFilter);
-        }
-
-        if (activeFilter !== '') {
-          const isActive = activeFilter === 'true';
-          driverData = driverData.filter(driver => driver.active === isActive);
-        }
-
-        setDrivers(driverData);
+        
+        setDrivers(driversData);
         setTotalPages(response.data.totalPages || 0);
         setTotalElements(response.data.totalElements || 0);
+        setCurrentPage(page);
       } else {
-        console.log('Response structure issue:', response);
-        setError('Şoförler yüklenirken hata oluştu');
+        setError('Sürücüler yüklenirken hata oluştu');
       }
-    } catch (err) {
-      console.error('Error loading drivers:', err);
-      setError('Şoförler yüklenirken hata oluştu');
+    } catch (error) {
+      console.error('Drivers loading error:', error);
+      setError('Sürücüler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
     }
   };
 
+  // Sayfa yüklendiğinde sürücüleri getir
   useEffect(() => {
     loadDrivers();
-  }, [currentPage]);
+  }, [currentFilter]);
 
-  // Handle search
+  // Arama
   const handleSearch = () => {
     setCurrentPage(0);
-    loadDrivers();
+    loadDrivers(0);
   };
 
-  // Handle page change
+  // Aramayı temizle
+  const clearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(0);
+    loadDrivers(0);
+  };
+
+  // Filter değiştir
+  const handleFilterChange = (filter) => {
+    setCurrentFilter(filter);
+    setCurrentPage(0);
+  };
+
+  // Sayfa değiştir
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
-
-  // Delete driver
-  const deleteDriver = async (driverId) => {
-    if (!window.confirm('Bu şoförü silmek istediğinizden emin misiniz?')) return;
-
-    try {
-      await driverApi.deleteDriver(driverId);
-      loadDrivers(); // Reload data
-    } catch (err) {
-      console.error('Error deleting driver:', err);
-      setError('Şoför silinirken hata oluştu');
+    if (newPage >= 0 && newPage < totalPages) {
+      loadDrivers(newPage);
     }
   };
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('tr-TR');
+  // Sürücü seç/seçimi kaldır
+  const toggleDriverSelection = (driverId) => {
+    setSelectedDrivers(prev => 
+      prev.includes(driverId) 
+        ? prev.filter(id => id !== driverId)
+        : [...prev, driverId]
+    );
   };
 
-  // Get shift badge class
-  const getShiftBadgeClass = (shift) => {
-    switch (shift) {
-      case 'DAYTIME':
-        return 'shift-badge shift-day';
-      case 'NIGHT':
-        return 'shift-badge shift-night';
-      default:
-        return 'shift-badge shift-unknown';
-    }
-  };
-
-  // Get license status
-  const getLicenseStatus = (expiryDate) => {
-    if (!expiryDate) return { status: 'unknown', text: 'Bilinmiyor', class: 'license-unknown' };
-    
-    const expiry = new Date(expiryDate);
-    const today = new Date();
-    const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) {
-      return { status: 'expired', text: 'Süresi Dolmuş', class: 'license-expired' };
-    } else if (diffDays <= 30) {
-      return { status: 'expiring', text: `${diffDays} gün kaldı`, class: 'license-expiring' };
+  // Tümünü seç/seçimi kaldır
+  const toggleAllSelection = () => {
+    if (selectedDrivers.length === drivers.length) {
+      setSelectedDrivers([]);
     } else {
-      return { status: 'valid', text: 'Geçerli', class: 'license-valid' };
+      setSelectedDrivers(drivers.map(driver => driver.id));
     }
   };
 
-  // Calculate age
-  const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) return '-';
-    const today = new Date();
-    const birth = new Date(dateOfBirth);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
+  // Aktif durumu değiştir
+  const toggleActiveStatus = async (driverId) => {
+    try {
+      const driver = drivers.find(d => d.id === driverId);
+      const response = await driverApi.changeDriverStatus(driverId, !driver.active);
+      if (response.success) {
+        loadDrivers(currentPage);
+      } else {
+        setError('Durum değiştirme işlemi başarısız');
+      }
+    } catch (error) {
+      console.error('Toggle active error:', error);
+      setError('Durum değiştirme işlemi başarısız');
     }
-    return age;
   };
+
+  // Sürücü sil
+  const deleteDriver = async (driverId) => {
+    if (window.confirm('Bu sürücüyü silmek istediğinizden emin misiniz?')) {
+      try {
+        const response = await driverApi.deleteDriver(driverId);
+        if (response.success) {
+          loadDrivers(currentPage);
+        } else {
+          setError('Silme işlemi başarısız');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        setError('Silme işlemi başarısız');
+      }
+    }
+  };
+
+  // Sürücü satırı render
+  const renderDriverRow = (driver) => (
+    <tr key={driver.id} className="driver-row">
+      <td>
+        <input
+          type="checkbox"
+          checked={selectedDrivers.includes(driver.id)}
+          onChange={() => toggleDriverSelection(driver.id)}
+          className="driver-checkbox"
+        />
+      </td>
+      
+      <td>
+        <div className="driver-name-container">
+          <span className="driver-name">{driver.firstName} {driver.lastName}</span>
+          <span className="driver-id">#{driver.id}</span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="driver-contact">
+          <span className="email">{driver.email}</span>
+          <span className="national-id">{driver.nationalId}</span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="driver-status-container">
+          <span className="status-icon">{getDriverStatusIcon(driver.active)}</span>
+          <span 
+            className="status-badge"
+            style={{ backgroundColor: getDriverStatusColor(driver.active) }}
+          >
+            {getDriverStatusLabel(driver.active)}
+          </span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="shift-container">
+          <span className="shift-icon">{getDriverShiftIcon(driver.shift)}</span>
+          <span 
+            className="shift-badge"
+            style={{ backgroundColor: getDriverShiftColor(driver.shift) }}
+          >
+            {getDriverShiftLabel(driver.shift)}
+          </span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="license-info">
+          <span className="license-class">{driver.licenseClass}</span>
+          <span className="license-number">{driver.licenseNumber}</span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="experience-container">
+          {formatDriverExperience(driver.employmentDate)}
+        </div>
+      </td>
+      
+      <td>
+        <div className="rating-container">
+          <span 
+            className="rating-badge"
+            style={{ backgroundColor: getDriverRatingColor(driver.averageRating) }}
+          >
+            {formatDriverRating(driver.averageRating)}
+          </span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="driver-actions">
+          <Link 
+            to={`/driver/${driver.id}`} 
+            className="btn btn-view"
+            title="Detayları Görüntüle"
+          >
+            👁️
+          </Link>
+          
+          <button
+            onClick={() => toggleActiveStatus(driver.id)}
+            className={`btn ${driver.active ? 'btn-deactivate' : 'btn-activate'}`}
+            title={driver.active ? 'Pasifleştir' : 'Aktifleştir'}
+          >
+            {driver.active ? '⏸️' : '▶️'}
+          </button>
+          
+          <Link 
+            to={`/driver/${driver.id}/edit`} 
+            className="btn btn-edit"
+            title="Düzenle"
+          >
+            ✏️
+          </Link>
+          
+          <Link 
+            to={`/driver/${driver.id}/documents`} 
+            className="btn btn-documents"
+            title="Belgeler"
+          >
+            📄
+          </Link>
+          
+          <Link 
+            to={`/driver/${driver.id}/penalties`} 
+            className="btn btn-penalties"
+            title="Cezalar"
+          >
+            ⚖️
+          </Link>
+          
+          <button
+            onClick={() => deleteDriver(driver.id)}
+            className="btn btn-delete"
+            title="Sil"
+          >
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 
   return (
     <div className="driver-list-container">
       {/* Header */}
-      <div className="page-header">
+      <div className="driver-list-header">
         <div className="header-left">
-          <h1><User size={24} /> Şoför Yönetimi</h1>
-          <p>Sistemdeki tüm şoförleri görüntüleyin ve yönetin</p>
+          <h1>Sürücü Yönetimi</h1>
+          <p className="header-description">
+            Tüm sürücüleri listeleyin, durumlarını yönetin ve işlemler yapın
+          </p>
         </div>
         <div className="header-actions">
-          <button 
-            className="btn btn-primary"
-            onClick={() => window.location.href = '/driver/add'}
-          >
-            <Plus size={18} />
-            Yeni Şoför
-          </button>
+          <Link to="/driver/create" className="btn btn-primary">
+            ➕ Yeni Sürücü Ekle
+          </Link>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="filters-container">
-        <div className="filters-header">
-          <Filter size={20} />
-          <span>Filtreler ve Arama</span>
-        </div>
-        
-        <div className="filters-grid">
-          {/* Search */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <Search size={16} />
-              Şoför Ara
-            </label>
-            <div className="search-input-group">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Ad, soyad, TC kimlik veya ehliyet no"
-                className="modern-input"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <button 
-                onClick={handleSearch}
-                className="search-btn"
-                disabled={loading}
-              >
-                <Search size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Shift Filter */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <Clock size={16} />
-              Vardiya
-            </label>
-            <select
-              value={shiftFilter}
-              onChange={(e) => setShiftFilter(e.target.value)}
-              className="modern-select"
-            >
-              {shiftOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Active Filter */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <UserCheck size={16} />
-              Durum
-            </label>
-            <select
-              value={activeFilter}
-              onChange={(e) => setActiveFilter(e.target.value)}
-              className="modern-select"
-            >
-              {activeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Refresh */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <RefreshCw size={16} />
-              Yenile
-            </label>
+      {/* Search and Filters */}
+      <div className="search-section">
+        <div className="search-container">
+          <div className="search-input-wrapper">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Ad, soyad veya TC kimlik no ile ara..."
+              className="search-input"
+            />
             <button 
-              onClick={loadDrivers}
-              className="btn btn-secondary"
+              onClick={handleSearch} 
               disabled={loading}
+              className="search-btn"
             >
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-              Yenile
+              🔍 Ara
             </button>
+            {searchTerm && (
+              <button 
+                onClick={clearSearch}
+                className="clear-search-btn"
+              >
+                ✖️ Temizle
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="filters-container">
+          {Object.entries(DRIVER_SEARCH_FILTERS).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => handleFilterChange(key)}
+              className={`filter-btn ${currentFilter === key ? 'active' : ''}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -285,208 +368,91 @@ const DriverList = () => {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="stats-summary">
-        <div className="stat-item">
-          <User size={20} />
-          <div>
-            <span className="stat-number">{totalElements}</span>
-            <span className="stat-label">Toplam Şoför</span>
-          </div>
+      {/* Content */}
+      <div className="driver-list-content">
+        {/* Results Info */}
+        <div className="results-info">
+          <span className="results-count">
+            Toplam {totalElements} sürücü bulundu
+          </span>
+          <button 
+            onClick={() => loadDrivers(currentPage)}
+            className="refresh-btn"
+          >
+            🔄 Yenile
+          </button>
         </div>
-        <div className="stat-item">
-          <UserCheck size={20} />
-          <div>
-            <span className="stat-number">{drivers.filter(d => d.active).length}</span>
-            <span className="stat-label">Aktif</span>
-          </div>
-        </div>
-        <div className="stat-item">
-          <UserX size={20} />
-          <div>
-            <span className="stat-number">{drivers.filter(d => !d.active).length}</span>
-            <span className="stat-label">Pasif</span>
-          </div>
-        </div>
-        <div className="stat-item">
-          <Clock size={20} />
-          <div>
-            <span className="stat-number">{drivers.filter(d => d.shift === 'DAYTIME').length}</span>
-            <span className="stat-label">Gündüz</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Drivers Table */}
-      <div className="drivers-table-container">
-        <table className="drivers-table">
-          <thead>
-            <tr>
-              <th>Şoför</th>
-              <th>TC Kimlik</th>
-              <th>Vardiya</th>
-              <th>Ehliyet</th>
-              <th>Yaş</th>
-              <th>İşe Başlama</th>
-              <th>Performans</th>
-              <th>Durum</th>
-              <th>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="9" className="loading-cell">
-                  <RefreshCw className="spinning" size={20} />
-                  Yükleniyor...
-                </td>
-              </tr>
-            ) : drivers.length === 0 ? (
-              <tr>
-                <td colSpan="9" className="empty-cell">
-                  <User size={48} />
-                  <p>Henüz şoför bulunamadı</p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => window.location.href = '/driver/add'}
-                  >
-                    İlk Şoförü Ekle
-                  </button>
-                </td>
-              </tr>
-            ) : (
-              drivers.map((driver) => {
-                const licenseStatus = getLicenseStatus(driver.licenseExpiryDate);
-                return (
-                  <tr key={driver.id}>
-                    <td>
-                      <div className="driver-info">
-                        <div className="driver-avatar">
-                          <User size={20} />
-                        </div>
-                        <div className="driver-details">
-                          <div className="driver-name">
-                            {driver.firstName} {driver.lastName}
-                          </div>
-                          <div className="driver-contact">
-                            <Mail size={12} />
-                            {driver.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="national-id">
-                        <CreditCard size={14} />
-                        {driver.nationalId}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={getShiftBadgeClass(driver.shift)}>
-                        <Clock size={12} />
-                        {driver.shift === 'DAYTIME' ? 'Gündüz' : driver.shift === 'NIGHT' ? 'Gece' : 'Belirsiz'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="license-info">
-                        <div className="license-number">
-                          <FileText size={12} />
-                          {driver.licenseNumber}
-                        </div>
-                        <div className={`license-status ${licenseStatus.class}`}>
-                          {licenseStatus.status === 'expired' && <AlertTriangle size={12} />}
-                          {licenseStatus.text}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="age-info">
-                        <Calendar size={14} />
-                        {calculateAge(driver.dateOfBirth)} yaş
-                      </div>
-                    </td>
-                    <td>
-                      <div className="employment-date">
-                        <Calendar size={14} />
-                        {formatDate(driver.employmentDate)}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="performance-summary">
-                        <div className="performance-item">
-                          <Award size={12} />
-                          <span>{driver.averageRating ? driver.averageRating.toFixed(1) : 'N/A'}</span>
-                        </div>
-                        <div className="performance-item">
-                          <Clock size={12} />
-                          <span>{driver.totalDrivingHours || 0}h</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${driver.active ? 'status-active' : 'status-inactive'}`}>
-                        {driver.active ? <UserCheck size={12} /> : <UserX size={12} />}
-                        {driver.active ? 'Aktif' : 'Pasif'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          onClick={() => window.location.href = `/driver/detail/${driver.id}`}
-                          className="btn-action btn-view"
-                          title="Detayları Görüntüle"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => window.location.href = `/driver/edit/${driver.id}`}
-                          className="btn-action btn-edit"
-                          title="Düzenle"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => deleteDriver(driver.id)}
-                          className="btn-action btn-delete"
-                          title="Sil"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner" />
+            <p>Sürücüler yükleniyor...</p>
+          </div>
+        ) : drivers.length === 0 ? (
+          <div className="no-drivers">
+            <div className="no-drivers-icon">👨‍💼</div>
+            <h3>Sürücü bulunamadı</h3>
+            <p>Henüz hiç sürücü kaydedilmemiş veya arama kriterlerinize uygun sonuç yok.</p>
+            <Link to="/driver/create" className="btn btn-primary">
+              İlk Sürücüyü Ekleyin
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Table */}
+            <div className="drivers-table-wrapper">
+              <table className="drivers-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        checked={selectedDrivers.length === drivers.length && drivers.length > 0}
+                        onChange={toggleAllSelection}
+                        className="select-all-checkbox"
+                      />
+                    </th>
+                    <th>Ad Soyad</th>
+                    <th>İletişim</th>
+                    <th>Durum</th>
+                    <th>Vardiya</th>
+                    <th>Ehliyet</th>
+                    <th>Deneyim</th>
+                    <th>Puan</th>
+                    <th>İşlemler</th>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                </thead>
+                <tbody>
+                  {drivers.map(renderDriverRow)}
+                </tbody>
+              </table>
+            </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 0}
-            className="pagination-btn"
-          >
-            Önceki
-          </button>
-          
-          <div className="pagination-info">
-            Sayfa {currentPage + 1} / {totalPages} 
-            <span className="total-info">({totalElements} toplam şoför)</span>
-          </div>
-          
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages - 1}
-            className="pagination-btn"
-          >
-            Sonraki
-          </button>
-        </div>
-      )}
+            {/* Pagination */}
+            <div className="pagination-container">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="pagination-btn"
+              >
+                ◀️ Önceki
+              </button>
+              
+              <div className="pagination-info">
+                Sayfa {currentPage + 1} / {totalPages}
+              </div>
+              
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="pagination-btn"
+              >
+                Sonraki ▶️
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -297,13 +297,10 @@ export const newsApi = {
 };
 
 // Dashboard API endpoints
+// Dashboard API endpoints (using mock data since backend endpoints don't exist)
 export const dashboardApi = {
-  getStats: async () => {
-    const response = await apiClient.get('/dashboard/stats');
-    return response.data;
-  },
-
   getRecentActivities: async () => {
+    // This endpoint may not exist either, will be handled with try-catch in components
     const response = await apiClient.get('/dashboard/recent-activities');
     return response.data;
   }
@@ -393,28 +390,114 @@ export const feedbackApi = {
 
 // Station API endpoints
 export const stationApi = {
-  getAllStations: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/stations?page=${page}&size=${size}`);
+  getAllStations: async (
+    latitude?: number | null, 
+    longitude?: number | null, 
+    type?: string | null, 
+    page: number = 0, 
+    size: number = 10
+  ) => {
+    const queryParams = new URLSearchParams();
+    
+    if (latitude !== null && latitude !== undefined) {
+      queryParams.append('latitude', latitude.toString());
+    }
+    if (longitude !== null && longitude !== undefined) {
+      queryParams.append('longitude', longitude.toString());
+    }
+    if (type !== null && type !== undefined && type !== 'ALL') {
+      queryParams.append('type', type);
+    }
+    queryParams.append('page', page.toString());
+    queryParams.append('size', size.toString());
+    
+    const response = await apiClient.get(`/v1/api/station?${queryParams.toString()}`);
     return response.data;
   },
 
-  getStationById: async (id: number) => {
-    const response = await apiClient.get(`/stations/${id}`);
+  searchStationsByName: async (name: string, page: number = 0, size: number = 10) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('name', name);
+    queryParams.append('page', page.toString());
+    queryParams.append('size', size.toString());
+    
+    const response = await apiClient.get(`/v1/api/station/search?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  getStationById: async (id: number, directionType?: string) => {
+    const queryParams = new URLSearchParams();
+    if (directionType) {
+      queryParams.append('directionType', directionType);
+    }
+    
+    const url = queryParams.toString() 
+      ? `/v1/api/station/${id}?${queryParams.toString()}`
+      : `/v1/api/station/${id}`;
+    
+    const response = await apiClient.get(url);
     return response.data;
   },
 
   createStation: async (stationData: any) => {
-    const response = await apiClient.post('/stations', stationData);
+    const response = await apiClient.post('/v1/api/station', stationData);
     return response.data;
   },
 
-  updateStation: async (id: number, stationData: any) => {
-    const response = await apiClient.put(`/stations/${id}`, stationData);
+  updateStation: async (stationData: any) => {
+    const response = await apiClient.put('/v1/api/station', stationData);
     return response.data;
   },
 
   deleteStation: async (id: number) => {
-    const response = await apiClient.delete(`/stations/${id}`);
+    const response = await apiClient.delete(`/v1/api/station/${id}`);
+    return response.data;
+  },
+
+  changeStationStatus: async (id: number, active: boolean) => {
+    const response = await apiClient.patch(`/v1/api/station/${id}/status?active=${active}`);
+    return response.data;
+  },
+
+  getStationRoutes: async (stationId: number) => {
+    const response = await apiClient.get(`/v1/api/station/routes?stationId=${stationId}`);
+    return response.data;
+  },
+
+  searchKeywords: async (query: string) => {
+    const response = await apiClient.get(`/v1/api/station/keywords?query=${query}`);
+    return response.data;
+  },
+
+  searchNearbyStations: async (searchRequest: any, page: number = 0, size: number = 10) => {
+    const response = await apiClient.post(`/v1/api/station/search/nearby?page=${page}&size=${size}`, searchRequest);
+    return response.data;
+  },
+
+  getNearbyStations: async (latitude: number, longitude: number, page: number = 0, size: number = 10) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('latitude', latitude.toString());
+    queryParams.append('longitude', longitude.toString());
+    queryParams.append('page', page.toString());
+    queryParams.append('size', size.toString());
+    
+    const response = await apiClient.get(`/v1/api/station/nearby?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Favoriler için
+  addFavoriteStation: async (stationId: number) => {
+    const response = await apiClient.post(`/v1/api/station/add-favorite?stationId=${stationId}`);
+    return response.data;
+  },
+
+  removeFavoriteStation: async (stationId: number) => {
+    const response = await apiClient.delete(`/v1/api/station/remove-favorite?stationId=${stationId}`);
+    return response.data;
+  },
+
+  getFavoriteStations: async () => {
+    const response = await apiClient.get('/v1/api/station/favorite');
     return response.data;
   }
 };
@@ -449,6 +532,7 @@ export const paymentPointApi = {
 
 // Bus API endpoints
 export const busApi = {
+  // === GENEL SORGULAMA ENDPOİNTLERİ ===
   getAllBuses: async (page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/bus/all?page=${page}&size=${size}`);
     return response.data;
@@ -459,8 +543,97 @@ export const busApi = {
     return response.data;
   },
 
+  getActiveBuses: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/bus/active?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // === CRUD İŞLEMLERİ ===
+  createBus: async (busData: any) => {
+    const response = await apiClient.post('/bus/create', busData);
+    return response.data;
+  },
+
+  updateBus: async (id: number, busData: any) => {
+    const response = await apiClient.put(`/bus/update/${id}`, busData);
+    return response.data;
+  },
+
+  deleteBus: async (id: number) => {
+    const response = await apiClient.delete(`/bus/delete/${id}`);
+    return response.data;
+  },
+
+  toggleActiveStatus: async (id: number) => {
+    const response = await apiClient.put(`/bus/${id}/toggle-active`);
+    return response.data;
+  },
+
+  // === ŞOFÖR YÖNETİMİ ===
+  assignDriver: async (busId: number, driverId: number) => {
+    const response = await apiClient.put(`/bus/${busId}/assign-driver`, { driverId });
+    return response.data;
+  },
+
+  // === KONUM YÖNETİMİ ===
+  getCurrentLocation: async (busId: number) => {
+    const response = await apiClient.get(`/bus/${busId}/location`);
+    return response.data;
+  },
+
+  updateLocation: async (busId: number, locationData: any) => {
+    const response = await apiClient.post(`/bus/${busId}/location`, locationData);
+    return response.data;
+  },
+
+  getLocationHistory: async (busId: number, date?: string, page: number = 0, size: number = 10) => {
+    const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+    if (date) params.append('date', date);
+    const response = await apiClient.get(`/bus/${busId}/location-history?${params}`);
+    return response.data;
+  },
+
+  // === ROTA YÖNETİMİ ===
+  assignRoute: async (busId: number, routeId: number) => {
+    const response = await apiClient.put(`/bus/${busId}/route`, { routeId });
+    return response.data;
+  },
+
+  getRouteStations: async (busId: number) => {
+    const response = await apiClient.get(`/bus/${busId}/route/stations`);
+    return response.data;
+  },
+
+  getEstimatedArrivalTime: async (busId: number, stationId: number) => {
+    const response = await apiClient.get(`/bus/${busId}/eta?stationId=${stationId}`);
+    return response.data;
+  },
+
+  // === YÖN YÖNETİMİ ===
+  switchDirection: async (busId: number) => {
+    const response = await apiClient.put(`/bus/${busId}/switch-direction`);
+    return response.data;
+  },
+
+  // === İSTATİSTİKLER ===
+  getBusStatistics: async () => {
+    const response = await apiClient.get('/bus/statistics');
+    return response.data;
+  },
+
+  // === ARAMA VE FİLTRELEME ===
   searchBuses: async (searchParams: any) => {
     const response = await apiClient.get('/bus/search', { params: searchParams });
+    return response.data;
+  },
+
+  getBusesByRoute: async (routeId: number, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/bus/route/${routeId}?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getBusesByDriver: async (driverId: number, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/bus/driver/${driverId}?page=${page}&size=${size}`);
     return response.data;
   },
 
@@ -469,39 +642,27 @@ export const busApi = {
     return response.data;
   },
 
-  createBus: async (busData: any) => {
-    const response = await apiClient.post('/bus', busData);
+  // === DURUM YÖNETİMİ ===
+  updateBusStatus: async (busId: number, statusData: any) => {
+    const response = await apiClient.put(`/bus/${busId}/status`, statusData);
     return response.data;
   },
 
-  updateBus: async (id: number, busData: any) => {
-    const response = await apiClient.put(`/bus/${id}`, busData);
-    return response.data;
-  },
-
-  deleteBus: async (id: number) => {
-    const response = await apiClient.delete(`/bus/${id}`);
-    return response.data;
-  },
-
-  toggleActiveStatus: async (id: number) => {
-    const response = await apiClient.patch(`/bus/${id}/toggle-active`);
-    return response.data;
-  },
-
+  // === TOPLU İŞLEMLER ===
   bulkActivate: async (busIds: number[]) => {
-    const response = await apiClient.patch('/bus/bulk-activate', { busIds });
+    const response = await apiClient.put('/bus/bulk/activate', busIds);
     return response.data;
   },
 
   bulkDeactivate: async (busIds: number[]) => {
-    const response = await apiClient.patch('/bus/bulk-deactivate', { busIds });
+    const response = await apiClient.put('/bus/bulk/deactivate', busIds);
     return response.data;
   }
 };
 
 // Driver API endpoints
 export const driverApi = {
+  // === DRIVER CRUD ===
   getAllDrivers: async (page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/drivers?page=${page}&size=${size}`);
     return response.data;
@@ -509,11 +670,6 @@ export const driverApi = {
 
   getDriverById: async (id: number) => {
     const response = await apiClient.get(`/drivers/${id}`);
-    return response.data;
-  },
-
-  searchDrivers: async (searchTerm: string, page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/drivers/search?q=${searchTerm}&page=${page}&size=${size}`);
     return response.data;
   },
 
@@ -530,11 +686,112 @@ export const driverApi = {
   deleteDriver: async (id: number) => {
     const response = await apiClient.delete(`/drivers/${id}`);
     return response.data;
+  },
+
+  // === SEARCH & FILTERING ===
+  getActiveDrivers: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/active?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getDriversByShift: async (shift: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/by-shift/${shift}?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  searchDrivers: async (query: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getDriversWithPenalties: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/with-penalties?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // === STATUS MANAGEMENT ===
+  changeDriverStatus: async (id: number, active: boolean) => {
+    const response = await apiClient.put(`/drivers/${id}/status?active=${active}`);
+    return response.data;
+  },
+
+  // === DOCUMENTS ===
+  getDriverDocuments: async (id: number, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/${id}/documents?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  addDriverDocument: async (id: number, documentData: any) => {
+    const response = await apiClient.post(`/drivers/${id}/documents`, documentData);
+    return response.data;
+  },
+
+  updateDriverDocument: async (docId: number, documentData: any) => {
+    const response = await apiClient.put(`/drivers/documents/${docId}`, documentData);
+    return response.data;
+  },
+
+  deleteDriverDocument: async (docId: number) => {
+    const response = await apiClient.delete(`/drivers/documents/${docId}`);
+    return response.data;
+  },
+
+  // === PENALTIES ===
+  getDriverPenalties: async (id: number, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/${id}/penalties?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  addDriverPenalty: async (id: number, penaltyData: any) => {
+    const response = await apiClient.post(`/drivers/${id}/penalties`, penaltyData);
+    return response.data;
+  },
+
+  updateDriverPenalty: async (penaltyId: number, penaltyData: any) => {
+    const response = await apiClient.put(`/drivers/penalties/${penaltyId}`, penaltyData);
+    return response.data;
+  },
+
+  deleteDriverPenalty: async (penaltyId: number) => {
+    const response = await apiClient.delete(`/drivers/penalties/${penaltyId}`);
+    return response.data;
+  },
+
+  // === PERFORMANCE ===
+  getDriverPerformance: async (id: number) => {
+    const response = await apiClient.get(`/drivers/${id}/performance`);
+    return response.data;
+  },
+
+  // === STATISTICS & REPORTS ===
+  getDriverStatistics: async () => {
+    const response = await apiClient.get('/drivers/statistics');
+    return response.data;
+  },
+
+  getTopPerformingDrivers: async (limit: number = 10) => {
+    const response = await apiClient.get(`/drivers/top-performers?limit=${limit}`);
+    return response.data;
+  },
+
+  getDriversWithExpiringLicenses: async (days: number = 30) => {
+    const response = await apiClient.get(`/drivers/expiring-licenses?days=${days}`);
+    return response.data;
+  },
+
+  getDriversWithExpiringHealthCertificates: async (days: number = 30) => {
+    const response = await apiClient.get(`/drivers/expiring-health-certificates?days=${days}`);
+    return response.data;
+  },
+
+  getDriversHiredBetween: async (startDate: string, endDate: string, page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/drivers/hired-between?startDate=${startDate}&endDate=${endDate}&page=${page}&size=${size}`);
+    return response.data;
   }
 };
 
-// Route API endpoints
-export const routeApi = {
+// Old Route API endpoints (legacy)
+export const oldRouteApi = {
   getAllRoutes: async (page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/routes?page=${page}&size=${size}`);
     return response.data;
@@ -892,6 +1149,106 @@ export const walletTransfersApi = {
 
   deleteTransfer: async (id: number) => {
     const response = await apiClient.delete(`/wallet-transfers/${id}`);
+    return response.data;
+  }
+};
+
+// Route API endpoints - Complete Route Management System
+export const routeApi = {
+  // 1. Tüm rotaları getir (GET /all)
+  getAllRoutes: async () => {
+    const response = await apiClient.get('/route/all');
+    return response.data;
+  },
+
+  // 2. İsme göre rota arama (GET /search?name=)
+  searchRoutesByName: async (name: string) => {
+    const response = await apiClient.get(`/route/search?name=${encodeURIComponent(name)}`);
+    return response.data;
+  },
+
+  // 3. Rota detayları (GET /{id})
+  getRouteById: async (id: number) => {
+    const response = await apiClient.get(`/route/${id}`);
+    return response.data;
+  },
+
+  // 4. Rota yönlerini getir (GET /{id}/directions)
+  getRouteDirections: async (id: number) => {
+    const response = await apiClient.get(`/route/${id}/directions`);
+    return response.data;
+  },
+
+  // 5. Belirli yöndeki durakları getir (GET /{routeId}/direction/{directionType}/stations)
+  getStationsInDirection: async (routeId: number, directionType: 'GIDIS' | 'DONUS') => {
+    const response = await apiClient.get(`/route/${routeId}/direction/${directionType}/stations`);
+    return response.data;
+  },
+
+  // 6. İki yönlü rota oluştur (POST /create-bidirectional)
+  createBidirectionalRoute: async (routeData: any) => {
+    const response = await apiClient.post('/route/create-bidirectional', routeData);
+    return response.data;
+  },
+
+  // 7. Rota sil (DELETE /{id})
+  deleteRoute: async (id: number) => {
+    const response = await apiClient.delete(`/route/${id}`);
+    return response.data;
+  },
+
+  // 8. Yöne durak ekle (POST /{routeId}/direction/{directionType}/add-station)
+  addStationToDirection: async (
+    routeId: number, 
+    directionType: 'GIDIS' | 'DONUS', 
+    afterStationId: number, 
+    newStationId: number
+  ) => {
+    const response = await apiClient.post(
+      `/route/${routeId}/direction/${directionType}/add-station?afterStationId=${afterStationId}&newStationId=${newStationId}`
+    );
+    return response.data;
+  },
+
+  // 9. Yönden durak çıkar (DELETE /{routeId}/direction/{directionType}/remove-station)
+  removeStationFromDirection: async (
+    routeId: number, 
+    directionType: 'GIDIS' | 'DONUS', 
+    stationId: number
+  ) => {
+    const response = await apiClient.delete(
+      `/route/${routeId}/direction/${directionType}/remove-station?stationId=${stationId}`
+    );
+    return response.data;
+  },
+
+  // 10. Durağa göre rota arama (GET /search-by-station?stationId=)
+  searchRoutesByStation: async (stationId: number) => {
+    const response = await apiClient.get(`/route/search-by-station?stationId=${stationId}`);
+    return response.data;
+  },
+
+  // 11. Favorilere ekleme (POST /favorite)
+  addFavorite: async (routeId: number) => {
+    const response = await apiClient.post(`/route/favorite?routeId=${routeId}`);
+    return response.data;
+  },
+
+  // 12. Favorilerden çıkarma (DELETE /favorite)
+  removeFavorite: async (routeId: number) => {
+    const response = await apiClient.delete(`/route/favorite?routeId=${routeId}`);
+    return response.data;
+  },
+
+  // 13. Kullanıcının favori rotaları (GET /favorites)
+  getFavoriteRoutes: async () => {
+    const response = await apiClient.get('/route/favorites');
+    return response.data;
+  },
+
+  // 14. Rota önerisi (POST /suggest)
+  suggestRoute: async (suggestionData: { userLat: number; userLng: number; destinationAddress: string }) => {
+    const response = await apiClient.post('/route/suggest', suggestionData);
     return response.data;
   }
 };

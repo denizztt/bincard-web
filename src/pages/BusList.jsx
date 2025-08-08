@@ -1,113 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bus, 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  MapPin, 
-  Users, 
-  Gauge,
-  Clock,
-  Power,
-  PowerOff,
-  Route,
-  User,
-  Navigation,
-  RefreshCw
-} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { busApi } from '../services/apiService';
+import { 
+  getBusStatusLabel, 
+  getBusStatusColor, 
+  getBusStatusIcon,
+  formatOccupancyRate,
+  getOccupancyColor,
+  formatTimeAgo,
+  BUS_SEARCH_FILTERS,
+  BUS_SORT_OPTIONS
+} from '../constants/busTypes';
 import '../styles/BusList.css';
 
 const BusList = () => {
   const [buses, setBuses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [routeFilter, setRouteFilter] = useState('');
+  const [currentFilter, setCurrentFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('numberPlate');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedBuses, setSelectedBuses] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [pageSize] = useState(10);
-  const [selectedBuses, setSelectedBuses] = useState([]);
-  const [bulkOperation, setBulkOperation] = useState('');
+  
+  const navigate = useNavigate();
 
-  // Bus status options
-  const statusOptions = [
-    { value: '', label: 'Tüm Durumlar' },
-    { value: 'CALISIYOR', label: 'Çalışıyor' },
-    { value: 'ARIZALI', label: 'Arızalı' },
-    { value: 'BAKIMDA', label: 'Bakımda' },
-    { value: 'SERVIS_DISI', label: 'Servis Dışı' },
-    { value: 'DURAKTA_BEKLIYOR', label: 'Durakta Bekliyor' },
-    { value: 'HAREKET_HALINDE', label: 'Hareket Halinde' },
-    { value: 'GARAJDA', label: 'Garajda' },
-    { value: 'TEMIZLIK', label: 'Temizlik' },
-    { value: 'YAKIT_ALIMI', label: 'Yakıt Alımı' },
-    { value: 'MOLA', label: 'Mola' }
-  ];
-
-  // Load buses
-  const loadBuses = async () => {
+  // Tüm otobüsleri yükle
+  const loadBuses = async (page = 0) => {
     setLoading(true);
+    setError('');
     try {
       let response;
       
       if (searchTerm.trim()) {
-        // Search by plate number
+        // Arama yapılıyorsa
         response = await busApi.searchBuses({
           numberPlate: searchTerm,
-          status: statusFilter,
-          page: currentPage,
+          page: page,
           size: pageSize
         });
-      } else if (statusFilter) {
-        // Filter by status
-        response = await busApi.getBusesByStatus(statusFilter, currentPage, pageSize);
+      } else if (currentFilter === 'ACTIVE') {
+        response = await busApi.getActiveBuses(page, pageSize);
       } else {
-        // Get all buses
-        response = await busApi.getAllBuses(currentPage, pageSize);
+        response = await busApi.getAllBuses(page, pageSize);
       }
 
-      console.log('Bus API Response:', response);
-
-      if (response) {
-        const busData = response.content || [];
-        console.log('Bus data:', busData);
-        setBuses(busData);
-        setTotalPages(response.totalPages || 0);
-        setTotalElements(response.totalElements || 0);
+      if (response.success && response.data) {
+        setBuses(response.data.content || []);
+        setTotalPages(response.data.totalPages || 0);
+        setTotalElements(response.data.totalElements || 0);
+        setCurrentPage(page);
       } else {
-        console.log('Response structure issue:', response);
         setError('Otobüsler yüklenirken hata oluştu');
       }
-    } catch (err) {
-      console.error('Error loading buses:', err);
+    } catch (error) {
+      console.error('Buses loading error:', error);
       setError('Otobüsler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
     }
   };
 
+  // Sayfa yüklendiğinde otobüsleri getir
   useEffect(() => {
     loadBuses();
-  }, [currentPage, statusFilter]);
+  }, [currentFilter]);
 
-  // Handle search
+  // Arama
   const handleSearch = () => {
     setCurrentPage(0);
-    loadBuses();
+    loadBuses(0);
   };
 
-  // Handle page change
+  // Aramayı temizle
+  const clearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(0);
+    loadBuses(0);
+  };
+
+  // Filter değiştir
+  const handleFilterChange = (filter) => {
+    setCurrentFilter(filter);
+    setCurrentPage(0);
+  };
+
+  // Sayfa değiştir
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    if (newPage >= 0 && newPage < totalPages) {
+      loadBuses(newPage);
+    }
   };
 
-  // Toggle bus selection
+  // Otobüs seç/seçimi kaldır
   const toggleBusSelection = (busId) => {
     setSelectedBuses(prev => 
       prev.includes(busId) 
@@ -116,8 +105,8 @@ const BusList = () => {
     );
   };
 
-  // Select all buses
-  const handleSelectAll = () => {
+  // Tümünü seç/seçimi kaldır
+  const toggleAllSelection = () => {
     if (selectedBuses.length === buses.length) {
       setSelectedBuses([]);
     } else {
@@ -125,207 +114,248 @@ const BusList = () => {
     }
   };
 
-  // Handle bulk operations
-  const handleBulkOperation = async () => {
-    if (!bulkOperation || selectedBuses.length === 0) return;
-
+  // Aktif durumu değiştir
+  const toggleActiveStatus = async (busId) => {
     try {
-      setLoading(true);
-      
-      if (bulkOperation === 'activate') {
-        await busApi.bulkActivate(selectedBuses);
-      } else if (bulkOperation === 'deactivate') {
-        await busApi.bulkDeactivate(selectedBuses);
+      const response = await busApi.toggleActiveStatus(busId);
+      if (response.success) {
+        loadBuses(currentPage);
+      } else {
+        setError('Durum değiştirme işlemi başarısız');
       }
-
-      // Reload data
-      await loadBuses();
-      setSelectedBuses([]);
-      setBulkOperation('');
-    } catch (err) {
-      console.error('Bulk operation error:', err);
-      setError('Toplu işlem sırasında hata oluştu');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Toggle active error:', error);
+      setError('Durum değiştirme işlemi başarısız');
     }
   };
 
-  // Toggle single bus active status
-  const toggleBusStatus = async (busId) => {
-    try {
-      await busApi.toggleActiveStatus(busId);
-      loadBuses(); // Reload data
-    } catch (err) {
-      console.error('Error toggling bus status:', err);
-      setError('Otobüs durumu değiştirilirken hata oluştu');
-    }
-  };
-
-  // Delete bus
+  // Otobüs sil
   const deleteBus = async (busId) => {
-    if (!window.confirm('Bu otobüsü silmek istediğinizden emin misiniz?')) return;
+    if (window.confirm('Bu otobüsü silmek istediğinizden emin misiniz?')) {
+      try {
+        const response = await busApi.deleteBus(busId);
+        if (response.success) {
+          loadBuses(currentPage);
+        } else {
+          setError('Silme işlemi başarısız');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        setError('Silme işlemi başarısız');
+      }
+    }
+  };
 
+  // Toplu işlemler
+  const handleBulkActivate = async () => {
+    if (selectedBuses.length === 0) return;
+    
     try {
-      await busApi.deleteBus(busId);
-      loadBuses(); // Reload data
-    } catch (err) {
-      console.error('Error deleting bus:', err);
-      setError('Otobüs silinirken hata oluştu');
+      const response = await busApi.bulkActivate(selectedBuses);
+      if (response.success) {
+        setSelectedBuses([]);
+        loadBuses(currentPage);
+      } else {
+        setError('Toplu aktifleştirme başarısız');
+      }
+    } catch (error) {
+      console.error('Bulk activate error:', error);
+      setError('Toplu aktifleştirme başarısız');
     }
   };
 
-  // Get status badge class
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'CALISIYOR':
-      case 'HAREKET_HALINDE':
-        return 'status-badge status-success';
-      case 'DURAKTA_BEKLIYOR':
-        return 'status-badge status-info';
-      case 'MOLA':
-      case 'TEMIZLIK':
-      case 'YAKIT_ALIMI':
-        return 'status-badge status-warning';
-      case 'ARIZALI':
-      case 'BAKIMDA':
-      case 'SERVIS_DISI':
-        return 'status-badge status-danger';
-      case 'GARAJDA':
-        return 'status-badge status-secondary';
-      default:
-        return 'status-badge status-secondary';
+  const handleBulkDeactivate = async () => {
+    if (selectedBuses.length === 0) return;
+    
+    if (window.confirm(`${selectedBuses.length} otobüsü pasifleştirmek istediğinizden emin misiniz?`)) {
+      try {
+        const response = await busApi.bulkDeactivate(selectedBuses);
+        if (response.success) {
+          setSelectedBuses([]);
+          loadBuses(currentPage);
+        } else {
+          setError('Toplu pasifleştirme başarısız');
+        }
+      } catch (error) {
+        console.error('Bulk deactivate error:', error);
+        setError('Toplu pasifleştirme başarısız');
+      }
     }
   };
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('tr-TR');
-  };
-
-  // Calculate occupancy color
-  const getOccupancyColor = (rate) => {
-    if (rate >= 90) return '#ef4444'; // Red
-    if (rate >= 70) return '#f59e0b'; // Yellow
-    if (rate >= 50) return '#10b981'; // Green
-    return '#6b7280'; // Gray
-  };
+  // Otobüs satırı render
+  const renderBusRow = (bus) => (
+    <tr key={bus.id} className="bus-row">
+      <td>
+        <input
+          type="checkbox"
+          checked={selectedBuses.includes(bus.id)}
+          onChange={() => toggleBusSelection(bus.id)}
+          className="bus-checkbox"
+        />
+      </td>
+      
+      <td>
+        <div className="bus-plate-container">
+          <span className="bus-plate">{bus.numberPlate}</span>
+          <span className="bus-id">#{bus.id}</span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="bus-status-container">
+          <span className="status-icon">{getBusStatusIcon(bus.status)}</span>
+          <span 
+            className="status-badge"
+            style={{ backgroundColor: getBusStatusColor(bus.status) }}
+          >
+            {getBusStatusLabel(bus.status)}
+          </span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="driver-info">
+          {bus.driverName || 'Atanmamış'}
+        </div>
+      </td>
+      
+      <td>
+        <div className="route-info">
+          {bus.assignedRouteName ? (
+            <>
+              <span className="route-name">{bus.assignedRouteName}</span>
+              {bus.assignedRouteCode && (
+                <span className="route-code">({bus.assignedRouteCode})</span>
+              )}
+            </>
+          ) : (
+            'Atanmamış'
+          )}
+        </div>
+      </td>
+      
+      <td>
+        <div className="occupancy-container">
+          <div className="occupancy-bar">
+            <div 
+              className="occupancy-fill"
+              style={{ 
+                width: `${bus.occupancyRate || 0}%`,
+                backgroundColor: getOccupancyColor(bus.occupancyRate)
+              }}
+            />
+          </div>
+          <span className="occupancy-text">
+            {formatOccupancyRate(bus.occupancyRate)} ({bus.currentPassengerCount}/{bus.capacity})
+          </span>
+        </div>
+      </td>
+      
+      <td>
+        <div className="last-update">
+          {formatTimeAgo(bus.lastLocationUpdate)}
+        </div>
+      </td>
+      
+      <td>
+        <div className="bus-actions">
+          <Link 
+            to={`/bus/${bus.id}`} 
+            className="btn btn-view"
+            title="Detayları Görüntüle"
+          >
+            👁️
+          </Link>
+          
+          <button
+            onClick={() => toggleActiveStatus(bus.id)}
+            className={`btn ${bus.isActive ? 'btn-deactivate' : 'btn-activate'}`}
+            title={bus.isActive ? 'Pasifleştir' : 'Aktifleştir'}
+          >
+            {bus.isActive ? '⏸️' : '▶️'}
+          </button>
+          
+          <Link 
+            to={`/bus/${bus.id}/edit`} 
+            className="btn btn-edit"
+            title="Düzenle"
+          >
+            ✏️
+          </Link>
+          
+          <button
+            onClick={() => deleteBus(bus.id)}
+            className="btn btn-delete"
+            title="Sil"
+          >
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 
   return (
     <div className="bus-list-container">
       {/* Header */}
-      <div className="page-header">
+      <div className="bus-list-header">
         <div className="header-left">
-          <h1><Bus size={24} /> Otobüs Yönetimi</h1>
-          <p>Sistemdeki tüm otobüsleri görüntüleyin ve yönetin</p>
+          <h1>Otobüs Yönetimi</h1>
+          <p className="header-description">
+            Tüm otobüsleri listeleyin, durumlarını yönetin ve işlemler yapın
+          </p>
         </div>
         <div className="header-actions">
-          <button 
-            className="btn btn-primary"
-            onClick={() => window.location.href = '/bus/add'}
-          >
-            <Plus size={18} />
-            Yeni Otobüs
-          </button>
+          <Link to="/bus/create" className="btn btn-primary">
+            ➕ Yeni Otobüs Ekle
+          </Link>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="filters-container">
-        <div className="filters-header">
-          <Filter size={20} />
-          <span>Filtreler ve Arama</span>
-        </div>
-        
-        <div className="filters-grid">
-          {/* Search */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <Search size={16} />
-              Plaka Ara
-            </label>
-            <div className="search-input-group">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="34 ABC 123"
-                className="modern-input"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <button 
-                onClick={handleSearch}
-                className="search-btn"
-                disabled={loading}
-              >
-                <Search size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <Gauge size={16} />
-              Durum
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="modern-select"
-            >
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Refresh */}
-          <div className="filter-card">
-            <label className="filter-label">
-              <RefreshCw size={16} />
-              Yenile
-            </label>
+      {/* Search and Filters */}
+      <div className="search-section">
+        <div className="search-container">
+          <div className="search-input-wrapper">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Plaka ile ara..."
+              className="search-input"
+            />
             <button 
-              onClick={loadBuses}
-              className="btn btn-secondary"
+              onClick={handleSearch} 
               disabled={loading}
+              className="search-btn"
             >
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-              Yenile
+              🔍 Ara
             </button>
+            {searchTerm && (
+              <button 
+                onClick={clearSearch}
+                className="clear-search-btn"
+              >
+                ✖️ Temizle
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Filters */}
+        <div className="filters-container">
+          {Object.entries(BUS_SEARCH_FILTERS).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => handleFilterChange(key)}
+              className={`filter-btn ${currentFilter === key ? 'active' : ''}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* Bulk Operations */}
-      {selectedBuses.length > 0 && (
-        <div className="bulk-operations">
-          <div className="bulk-info">
-            <span>{selectedBuses.length} otobüs seçildi</span>
-          </div>
-          <div className="bulk-actions">
-            <select
-              value={bulkOperation}
-              onChange={(e) => setBulkOperation(e.target.value)}
-              className="bulk-select"
-            >
-              <option value="">Toplu İşlem Seçin</option>
-              <option value="activate">Aktifleştir</option>
-              <option value="deactivate">Pasifleştir</option>
-            </select>
-            <button
-              onClick={handleBulkOperation}
-              disabled={!bulkOperation || loading}
-              className="btn btn-primary"
-            >
-              Uygula
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (
@@ -334,211 +364,113 @@ const BusList = () => {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="stats-summary">
-        <div className="stat-item">
-          <Bus size={20} />
-          <div>
-            <span className="stat-number">{totalElements}</span>
-            <span className="stat-label">Toplam Otobüs</span>
+      {/* Content */}
+      <div className="bus-list-content">
+        {/* Bulk Actions */}
+        {selectedBuses.length > 0 && (
+          <div className="bulk-actions">
+            <span className="selected-count">
+              {selectedBuses.length} otobüs seçildi
+            </span>
+            <div className="bulk-buttons">
+              <button 
+                onClick={handleBulkActivate}
+                className="btn btn-bulk-activate"
+              >
+                ▶️ Aktifleştir
+              </button>
+              <button 
+                onClick={handleBulkDeactivate}
+                className="btn btn-bulk-deactivate"
+              >
+                ⏸️ Pasifleştir
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="stat-item">
-          <Power size={20} />
-          <div>
-            <span className="stat-number">{buses.filter(b => b.isActive).length}</span>
-            <span className="stat-label">Aktif</span>
-          </div>
-        </div>
-        <div className="stat-item">
-          <PowerOff size={20} />
-          <div>
-            <span className="stat-number">{buses.filter(b => !b.isActive).length}</span>
-            <span className="stat-label">Pasif</span>
-          </div>
-        </div>
-      </div>
+        )}
 
-      {/* Buses Table */}
-      <div className="buses-table-container">
-        <table className="buses-table">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={selectedBuses.length === buses.length && buses.length > 0}
-                  onChange={handleSelectAll}
-                />
-              </th>
-              <th>Plaka</th>
-              <th>Durum</th>
-              <th>Aktif</th>
-              <th>Şoför</th>
-              <th>Rota</th>
-              <th>Kapasite</th>
-              <th>Doluluk</th>
-              <th>Ücret</th>
-              <th>Son Güncelleme</th>
-              <th>İşlemler</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="11" className="loading-cell">
-                  <RefreshCw className="spinning" size={20} />
-                  Yükleniyor...
-                </td>
-              </tr>
-            ) : buses.length === 0 ? (
-              <tr>
-                <td colSpan="11" className="empty-cell">
-                  <Bus size={48} />
-                  <p>Henüz otobüs bulunamadı</p>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => window.location.href = '/bus/add'}
-                  >
-                    İlk Otobüsü Ekle
-                  </button>
-                </td>
-              </tr>
-            ) : (
-              buses.map((bus) => (
-                <tr key={bus.id} className={selectedBuses.includes(bus.id) ? 'selected' : ''}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedBuses.includes(bus.id)}
-                      onChange={() => toggleBusSelection(bus.id)}
-                    />
-                  </td>
-                  <td>
-                    <div className="bus-plate">
-                      <Bus size={16} />
-                      <strong>{bus.numberPlate}</strong>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={getStatusBadgeClass(bus.status)}>
-                      {bus.statusDisplayName || bus.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => toggleBusStatus(bus.id)}
-                      className={`status-toggle ${bus.isActive ? 'active' : 'inactive'}`}
-                      title={bus.isActive ? 'Pasifleştir' : 'Aktifleştir'}
-                    >
-                      {bus.isActive ? <Power size={16} /> : <PowerOff size={16} />}
-                    </button>
-                  </td>
-                  <td>
-                    <div className="driver-info">
-                      <User size={14} />
-                      {bus.driverName || 'Atanmamış'}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="route-info">
-                      <Route size={14} />
-                      {bus.assignedRouteName || 'Atanmamış'}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="capacity-info">
-                      <Users size={14} />
-                      {bus.currentPassengerCount}/{bus.capacity}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="occupancy-bar">
-                      <div 
-                        className="occupancy-fill"
-                        style={{
-                          width: `${bus.occupancyRate || 0}%`,
-                          backgroundColor: getOccupancyColor(bus.occupancyRate || 0)
-                        }}
-                      ></div>
-                      <span className="occupancy-text">
-                        {Math.round(bus.occupancyRate || 0)}%
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="fare-amount">{bus.baseFare} ₺</span>
-                  </td>
-                  <td>
-                    <div className="update-time">
-                      <Clock size={14} />
-                      {formatDate(bus.updatedAt)}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        onClick={() => window.location.href = `/bus/detail/${bus.id}`}
-                        className="btn-action btn-view"
-                        title="Detayları Görüntüle"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        onClick={() => window.location.href = `/bus/edit/${bus.id}`}
-                        className="btn-action btn-edit"
-                        title="Düzenle"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => window.location.href = `/bus/location/${bus.id}`}
-                        className="btn-action btn-location"
-                        title="Haritada Göster"
-                      >
-                        <MapPin size={16} />
-                      </button>
-                      <button
-                        onClick={() => deleteBus(bus.id)}
-                        className="btn-action btn-delete"
-                        title="Sil"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 0}
-            className="pagination-btn"
+        {/* Results Info */}
+        <div className="results-info">
+          <span className="results-count">
+            Toplam {totalElements} otobüs bulundu
+          </span>
+          <button 
+            onClick={() => loadBuses(currentPage)}
+            className="refresh-btn"
           >
-            Önceki
-          </button>
-          
-          <div className="pagination-info">
-            Sayfa {currentPage + 1} / {totalPages} 
-            <span className="total-info">({totalElements} toplam otobüs)</span>
-          </div>
-          
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages - 1}
-            className="pagination-btn"
-          >
-            Sonraki
+            🔄 Yenile
           </button>
         </div>
-      )}
+
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner" />
+            <p>Otobüsler yükleniyor...</p>
+          </div>
+        ) : buses.length === 0 ? (
+          <div className="no-buses">
+            <div className="no-buses-icon">🚍</div>
+            <h3>Otobüs bulunamadı</h3>
+            <p>Henüz hiç otobüs kaydedilmemiş veya arama kriterlerinize uygun sonuç yok.</p>
+            <Link to="/bus/create" className="btn btn-primary">
+              İlk Otobüsü Ekleyin
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Table */}
+            <div className="buses-table-wrapper">
+              <table className="buses-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        checked={selectedBuses.length === buses.length && buses.length > 0}
+                        onChange={toggleAllSelection}
+                        className="select-all-checkbox"
+                      />
+                    </th>
+                    <th>Plaka</th>
+                    <th>Durum</th>
+                    <th>Şoför</th>
+                    <th>Rota</th>
+                    <th>Doluluk</th>
+                    <th>Son Güncelleme</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {buses.map(renderBusRow)}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="pagination-container">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="pagination-btn"
+              >
+                ◀️ Önceki
+              </button>
+              
+              <div className="pagination-info">
+                Sayfa {currentPage + 1} / {totalPages}
+              </div>
+              
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="pagination-btn"
+              >
+                Sonraki ▶️
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
