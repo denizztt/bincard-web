@@ -31,6 +31,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Handle token refresh for 401 errors
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
@@ -51,6 +52,30 @@ apiClient.interceptors.response.use(
           window.location.href = '/login';
         }
       }
+    }
+    
+    // Enhanced error logging
+    if (error.response) {
+      console.error('❌ API RESPONSE ERROR:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        url: error.config?.url,
+        method: error.config?.method?.toUpperCase(),
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      console.error('❌ API REQUEST ERROR:', {
+        message: 'No response received',
+        url: error.config?.url,
+        method: error.config?.method?.toUpperCase()
+      });
+    } else {
+      console.error('❌ API ERROR:', {
+        message: error.message,
+        url: error.config?.url,
+        method: error.config?.method?.toUpperCase()
+      });
     }
     
     return Promise.reject(error);

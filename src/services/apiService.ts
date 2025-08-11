@@ -845,8 +845,26 @@ export const walletApi = {
     return response.data;
   },
 
-  getWalletTransfers: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallet-transfers?page=${page}&size=${size}`);
+  getWalletTransfers: async (status?: string, startDate?: string, endDate?: string, page: number = 0, size: number = 10, sortBy?: string, sortOrder?: string) => {
+    let url = `/wallet-transfers?page=${page}&size=${size}`;
+    
+    if (status && status !== 'Tümü') {
+      url += `&status=${encodeURIComponent(status)}`;
+    }
+    if (startDate) {
+      url += `&startDate=${encodeURIComponent(startDate)}`;
+    }
+    if (endDate) {
+      url += `&endDate=${encodeURIComponent(endDate)}`;
+    }
+    if (sortBy) {
+      url += `&sortBy=${encodeURIComponent(sortBy)}`;
+    }
+    if (sortOrder) {
+      url += `&sortOrder=${encodeURIComponent(sortOrder)}`;
+    }
+    
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -997,7 +1015,7 @@ export const contractApi = {
   },
 
   getUserAcceptedContracts: async (username: string) => {
-    const response = await apiClient.get(`/admin/contract/users/${username}/accepted-contracts`);
+    const response = await apiClient.get(`/admin/contract/users/user/accepted-contracts?username=${username}`);
     return response.data;
   },
 
@@ -1127,8 +1145,26 @@ export const walletStatusApi = {
 
 // Wallet Transfers API endpoints
 export const walletTransfersApi = {
-  getWalletTransfers: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/wallet-transfers?page=${page}&size=${size}`);
+  getWalletTransfers: async (status?: string, startDate?: string, endDate?: string, page: number = 0, size: number = 10, sortBy?: string, sortOrder?: string) => {
+    let url = `/wallet-transfers?page=${page}&size=${size}`;
+    
+    if (status && status !== 'Tümü') {
+      url += `&status=${encodeURIComponent(status)}`;
+    }
+    if (startDate) {
+      url += `&startDate=${encodeURIComponent(startDate)}`;
+    }
+    if (endDate) {
+      url += `&endDate=${encodeURIComponent(endDate)}`;
+    }
+    if (sortBy) {
+      url += `&sortOrder=${encodeURIComponent(sortBy)}`;
+    }
+    if (sortOrder) {
+      url += `&sortOrder=${encodeURIComponent(sortOrder)}`;
+    }
+    
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -1249,6 +1285,30 @@ export const routeApi = {
   // 14. Rota önerisi (POST /suggest)
   suggestRoute: async (suggestionData: { userLat: number; userLng: number; destinationAddress: string }) => {
     const response = await apiClient.post('/route/suggest', suggestionData);
+    return response.data;
+  },
+
+  // 15. Rota duraklarını getir (GET /{id}/stations)
+  getRouteStations: async (routeId: number) => {
+    const response = await apiClient.get(`/route/${routeId}/stations`);
+    return response.data;
+  },
+
+  // 16. Rotaya durak ekle (POST /{id}/add-station)
+  addStationToRoute: async (routeId: number, stationId: number) => {
+    const response = await apiClient.post(`/route/${routeId}/add-station`, { stationId });
+    return response.data;
+  },
+
+  // 17. Rotadan durak kaldır (DELETE /{id}/remove-station)
+  removeStationFromRoute: async (routeId: number, stationId: number) => {
+    const response = await apiClient.delete(`/route/${routeId}/remove-station?stationId=${stationId}`);
+    return response.data;
+  },
+
+  // 18. Durak sırasını güncelle (PUT /{id}/update-station-order)
+  updateStationOrder: async (routeId: number, stationId: number, newOrder: number) => {
+    const response = await apiClient.put(`/route/${routeId}/update-station-order`, { stationId, newOrder });
     return response.data;
   }
 };

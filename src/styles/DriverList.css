@@ -223,6 +223,8 @@
 
 .status-icon {
   font-size: 1rem;
+  opacity: 0.8;
+  filter: grayscale(20%);
 }
 
 .status-badge {
@@ -242,6 +244,8 @@
 
 .shift-icon {
   font-size: 1rem;
+  opacity: 0.8;
+  filter: grayscale(20%);
 }
 
 .shift-badge {
@@ -297,9 +301,9 @@
 }
 
 .btn-view {
-  background: var(--info-color);
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -308,47 +312,59 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-view:hover {
-  background: var(--info-dark);
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-activate {
-  background: var(--success-color);
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.75rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-activate:hover {
-  background: var(--success-dark);
+  background: var(--background-hover);
+  border-color: var(--success-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-deactivate {
-  background: var(--warning-color);
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.75rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-deactivate:hover {
-  background: var(--warning-dark);
+  background: var(--background-hover);
+  border-color: var(--warning-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-edit {
-  background: var(--primary-color);
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -357,17 +373,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-edit:hover {
-  background: var(--primary-dark);
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-documents {
-  background: #6366f1;
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -376,17 +396,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-documents:hover {
-  background: #4f46e5;
+  background: var(--background-hover);
+  border-color: #6366f1;
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-penalties {
-  background: #dc2626;
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -399,22 +423,29 @@
 }
 
 .btn-penalties:hover {
-  background: #b91c1c;
+  background: var(--background-hover);
+  border-color: #dc2626;
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .btn-delete {
-  background: var(--danger-color);
-  color: white;
-  border: none;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.75rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  opacity: 0.8;
 }
 
 .btn-delete:hover {
-  background: var(--danger-dark);
+  background: var(--background-hover);
+  border-color: var(--danger-color);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .driver-checkbox, .select-all-checkbox {

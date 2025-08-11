@@ -60,20 +60,39 @@ const UserContractTracking = () => {
       const response = await contractApi.getUserAcceptedContracts(searchUsername.trim());
       console.log('User contracts loaded:', response);
       
-      if (Array.isArray(response)) {
-        setUserContracts(response);
-        setSelectedUser(searchUsername.trim());
+      if (response && (response.data || Array.isArray(response))) {
+        const contracts = response.data || response;
+        if (Array.isArray(contracts)) {
+          setUserContracts(contracts);
+          setSelectedUser(searchUsername.trim());
+        } else {
+          setUserContracts([]);
+          setSelectedUser(searchUsername.trim());
+          setError('Kullanıcı sözleşmeleri bulunamadı');
+        }
       } else {
         setUserContracts([]);
         setSelectedUser(searchUsername.trim());
+        setError('Kullanıcı sözleşmeleri yüklenemedi');
       }
     } catch (err) {
       console.error('Error loading user contracts:', err);
+      
+      // Handle different types of errors
       if (err.response?.status === 404) {
         setError('Kullanıcı bulunamadı');
+      } else if (err.response?.status === 500) {
+        setError('Sunucu hatası: Lütfen daha sonra tekrar deneyin');
+      } else if (err.response?.status === 401) {
+        setError('Yetkilendirme hatası: Lütfen tekrar giriş yapın');
+      } else if (err.response?.status === 403) {
+        setError('Bu işlem için yetkiniz bulunmuyor');
+      } else if (err.code === 'NETWORK_ERROR') {
+        setError('Bağlantı hatası: İnternet bağlantınızı kontrol edin');
       } else {
-        setError('Kullanıcı sözleşmeleri yüklenirken hata oluştu');
+        setError('Kullanıcı sözleşmeleri yüklenirken hata oluştu: ' + (err.message || 'Bilinmeyen hata'));
       }
+      
       setUserContracts([]);
       setSelectedUser(null);
     } finally {

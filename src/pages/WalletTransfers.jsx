@@ -47,12 +47,12 @@ const WalletTransfers = () => {
         statusParam, startDate, endDate, 0, 100, 'timestamp', 'desc'
       );
       
-      if (response && response.success) {
+      if (response && response.data) {
         const transfersData = parseTransfersFromResponse(response);
         setTransfers(transfersData);
         updateStats(transfersData);
       } else {
-        throw new Error(response?.message || 'API yanıtı başarısız');
+        throw new Error('API yanıtı başarısız');
       }
       
       setLoading(false);

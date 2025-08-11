@@ -254,46 +254,22 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
-.route-type-bus {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.route-type-metro {
-  background: #f3e8ff;
-  color: #7c3aed;
-}
-
-.route-type-metrobus {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.route-type-tram {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.route-type-ferry {
-  background: #e0f2fe;
-  color: #0277bd;
-}
-
-.route-type-minibus {
-  background: #fff2cc;
-  color: #b45309;
-}
-
-.route-type-express {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
+.route-type-bus,
+.route-type-metro,
+.route-type-metrobus,
+.route-type-tram,
+.route-type-ferry,
+.route-type-minibus,
+.route-type-express,
 .route-type-default {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
 }
 
 /* Route Path */

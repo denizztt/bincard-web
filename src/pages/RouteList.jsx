@@ -95,7 +95,7 @@ const RouteList = () => {
           <p className="header-description">Tüm aktif rotaları yönetin, arama yapın ve yeni rota ekleyin</p>
         </div>
         <div className="header-actions">
-          <Link to="/routes/create" className="btn btn-primary">
+          <Link to="/route/add" className="btn btn-primary">
             ➕ Yeni Rota Ekle
           </Link>
         </div>
@@ -230,14 +230,14 @@ const RouteList = () => {
                         <td className="route-actions">
                           <div className="action-buttons">
                             <Link 
-                              to={`/routes/${route.id}`}
+                              to={`/route/${route.id}`}
                               className="btn btn-view"
                               title="Detayları Görüntüle"
                             >
                               👁️ Detay
                             </Link>
                             <Link 
-                              to={`/routes/${route.id}/stations`}
+                              to={`/route/${route.id}/stations`}
                               className="btn btn-edit"
                               title="Durakları Yönet"
                             >
@@ -266,7 +266,7 @@ const RouteList = () => {
                     ? `"${searchTerm}" araması için sonuç bulunamadı` 
                     : 'Henüz hiç rota eklenmemiş'}
                 </p>
-                <Link to="/routes/create" className="btn btn-primary">
+                <Link to="/route/add" className="btn btn-primary">
                   ➕ İlk Rotayı Oluştur
                 </Link>
               </div>

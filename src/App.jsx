@@ -35,6 +35,8 @@ import BusMap from './pages/BusMap';
 import DriverList from './pages/DriverList';
 import RouteList from './pages/RouteList';
 import RouteAdd from './pages/RouteAdd';
+import RouteDetail from './pages/RouteDetail';
+import RouteStations from './pages/RouteStations';
 import DriverAdd from './pages/DriverAdd';
 import DriverEdit from './pages/DriverEdit';
 import ContractManagement from './pages/ContractManagement';
@@ -83,6 +85,23 @@ function App() {
                 </ProtectedRoute>
               }
             />
+                      {/* Support legacy or alternate station detail/form URLs */}
+                      <Route
+                        path="/station-detail/:id"
+                        element={
+                          <ProtectedRoute>
+                            <StationDetail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/station-form/:id"
+                        element={
+                          <ProtectedRoute>
+                            <StationEdit />
+                          </ProtectedRoute>
+                        }
+                      />
             <Route
               path="/news/edit/:id"
               element={
@@ -116,6 +135,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PaymentPointList />
+                </ProtectedRoute>
+              }
+            />
+            {/* Support alternate payment point detail URL */}
+            <Route
+              path="/payment-point/detail/:id"
+              element={
+                <ProtectedRoute>
+                  <PaymentPointDetail />
                 </ProtectedRoute>
               }
             />
@@ -177,8 +205,33 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* Support legacy or alternate station detail/form URLs */}
+            <Route
+              path="/station-detail/:id"
+              element={
+                <ProtectedRoute>
+                  <StationDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/station-form/:id"
+              element={
+                <ProtectedRoute>
+                  <StationEdit />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/station/map"
+              element={
+                <ProtectedRoute>
+                  <StationMap />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/station-map"
               element={
                 <ProtectedRoute>
                   <StationMap />
@@ -327,6 +380,22 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/route/:id"
+              element={
+                <ProtectedRoute>
+                  <RouteDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/route/:id/stations"
+              element={
+                <ProtectedRoute>
+                  <RouteStations />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Wallet Routes */}
             <Route
@@ -347,6 +416,14 @@ function App() {
             />
             <Route
               path="/wallet-status-update"
+              element={
+                <ProtectedRoute>
+                  <WalletStatusUpdate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wallet-status"
               element={
                 <ProtectedRoute>
                   <WalletStatusUpdate />
