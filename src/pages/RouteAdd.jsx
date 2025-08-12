@@ -12,10 +12,14 @@ import {
   Trash2,
   Navigation,
   Palette,
-  Info
+  Info,
+  Map,
+  Target,
+  Route as RouteIcon
 } from 'lucide-react';
 import { routeApi } from '../services/apiService';
 import { stationApi } from '../services/apiService';
+import GoogleMapWrapper from '../components/GoogleMapWrapper';
 import '../styles/RouteAdd.css';
 
 const RouteAdd = () => {
@@ -44,6 +48,9 @@ const RouteAdd = () => {
   const [success, setSuccess] = useState('');
   const [stations, setStations] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedStations, setSelectedStations] = useState([]);
+  const [mapCenter, setMapCenter] = useState({ lat: 41.0082, lng: 28.9784 });
+  const [showMap, setShowMap] = useState(false);
   const totalSteps = 4;
 
   // Route type options
@@ -105,6 +112,33 @@ const RouteAdd = () => {
       [field]: value
     }));
     setError('');
+  };
+
+  // Handle station selection from map
+  const handleStationClick = (station) => {
+    if (!selectedStations.find(s => s.id === station.id)) {
+      setSelectedStations(prev => [...prev, station]);
+      
+      // Auto-fill start and end stations if not set
+      if (!formData.startStationId) {
+        handleInputChange('startStationId', station.id.toString());
+      } else if (!formData.endStationId && station.id.toString() !== formData.startStationId) {
+        handleInputChange('endStationId', station.id.toString());
+      }
+    }
+  };
+
+  // Remove selected station
+  const removeSelectedStation = (stationId) => {
+    setSelectedStations(prev => prev.filter(s => s.id !== stationId));
+    
+    // Clear start/end station if it was removed
+    if (formData.startStationId === stationId.toString()) {
+      handleInputChange('startStationId', '');
+    }
+    if (formData.endStationId === stationId.toString()) {
+      handleInputChange('endStationId', '');
+    }
   };
 
   // Handle time slot selection
@@ -323,6 +357,64 @@ const RouteAdd = () => {
         return (
           <div className="step-content">
             <h3>Durak Seçimi</h3>
+            
+            {/* Map Toggle */}
+            <div className="map-toggle-section">
+              <button
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className="btn btn-secondary map-toggle-btn"
+              >
+                <Map size={16} />
+                {showMap ? 'Haritayı Gizle' : 'Haritayı Göster'}
+              </button>
+              <p className="map-instructions">
+                Haritada durakları tıklayarak seçin veya aşağıdaki dropdown'lardan seçim yapın
+              </p>
+            </div>
+
+            {/* Map Section */}
+            {showMap && (
+              <div className="map-section">
+                <div className="map-container">
+                  <GoogleMapWrapper
+                    stations={stations}
+                    onStationClick={handleStationClick}
+                    center={mapCenter}
+                    zoom={11}
+                    height="400px"
+                  />
+                </div>
+                
+                {/* Selected Stations */}
+                <div className="selected-stations">
+                  <h4>Seçilen Duraklar</h4>
+                  {selectedStations.length === 0 ? (
+                    <p className="no-selection">Henüz durak seçilmedi</p>
+                  ) : (
+                    <div className="selected-stations-list">
+                      {selectedStations.map((station, index) => (
+                        <div key={station.id} className="selected-station-item">
+                          <div className="station-info">
+                            <span className="station-number">{index + 1}</span>
+                            <span className="station-name">{station.name}</span>
+                            <span className="station-address">{station.address || 'Adres bilgisi yok'}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeSelectedStation(station.id)}
+                            className="btn-remove-station"
+                            title="Durağı kaldır"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className="form-grid">
               <div className="form-group">

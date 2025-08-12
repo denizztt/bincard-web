@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routeApi } from '../services/apiService';
 import { stationApi } from '../services/apiService';
+import { Loader } from '@googlemaps/js-api-loader';
 import { 
   ROUTE_TYPES, 
   ROUTE_TYPE_LABELS, 
@@ -16,6 +17,17 @@ const RouteCreate = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stations, setStations] = useState([]);
+
+  // Google Maps için gerekli state ve referanslar
+  const mapRef = useRef(null);
+  const googleMapRef = useRef(null);
+  const markersRef = useRef([]);
+  const polylineRef = useRef(null);
+  const directionsServiceRef = useRef(null);
+  const directionsRendererRef = useRef(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [selectedStations, setSelectedStations] = useState([]);
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -33,6 +45,9 @@ const RouteCreate = () => {
     outgoingStations: [],
     returnStations: []
   });
+
+  // Harita başlangıç konumu (Türkiye merkezli)
+  const [mapCenter, setMapCenter] = useState({ lat: 39.1667, lng: 35.6667 });
 
   // Durak node state
   const [newOutgoingNode, setNewOutgoingNode] = useState({
@@ -55,6 +70,270 @@ const RouteCreate = () => {
     }
   };
 
+  // Google Maps API'yi yükle
+  const loadGoogleMapsAPI = useCallback(async () => {
+    try {
+      const loader = new Loader({
+        apiKey: GOOGLE_MAPS_API_KEY,
+        version: 'weekly',
+        libraries: ['places']
+      });
+
+      const google = await loader.load();
+      return google;
+    } catch (error) {
+      console.error('Google Maps API loading error:', error);
+      setError('Google Haritalar yüklenemedi!');
+      return null;
+    }
+  }, [GOOGLE_MAPS_API_KEY]);
+
+  // Haritayı başlat
+  const initMap = useCallback(async () => {
+    try {
+      const google = await loadGoogleMapsAPI();
+      if (!google || !mapRef.current) return;
+
+      // Durakların merkez noktasını hesapla (daha iyi bir görüntü için)
+      let centerLat = mapCenter.lat;
+      let centerLng = mapCenter.lng;
+      let bounds = new google.maps.LatLngBounds();
+      let validCoordinates = 0;
+
+      stations.forEach(station => {
+        if (station.latitude && station.longitude) {
+          const lat = parseFloat(station.latitude);
+          const lng = parseFloat(station.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            bounds.extend(new google.maps.LatLng(lat, lng));
+            validCoordinates++;
+          }
+        }
+      });
+
+      // Duraklar varsa, görünümü onlara göre ayarla
+      if (validCoordinates > 0) {
+        centerLat = bounds.getCenter().lat();
+        centerLng = bounds.getCenter().lng();
+      }
+
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: centerLat, lng: centerLng },
+        zoom: validCoordinates > 0 ? 12 : 6, // Duraklar varsa daha yakın başla
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        streetViewControl: false,
+        mapTypeControl: true,
+        fullscreenControl: true,
+        zoomControl: true,
+        styles: [
+          {
+            featureType: 'transit.station',
+            elementType: 'labels.icon',
+            stylers: [{ visibility: 'on' }]
+          },
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
+      });
+
+      // Sınırları ayarla (duraklar çok dağınıksa)
+      if (validCoordinates > 1) {
+        map.fitBounds(bounds);
+      }
+
+      googleMapRef.current = map;
+      directionsServiceRef.current = new google.maps.DirectionsService();
+      directionsRendererRef.current = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: formData.color,
+          strokeWeight: 5
+        }
+      });
+      directionsRendererRef.current.setMap(map);
+
+      // Durakları haritada göster
+      if (stations.length > 0) {
+        showStationsOnMap(google, map);
+      }
+
+      // Durak arama kutusu ekle
+      const searchBox = document.getElementById('station-search');
+      if (searchBox) {
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(searchBox);
+        searchBox.style.display = 'block';
+
+        // Arama kutusuna odaklanıldığında klavye olaylarını durdur
+        searchBox.addEventListener('focus', () => {
+          map.setOptions({ keyboardShortcuts: false });
+        });
+
+        searchBox.addEventListener('blur', () => {
+          map.setOptions({ keyboardShortcuts: true });
+        });
+      }
+
+      setMapLoaded(true);
+    } catch (error) {
+      console.error('Map initialization error:', error);
+      setError('Harita başlatılamadı!');
+    }
+  }, [mapCenter, formData.color, stations, loadGoogleMapsAPI]);
+
+  // Durakları haritada göster
+  const showStationsOnMap = useCallback((google, map) => {
+    // Önce tüm markerları temizle
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    // İnfo penceresi oluştur
+    const infoWindow = new google.maps.InfoWindow();
+
+    stations.forEach(station => {
+      if (station.latitude && station.longitude) {
+        const position = {
+          lat: parseFloat(station.latitude),
+          lng: parseFloat(station.longitude)
+        };
+
+        // Durak daha önce seçilmiş mi kontrol et
+        const isSelected = selectedStations.some(s => s.id === station.id);
+        const stationIndex = selectedStations.findIndex(s => s.id === station.id);
+
+        const marker = new google.maps.Marker({
+          position: position,
+          map: map,
+          title: station.name,
+          animation: isSelected ? google.maps.Animation.BOUNCE : null,
+          icon: {
+            url: isSelected 
+              ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+              : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+            scaledSize: new google.maps.Size(32, 32)
+          },
+          label: isSelected ? {
+            text: (stationIndex + 1).toString(),
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          } : null
+        });
+
+        marker.stationData = station; // Durak bilgilerini marker'a ekle
+
+        // 1 saniye sonra animasyonu durdur
+        if (isSelected) {
+          setTimeout(() => {
+            marker.setAnimation(null);
+          }, 1000);
+        }
+
+        // Tıklama olayı
+        marker.addListener('click', () => {
+          handleStationSelect(station, marker, google);
+        });
+
+        // Üzerine gelme olayı
+        marker.addListener('mouseover', () => {
+          const contentString = `
+            <div class="info-window">
+              <h3>${station.name}</h3>
+              <p>${station.city || ''} ${station.district ? '/ ' + station.district : ''}</p>
+              <p><strong>Durak Kodu:</strong> ${station.code || 'Belirtilmemiş'}</p>
+              ${isSelected ? `<p><strong>Rota Sırası:</strong> ${stationIndex + 1}</p>` : ''}
+              <p class="info-action">${isSelected ? 'Bu durağı kaldırmak için tıklayın' : 'Bu durağı rotaya eklemek için tıklayın'}</p>
+            </div>
+          `;
+          infoWindow.setContent(contentString);
+          infoWindow.open(map, marker);
+        });
+
+        // Üzerinden ayrılma olayı
+        marker.addListener('mouseout', () => {
+          infoWindow.close();
+        });
+
+        markersRef.current.push(marker);
+      }
+    });
+  }, [stations, selectedStations]);
+
+  // Durak ara
+  const searchStation = (searchText) => {
+    if (!searchText || searchText.length < 2) return;
+
+    const searchLower = searchText.toLowerCase();
+    const foundStations = stations.filter(station => 
+      station.name?.toLowerCase().includes(searchLower) ||
+      station.code?.toLowerCase().includes(searchLower) ||
+      station.city?.toLowerCase().includes(searchLower)
+    );
+
+    if (foundStations.length > 0) {
+      // İlk bulunan durağa odaklan
+      const firstMatch = foundStations[0];
+      if (firstMatch.latitude && firstMatch.longitude) {
+        const position = {
+          lat: parseFloat(firstMatch.latitude),
+          lng: parseFloat(firstMatch.longitude)
+        };
+
+        googleMapRef.current.setCenter(position);
+        googleMapRef.current.setZoom(15);
+
+        // Marker'ı bul ve vurgula
+        const marker = markersRef.current.find(m => m.stationData?.id === firstMatch.id);
+        if (marker) {
+          // Geçici vurgulama animasyonu
+          marker.setAnimation(google.maps.Animation.BOUNCE);
+          setTimeout(() => {
+            marker.setAnimation(null);
+          }, 2000);
+        }
+      }
+    }
+  };
+
+  // En yakın istasyonu bul
+  const findNearestStation = (lat, lng) => {
+    if (stations.length === 0) return null;
+
+    let nearestStation = null;
+    let minDistance = Infinity;
+
+    stations.forEach(station => {
+      if (station.latitude && station.longitude) {
+        const distance = calculateDistance(
+          lat, lng, 
+          parseFloat(station.latitude), 
+          parseFloat(station.longitude)
+        );
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestStation = station;
+        }
+      }
+    });
+
+    return nearestStation;
+  };
+
+  // İki nokta arasındaki mesafeyi hesapla (Haversine formülü - km cinsinden)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Dünya yarıçapı (km)
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // km cinsinden
+  };
+
   // Form input değişiklikleri
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -62,6 +341,17 @@ const RouteCreate = () => {
       ...prev,
       [name]: value
     }));
+
+    // Rota rengi değiştiğinde polyline rengini güncelle
+    if (name === 'color' && directionsRendererRef.current) {
+      directionsRendererRef.current.setOptions({
+        polylineOptions: {
+          strokeColor: value,
+          strokeWeight: 5
+        }
+      });
+      updateRoute();
+    }
   };
 
   // Çoklu seçim için (time slots)
@@ -79,33 +369,423 @@ const RouteCreate = () => {
     });
   };
 
-  // Gidiş node ekleme
-  const addOutgoingNode = () => {
-    if (!newOutgoingNode.fromStationId || !newOutgoingNode.toStationId) {
-      alert('Lütfen başlangıç ve bitiş durağını seçin');
+  // Durak seçme işlemi
+  const handleStationSelect = (station, marker, google) => {
+    // Eğer durak zaten seçiliyse, seçimi kaldır
+    const isAlreadySelected = selectedStations.some(s => s.id === station.id);
+
+    if (isAlreadySelected) {
+      // Seçimi kaldır
+      const stationIndex = selectedStations.findIndex(s => s.id === station.id);
+      setSelectedStations(prev => prev.filter(s => s.id !== station.id));
+
+      // Marker görünümünü güncelle
+      marker.setIcon({
+        url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      });
+      marker.setLabel(null);
+
+      // Başlangıç veya bitiş durağı kaldırıldıysa form verilerini güncelle
+      if (stationIndex === 0 || stationIndex === selectedStations.length - 1) {
+        updateStartEndStations(selectedStations.filter(s => s.id !== station.id));
+      }
+
+      // Kullanıcıya bildirim göster
+      showToast(`${station.name} durağı rotadan çıkarıldı`);
+
+    } else {
+      // Yeni durak seç
+      const newSelectedStations = [...selectedStations, station];
+      setSelectedStations(newSelectedStations);
+
+      // Marker görünümünü güncelle ve numara ekle
+      marker.setIcon({
+        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      });
+      marker.setLabel({
+        text: newSelectedStations.length.toString(),
+        color: 'white',
+        fontSize: '12px',
+        fontWeight: 'bold'
+      });
+
+      // Marker'a geçici animasyon ekle
+      if (google) {
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => {
+          marker.setAnimation(null);
+        }, 1000);
+      }
+
+      // İlk ve son durakları otomatik güncelle
+      updateStartEndStations(newSelectedStations);
+
+      // Kullanıcıya bildirim göster
+      showToast(`${station.name} durağı rotaya eklendi`);
+    }
+
+    // Rota güzergahını güncelle
+    setTimeout(() => updateRoute(), 100);
+  };
+
+  // Başlangıç ve bitiş duraklarını güncelle
+  const updateStartEndStations = (stationsArray) => {
+    if (stationsArray.length > 0) {
+      const firstStation = stationsArray[0];
+      const lastStation = stationsArray[stationsArray.length - 1];
+
+      setFormData(prev => ({
+        ...prev,
+        startStationId: firstStation.id.toString(),
+        endStationId: lastStation ? lastStation.id.toString() : firstStation.id.toString()
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        startStationId: '',
+        endStationId: ''
+      }));
+    }
+  };
+
+  // Bildirim göster
+  const showToast = (message) => {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Animasyon ekle
+    setTimeout(() => {
+      toast.classList.add('show');
+
+      // 3 saniye sonra kaldır
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    }, 10);
+  };
+
+  // Durak sırasını değiştir
+  const moveStation = (index, direction) => {
+    if ((direction === -1 && index === 0) || (direction === 1 && index === selectedStations.length - 1)) {
+      return; // Sınırları aşan hareketlere izin verme
+    }
+
+    const newSelectedStations = [...selectedStations];
+    const temp = newSelectedStations[index];
+    newSelectedStations[index] = newSelectedStations[index + direction];
+    newSelectedStations[index + direction] = temp;
+
+    setSelectedStations(newSelectedStations);
+
+    // Rota güzergahını güncelle
+    setTimeout(() => updateRoute(), 100);
+  };
+
+  // Durak kaldır (seçim listesinden)
+  const removeStation = (index) => {
+    const stationToRemove = selectedStations[index];
+
+    // Marker'ı güncelle
+    const markerToUpdate = markersRef.current.find(marker => marker.stationData?.id === stationToRemove.id);
+    if (markerToUpdate) {
+      markerToUpdate.setIcon({
+        url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+      });
+    }
+
+    // Seçili durakları güncelle
+    setSelectedStations(prev => prev.filter((_, i) => i !== index));
+
+    // Rota güzergahını güncelle
+    setTimeout(() => updateRoute(), 100);
+  };
+
+  // Rotayı güncelle (duraklar arası çizgi)
+  const updateRoute = useCallback(() => {
+    if (!googleMapRef.current || !directionsServiceRef.current || !directionsRendererRef.current) {
       return;
+    }
+
+    // Seçili durak yoksa veya tek durak varsa direksiyonları temizle
+    if (selectedStations.length < 2) {
+      directionsRendererRef.current.setDirections({ routes: [] });
+
+      setFormData(prev => ({
+        ...prev,
+        totalDistanceKm: '',
+        estimatedDurationMinutes: '',
+        outgoingStations: []
+      }));
+
+      return;
+    }
+
+    // Yükleniyor göstergesi ekle
+    setLoading(true);
+
+    // Tüm durakları waypoint olarak ekle (ilk ve son hariç)
+    const waypoints = selectedStations.slice(1, -1).map(station => ({
+      location: new google.maps.LatLng(parseFloat(station.latitude), parseFloat(station.longitude)),
+      stopover: true
+    }));
+
+    const origin = new google.maps.LatLng(
+      parseFloat(selectedStations[0].latitude),
+      parseFloat(selectedStations[0].longitude)
+    );
+
+    const destination = new google.maps.LatLng(
+      parseFloat(selectedStations[selectedStations.length - 1].latitude),
+      parseFloat(selectedStations[selectedStations.length - 1].longitude)
+    );
+
+    // Google Maps API'nin rota sınırlamaları (waypoint sayısı)
+    const MAX_WAYPOINTS = 23; // Google API sınırı 25 noktadır (başlangıç + bitiş + 23 waypoint)
+
+    if (waypoints.length > MAX_WAYPOINTS) {
+      // Çok fazla durak varsa, kullanıcıya uyarı göster ve sınırı uygula
+      setError(`Google Haritalar API'si en fazla ${MAX_WAYPOINTS + 2} nokta arası rota hesaplayabilir. İlk ${MAX_WAYPOINTS + 2} durak için rota çizilecek.`);
+      waypoints.splice(MAX_WAYPOINTS);
+    } else {
+      setError('');
+    }
+
+    directionsServiceRef.current.route({
+      origin: origin,
+      destination: destination,
+      waypoints: waypoints,
+      optimizeWaypoints: false, // Sıralamayı korumak için false
+      travelMode: google.maps.TravelMode.DRIVING,
+      avoidHighways: false,
+      avoidTolls: false
+    }, (response, status) => {
+      setLoading(false);
+
+      if (status === 'OK') {
+        directionsRendererRef.current.setDirections(response);
+
+        // Toplam mesafe ve süreyi hesapla
+        let totalDistance = 0;
+        let totalDuration = 0;
+
+        const legs = response.routes[0].legs;
+        legs.forEach(leg => {
+          totalDistance += leg.distance.value; // metre cinsinden
+          totalDuration += leg.duration.value; // saniye cinsinden
+        });
+
+        // Kilometre ve dakikaya çevir
+        totalDistance = (totalDistance / 1000).toFixed(1); // km
+        totalDuration = Math.ceil(totalDuration / 60); // dakika
+
+        // Form verilerini güncelle
+        setFormData(prev => ({
+          ...prev,
+          totalDistanceKm: totalDistance,
+          estimatedDurationMinutes: totalDuration
+        }));
+
+        // Rota arası durak bilgilerini güncelle
+        const outgoingStations = [];
+
+        // Duraklar arasındaki rotaları hesapla
+        const visibleStations = selectedStations.slice(0, waypoints.length + 2);
+        for (let i = 0; i < visibleStations.length - 1; i++) {
+          const fromStation = visibleStations[i];
+          const toStation = visibleStations[i + 1];
+          const leg = legs[i];
+
+          outgoingStations.push({
+            fromStationId: fromStation.id.toString(),
+            toStationId: toStation.id.toString(),
+            estimatedTravelTimeMinutes: Math.ceil(leg.duration.value / 60),
+            distanceKm: (leg.distance.value / 1000).toFixed(1),
+            notes: ''
+          });
+        }
+
+        // Eğer bazı duraklar gösterilmiyorsa, direkt bağlantıları ekle
+        if (selectedStations.length > visibleStations.length) {
+          for (let i = visibleStations.length - 1; i < selectedStations.length - 1; i++) {
+            const fromStation = selectedStations[i];
+            const toStation = selectedStations[i + 1];
+
+            // Düz çizgi mesafesi hesapla
+            const distanceKm = calculateDistance(
+              parseFloat(fromStation.latitude), 
+              parseFloat(fromStation.longitude), 
+              parseFloat(toStation.latitude), 
+              parseFloat(toStation.longitude)
+            ).toFixed(1);
+
+            // Ortalama 40 km/saat hız varsayımıyla süre hesapla
+            const estimatedMinutes = Math.ceil(parseFloat(distanceKm) * 1.5);
+
+            outgoingStations.push({
+              fromStationId: fromStation.id.toString(),
+              toStationId: toStation.id.toString(),
+              estimatedTravelTimeMinutes: estimatedMinutes,
+              distanceKm: distanceKm,
+              notes: 'Tahmini mesafe'
+            });
+          }
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          outgoingStations: outgoingStations
+        }));
+
+        // Haritayı rotaya sığdır
+        const bounds = new google.maps.LatLngBounds();
+        response.routes[0].overview_path.forEach(path => {
+          bounds.extend(path);
+        });
+        googleMapRef.current.fitBounds(bounds);
+
+      } else {
+        console.error('Directions request failed due to', status);
+
+        // Kullanıcı dostu hata mesajları
+        let errorMessage = '';
+        switch(status) {
+          case 'ZERO_RESULTS':
+            errorMessage = 'Seçilen duraklar arasında sürülebilir bir yol bulunamadı.';
+            break;
+          case 'MAX_WAYPOINTS_EXCEEDED':
+            errorMessage = 'Çok fazla durak seçildi. Lütfen daha az durak seçin.';
+            break;
+          case 'OVER_QUERY_LIMIT':
+            errorMessage = 'Çok fazla istek yapıldı. Lütfen biraz bekleyin ve tekrar deneyin.';
+            break;
+          case 'REQUEST_DENIED':
+            errorMessage = 'Rota isteği reddedildi. API anahtarınızı kontrol edin.';
+            break;
+          case 'INVALID_REQUEST':
+            errorMessage = 'Geçersiz rota isteği. Lütfen durak koordinatlarını kontrol edin.';
+            break;
+          case 'UNKNOWN_ERROR':
+            errorMessage = 'Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+            break;
+          default:
+            errorMessage = `Rota hesaplanamadı: ${status}`;
+        }
+
+        setError(errorMessage);
+
+        // Alternatif: Düz çizgilerle göster
+        showFallbackRoute();
+      }
+    });
+  }, [selectedStations, calculateDistance]);
+
+  // Yedek rota gösterimi (API hata verirse düz çizgilerle göster)
+  const showFallbackRoute = useCallback(() => {
+    if (selectedStations.length < 2 || !googleMapRef.current) return;
+
+    // Mevcut polyline'ı temizle
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+    }
+
+    // Duraklar arasında düz çizgiler çiz
+    const path = selectedStations.map(station => ({
+      lat: parseFloat(station.latitude),
+      lng: parseFloat(station.longitude)
+    }));
+
+    polylineRef.current = new google.maps.Polyline({
+      path: path,
+      geodesic: true,
+      strokeColor: formData.color,
+      strokeOpacity: 0.7,
+      strokeWeight: 3,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3
+        },
+        repeat: '100px'
+      }]
+    });
+
+    polylineRef.current.setMap(googleMapRef.current);
+
+    // Haritayı tüm noktalara sığdır
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(point => bounds.extend(point));
+    googleMapRef.current.fitBounds(bounds);
+
+    // Tahmini mesafe ve süre hesapla (düz çizgi)
+    let totalDistance = 0;
+    for (let i = 0; i < selectedStations.length - 1; i++) {
+      totalDistance += calculateDistance(
+        parseFloat(selectedStations[i].latitude),
+        parseFloat(selectedStations[i].longitude),
+        parseFloat(selectedStations[i+1].latitude),
+        parseFloat(selectedStations[i+1].longitude)
+      );
+    }
+
+    // Ortalama 40km/saat hızla süre hesapla
+    const totalDuration = Math.ceil(totalDistance * 1.5); // yaklaşık değer
+
+    // Form verilerini güncelle
+    setFormData(prev => ({
+      ...prev,
+      totalDistanceKm: totalDistance.toFixed(1),
+      estimatedDurationMinutes: totalDuration
+    }));
+
+    // Rota arası durak bilgilerini güncelle
+    const outgoingStations = [];
+
+    for (let i = 0; i < selectedStations.length - 1; i++) {
+      const fromStation = selectedStations[i];
+      const toStation = selectedStations[i + 1];
+      const distanceKm = calculateDistance(
+        parseFloat(fromStation.latitude),
+        parseFloat(fromStation.longitude),
+        parseFloat(toStation.latitude),
+        parseFloat(toStation.longitude)
+      );
+
+      // Ortalama 40 km/saat hız varsayımıyla süre hesapla
+      const estimatedMinutes = Math.ceil(distanceKm * 1.5);
+
+      outgoingStations.push({
+        fromStationId: fromStation.id.toString(),
+        toStationId: toStation.id.toString(),
+        estimatedTravelTimeMinutes: estimatedMinutes,
+        distanceKm: distanceKm.toFixed(1),
+        notes: 'Tahmini mesafe (düz çizgi)'
+      });
     }
 
     setFormData(prev => ({
       ...prev,
-      outgoingStations: [...prev.outgoingStations, { ...newOutgoingNode }]
+      outgoingStations: outgoingStations
     }));
+  }, [selectedStations, formData.color, calculateDistance]);
 
-    setNewOutgoingNode({
-      fromStationId: '',
-      toStationId: '',
-      estimatedTravelTimeMinutes: '',
-      distanceKm: '',
-      notes: ''
-    });
+  // Gidiş node ekleme (eski stil - artık kullanılmıyor)
+  const addOutgoingNode = () => {
+    // Bu fonksiyon artık haritadan durak seçme ile değiştirildi
+    // Eskiden olan manuel durak ekleme kodu burada kalabilir, 
+    // ancak yeni UI'da kullanıcıya gösterilmeyecek
   };
 
-  // Node silme
+  // Node silme (eski stil - artık kullanılmıyor)
   const removeOutgoingNode = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      outgoingStations: prev.outgoingStations.filter((_, i) => i !== index)
-    }));
+    // Bu fonksiyon artık haritadan durak seçme ile değiştirildi
   };
 
   // Form gönderme
@@ -113,13 +793,28 @@ const RouteCreate = () => {
     e.preventDefault();
     
     // Validasyon
-    if (!formData.routeName || !formData.routeCode || !formData.startStationId || !formData.endStationId) {
-      setError('Lütfen zorunlu alanları doldurun');
+    if (!formData.routeName || !formData.routeCode) {
+      setError('Lütfen rota adı ve kodunu doldurun');
       return;
     }
 
+    if (selectedStations.length < 2) {
+      setError('En az iki durak seçmelisiniz');
+      return;
+    }
+
+    // Başlangıç ve bitiş duraklarını otomatik ayarla
+    const startStationId = selectedStations[0].id.toString();
+    const endStationId = selectedStations[selectedStations.length - 1].id.toString();
+
+    setFormData(prev => ({
+      ...prev,
+      startStationId: startStationId,
+      endStationId: endStationId
+    }));
+
     if (formData.outgoingStations.length === 0) {
-      setError('En az bir gidiş durağı eklemelisiniz');
+      setError('Duraklar arası rota bilgileri oluşturulamadı. Lütfen rotayı güncelleyin.');
       return;
     }
 
@@ -133,8 +828,8 @@ const RouteCreate = () => {
         description: formData.description,
         routeType: formData.routeType,
         color: formData.color,
-        startStationId: parseInt(formData.startStationId),
-        endStationId: parseInt(formData.endStationId),
+        startStationId: parseInt(startStationId),
+        endStationId: parseInt(endStationId),
         estimatedDurationMinutes: formData.estimatedDurationMinutes ? parseInt(formData.estimatedDurationMinutes) : null,
         totalDistanceKm: formData.totalDistanceKm ? parseFloat(formData.totalDistanceKm) : null,
         weekdayHours: formData.weekdayHours,
@@ -169,6 +864,26 @@ const RouteCreate = () => {
     loadStations();
   }, []);
 
+  // Haritayı başlat
+  useEffect(() => {
+    if (stations.length > 0) {
+      initMap();
+    }
+  }, [stations, initMap]);
+
+  // Rota rengi değiştiğinde güncelle
+  useEffect(() => {
+    if (mapLoaded && directionsRendererRef.current) {
+      directionsRendererRef.current.setOptions({
+        polylineOptions: {
+          strokeColor: formData.color,
+          strokeWeight: 5
+        }
+      });
+      updateRoute();
+    }
+  }, [formData.color, mapLoaded, updateRoute]);
+
   return (
     <div className="route-create-container">
       {/* Header */}
@@ -191,6 +906,161 @@ const RouteCreate = () => {
             ⚠️ {error}
           </div>
         )}
+
+        {/* Harita Görünümü */}
+        <div className="form-section map-section">
+          <h3>🗺️ Rota Haritası</h3>
+          <p className="map-instruction">Rotanızı oluşturmak için haritadan durakları seçin. Durakları sıralamak için sürükleyebilir veya ok tuşlarını kullanabilirsiniz.</p>
+
+          {/* Durak arama kutusu */}
+          <div id="station-search" className="station-search">
+            <input 
+              type="text" 
+              placeholder="Durak ara... (Ad, kod veya şehir)" 
+              onChange={(e) => searchStation(e.target.value)}
+              className="search-input"
+            />
+            <button type="button" className="search-button">
+              🔍
+            </button>
+          </div>
+
+          <div className="map-container">
+            <div ref={mapRef} className="google-map"></div>
+
+            {/* Seçili duraklar listesi */}
+            <div className="selected-stations-container">
+              <div className="selected-stations-header">
+                <h4>📍 Seçili Duraklar ({selectedStations.length})</h4>
+                {selectedStations.length > 0 && (
+                  <div className="station-actions-header">
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedStations([])} 
+                      className="btn-clear-all" 
+                      title="Tüm durakları temizle"
+                    >
+                      🗑️ Tümünü Temizle
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="selected-stations">
+                {selectedStations.length === 0 ? (
+                  <div className="no-stations">
+                    <p>Henüz durak seçilmedi.</p>
+                    <div className="instruction-steps">
+                      <div className="instruction-step"><span>1</span> Haritadan durakları seçin</div>
+                      <div className="instruction-step"><span>2</span> Sıralamayı değiştirmek için sürükleyin</div>
+                      <div className="instruction-step"><span>3</span> Duraklar arasında en kısa yol otomatik hesaplanır</div>
+                    </div>
+                  </div>
+                ) : (
+                  <ul className="stations-list">
+                    {selectedStations.map((station, index) => (
+                      <li 
+                        key={station.id} 
+                        className="station-item"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', index.toString());
+                          e.currentTarget.classList.add('dragging');
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove('dragging');
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.add('drag-over');
+                        }}
+                        onDragLeave={(e) => {
+                          e.currentTarget.classList.remove('drag-over');
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.remove('drag-over');
+                          const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                          const targetIndex = index;
+
+                          if (sourceIndex !== targetIndex) {
+                            const newStations = [...selectedStations];
+                            const [movedItem] = newStations.splice(sourceIndex, 1);
+                            newStations.splice(targetIndex, 0, movedItem);
+                            setSelectedStations(newStations);
+                            setTimeout(() => updateRoute(), 100);
+                          }
+                        }}
+                      >
+                        <div className="station-drag-handle" title="Sürükle ve bırak">::</div>
+                        <div className="station-index" title="Durak sırası">{index + 1}</div>
+                        <div className="station-info">
+                          <span className="station-name">{station.name}</span>
+                          <span className="station-city">{station.city || ''} {station.district ? `/ ${station.district}` : ''}</span>
+                          {station.code && <span className="station-code">Kod: {station.code}</span>}
+                        </div>
+                        <div className="station-actions">
+                          {index > 0 && (
+                            <button 
+                              type="button" 
+                              onClick={() => moveStation(index, -1)} 
+                              className="btn-move"
+                              title="Yukarı taşı"
+                            >
+                              ↑
+                            </button>
+                          )}
+                          {index < selectedStations.length - 1 && (
+                            <button 
+                              type="button" 
+                              onClick={() => moveStation(index, 1)} 
+                              className="btn-move"
+                              title="Aşağı taşı"
+                            >
+                              ↓
+                            </button>
+                          )}
+                          <button 
+                            type="button" 
+                            onClick={() => removeStation(index)} 
+                            className="btn-remove"
+                            title="Durağı kaldır"
+                          >
+                            ❌
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {selectedStations.length > 1 && (
+                  <div className="route-summary">
+                    <div className="summary-item">
+                      <span>Toplam Mesafe:</span>
+                      <strong>{formData.totalDistanceKm ? `${formData.totalDistanceKm} km` : 'Hesaplanıyor...'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Tahmini Süre:</span>
+                      <strong>{formData.estimatedDurationMinutes ? `${formData.estimatedDurationMinutes} dakika` : 'Hesaplanıyor...'}</strong>
+                    </div>
+                    <div className="summary-item">
+                      <span>Durak Sayısı:</span>
+                      <strong>{selectedStations.length}</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {loading && (
+            <div className="loading-overlay">
+              <div className="loading-spinner"></div>
+              <p>Rota hesaplanıyor...</p>
+            </div>
+          )}
+        </div>
 
         {/* Temel Bilgiler */}
         <div className="form-section">
@@ -277,139 +1147,64 @@ const RouteCreate = () => {
         {/* Durak Bilgileri */}
         <div className="form-section">
           <h3>🚏 Durak Bilgileri</h3>
+          <p className="section-info">Durak bilgileri haritadan seçtiğiniz duraklara göre otomatik olarak doldurulur.</p>
+
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="startStationId">Başlangıç Durağı *</label>
-              <select
-                id="startStationId"
-                name="startStationId"
-                value={formData.startStationId}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Durak seçin...</option>
-                {stations.map(station => (
-                  <option key={station.id} value={station.id}>
-                    {station.name} - {station.city}
-                  </option>
-                ))}
-              </select>
+              <label>Başlangıç Durağı</label>
+              <div className="info-display">
+                {selectedStations.length > 0 ? (
+                  <span>
+                    {stations.find(s => s.id.toString() === selectedStations[0].id.toString())?.name || 'Seçilmedi'} 
+                    ({stations.find(s => s.id.toString() === selectedStations[0].id.toString())?.city || ''})
+                  </span>
+                ) : (
+                  <span className="placeholder">Haritadan başlangıç durağı seçin</span>
+                )}
+              </div>
             </div>
             <div className="form-group">
-              <label htmlFor="endStationId">Bitiş Durağı *</label>
-              <select
-                id="endStationId"
-                name="endStationId"
-                value={formData.endStationId}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Durak seçin...</option>
-                {stations.map(station => (
-                  <option key={station.id} value={station.id}>
-                    {station.name} - {station.city}
-                  </option>
-                ))}
-              </select>
+              <label>Bitiş Durağı</label>
+              <div className="info-display">
+                {selectedStations.length > 1 ? (
+                  <span>
+                    {stations.find(s => s.id.toString() === selectedStations[selectedStations.length - 1].id.toString())?.name || 'Seçilmedi'} 
+                    ({stations.find(s => s.id.toString() === selectedStations[selectedStations.length - 1].id.toString())?.city || ''})
+                  </span>
+                ) : (
+                  <span className="placeholder">Haritadan bitiş durağı seçin</span>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="estimatedDurationMinutes">Tahmini Süre (dakika)</label>
-              <input
-                type="number"
-                id="estimatedDurationMinutes"
-                name="estimatedDurationMinutes"
-                value={formData.estimatedDurationMinutes}
-                onChange={handleInputChange}
-                placeholder="60"
-                min="1"
-              />
+              <label>Tahmini Süre (dakika)</label>
+              <div className="info-display">
+                {formData.estimatedDurationMinutes ? (
+                  <span>{formData.estimatedDurationMinutes} dakika</span>
+                ) : (
+                  <span className="placeholder">Duraklar seçildiğinde otomatik hesaplanır</span>
+                )}
+              </div>
             </div>
             <div className="form-group">
-              <label htmlFor="totalDistanceKm">Toplam Mesafe (km)</label>
-              <input
-                type="number"
-                id="totalDistanceKm"
-                name="totalDistanceKm"
-                value={formData.totalDistanceKm}
-                onChange={handleInputChange}
-                placeholder="25.5"
-                min="0"
-                step="0.1"
-              />
+              <label>Toplam Mesafe (km)</label>
+              <div className="info-display">
+                {formData.totalDistanceKm ? (
+                  <span>{formData.totalDistanceKm} km</span>
+                ) : (
+                  <span className="placeholder">Duraklar seçildiğinde otomatik hesaplanır</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Gidiş Yönü Durakları */}
-        <div className="form-section">
-          <h3>➡️ Gidiş Yönü Durakları</h3>
-          
-          {/* Yeni durak ekleme */}
-          <div className="add-station-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label>Başlangıç Durağı</label>
-                <select
-                  value={newOutgoingNode.fromStationId}
-                  onChange={(e) => setNewOutgoingNode(prev => ({ ...prev, fromStationId: e.target.value }))}
-                >
-                  <option value="">Durak seçin...</option>
-                  {stations.map(station => (
-                    <option key={station.id} value={station.id}>
-                      {station.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Hedef Durak</label>
-                <select
-                  value={newOutgoingNode.toStationId}
-                  onChange={(e) => setNewOutgoingNode(prev => ({ ...prev, toStationId: e.target.value }))}
-                >
-                  <option value="">Durak seçin...</option>
-                  {stations.map(station => (
-                    <option key={station.id} value={station.id}>
-                      {station.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Süre (dk)</label>
-                <input
-                  type="number"
-                  value={newOutgoingNode.estimatedTravelTimeMinutes}
-                  onChange={(e) => setNewOutgoingNode(prev => ({ ...prev, estimatedTravelTimeMinutes: e.target.value }))}
-                  placeholder="5"
-                  min="1"
-                />
-              </div>
-              <div className="form-group">
-                <label>Mesafe (km)</label>
-                <input
-                  type="number"
-                  value={newOutgoingNode.distanceKm}
-                  onChange={(e) => setNewOutgoingNode(prev => ({ ...prev, distanceKm: e.target.value }))}
-                  placeholder="2.5"
-                  min="0"
-                  step="0.1"
-                />
-              </div>
-              <div className="form-group">
-                <button
-                  type="button"
-                  onClick={addOutgoingNode}
-                  className="btn btn-add"
-                >
-                  ➕ Ekle
-                </button>
-              </div>
-            </div>
-          </div>
+                  {/* Çalışma Saatleri */}
+                  <div className="form-section">
+          <h3>⏰ Çalışma Saatleri</h3>
 
           {/* Mevcut duraklar */}
           {formData.outgoingStations.length > 0 && (
