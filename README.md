@@ -1,272 +1,325 @@
-# BinCard Web - Yönetici Paneli / Admin Panel
+# 🚌 BinCard Web - Toplu Taşıma Yönetim Sistemi
 
 [![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.0.6-646CFF.svg)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7.0.4-646CFF.svg)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🌍 Türkçe
+## 📖 Türkçe Açıklama
 
-BinCard Web, modern bir toplu taşıma yönetim sistemi için geliştirilmiş kapsamlı bir yönetici paneli uygulamasıdır. Bu platform, şehir içi ulaşım hizmetlerinin dijital yönetimini kolaylaştırmak için tasarlanmıştır.
+BinCard Web, modern şehir içi toplu taşıma sistemlerinin dijital yönetimi için geliştirilmiş kapsamlı bir yönetici paneli uygulamasıdır. Bu platform, otobüs, metro, tramvay gibi toplu taşıma araçlarının, rotaların, durakların ve personelin yönetimini kolaylaştırmak için tasarlanmıştır.
 
-### 🚀 Özellikler
+## 🌟 Özellikler
 
-- **📊 Dashboard**: Gerçek zamanlı sistem istatistikleri ve analitikler
-- **👥 Kullanıcı Yönetimi**: Kapsamlı kullanıcı kayıt, düzenleme ve yönetim sistemi
-# BinCard Web - Yönetici Paneli / Admin Panel (Admin Panel)
-- **🛤️ Rota Yönetimi**: Güzergah planlama ve optimizasyonu
-# **BinCard Web**, modern toplu taşıma yönetim sistemi için geliştirilmiş kapsamlı bir **Yönetici Paneli** uygulamasıdır. Şehir içi ulaşım hizmetlerinin dijital yönetimini kolaylaştırır.
-- **👤 Sürücü Yönetimi**: Sürücü kaydı, lisans takibi ve performans analizi
- - � **Dashboard**
-	 - İstatistikler: kullanıcı, şoför, otobüs, durak sayıları
-	 - Son aktiviteler: kullanıcı kayıt, şoför işlemleri, rota güncellemeleri
-	 - Sistem durumu ve sağlık kontrolleri
- - 👥 **Kullanıcı Yönetimi**
-	 - Yeni kullanıcı ekleme, düzenleme, silme
-	 - Rol ve yetki tanımlama
- - 🚌 **Otobüs & Araç Takibi**
-	 - Anlık konum takibi (BusMap)
-	 - Harita üzerinde rota çizimi
- - 🚏 **Durak Yönetimi (StationMap)**
-	 - Durak ekleme, düzenleme, silme
-	 - Google Maps entegrasyonu ile konum gösterimi
- - 🛤️ **Rota Yönetimi**
-	 - Yeni rota ekleme ve listeleme
-	 - Rota detayları ve güzergah optimizasyonu
- - 👤 **Şoför Yönetimi**
-	 - Şoför ekleme, düzenleme, silme
-	 - Lisans belgeleri ve cezaların takibi
-	 - Performans analizi ve istatistikler
- - 💰 **Ödeme Noktaları & Cüzdan İşlemleri**
-	 - Ödeme noktası ekleme, düzenleme, detay görüntüleme
-	 - Cüzdan durumu güncelleme ve transfer işlemleri
- - � **Kimlik Doğrulama**
-	 - Kayıt, Giriş, SMS doğrulama (2FA)
- - 📝 **Haber Yönetimi**
-	 - Duyuru ekleme, düzenleme, silme
- - 📊 **Analitik & Raporlar**
-	 - Grafikler ve raporlar (kullanım, gelir, performans)
- - ⚙️ **Uygulama Ayarları**
-	 - Tema (Light/Dark) desteği
-	 - Sistem ayarları ve konfigürasyon
-- **HTTP Client**: Axios (API entegrasyonu için)
- - **Frontend**
-	 - React 19.1.0
-	 - React Router DOM 7.7.1
-	 - Vite 7.0.6
-	 - Axios, JWT token yönetimi
- - **Haritalama**
-	 - @googlemaps/react-wrapper
-	 - @googlemaps/js-api-loader
- - **Stil & UI**
-	 - CSS Custom Properties / Modules
-	 - Lucide React ikon seti
- - **Araçlar**
-	 - Node.js, npm
-	 - PowerShell (Windows geliştirici ortamı)
-# Projeyi klonlayın
+### 📊 **Dashboard & Analitik**
+- Gerçek zamanlı sistem istatistikleri
+- Kullanıcı, şoför, otobüs, durak sayıları
+- Sistem sağlık kontrolleri ve performans metrikleri
+- Son aktiviteler ve güncellemeler
+
+### 🚌 **Araç Yönetimi**
+- **Otobüs Listesi**: Araç ekleme, düzenleme, silme
+- **Otobüs Haritası**: Gerçek zamanlı konum takibi
+- Araç durumu (aktif/pasif/bakım)
+- Şoför atama ve rota takibi
+
+### 🛤️ **Rota Yönetimi**
+- **Rota Oluşturma**: 4 adımlı süreç (Bilgiler → Durak Seçimi → Tarife → Güzergah)
+- **Harita Entegrasyonu**: Google Maps ile görsel rota planlama
+- **Durak Yönetimi**: Rotalara durak ekleme/çıkarma
+- **Rota Detayları**: Güzergah bilgileri ve optimizasyon
+
+### 🚏 **Durak Yönetimi**
+- **Durak Listesi**: CRUD işlemleri
+- **Durak Haritası**: Google Maps entegrasyonu
+- **Durak Detayları**: Konum, adres, özellikler
+- **Durak Formu**: Kolay ekleme ve düzenleme
+
+### 👤 **Şoför Yönetimi**
+- **Şoför Listesi**: Kayıt, düzenleme, silme
+- **Şoför Ekleme**: Detaylı bilgi formu
+- **Belge Takibi**: Lisans, ehliyet, sağlık raporu
+- **Performans Analizi**: İstatistikler ve raporlar
+
+### 💰 **Ödeme & Cüzdan Sistemi**
+- **Ödeme Noktaları**: CRUD işlemleri ve detay görüntüleme
+- **Cüzdan Durumu**: Güncelleme ve takip
+- **Transfer İşlemleri**: Cüzdanlar arası transfer
+- **Tüm Cüzdanlar**: Genel cüzdan yönetimi
+
+### 🔐 **Kimlik Doğrulama & Güvenlik**
+- **Kullanıcı Kaydı**: Form validasyonu
+- **Giriş Sistemi**: JWT token yönetimi
+- **SMS Doğrulama**: 2FA güvenlik
+- **Korumalı Rotalar**: Yetki kontrolü
+
+### 📰 **Haber & Duyuru Yönetimi**
+- **Haber Listesi**: CRUD işlemleri
+- **Haber Ekleme**: Zengin metin editörü
+- **Haber Düzenleme**: Güncelleme ve yayınlama
+- **Duyuru Sistemi**: Kullanıcı bildirimleri
+
+### 📈 **Raporlama & Analitik**
+- **İstatistikler**: Detaylı metrikler
+- **Analitik**: Grafik ve tablolar
+- **Denetim Kayıtları**: Sistem logları
+- **Uyumluluk Kontrolü**: Standart kontrol listeleri
+
+### ⚙️ **Sistem & Konfigürasyon**
+- **Sistem Sağlığı**: Monitör ve alarmlar
+- **Admin Onayları**: Kullanıcı işlem onayları
+- **Kimlik Talepleri**: Doğrulama süreçleri
+- **Sözleşme Yönetimi**: Kullanıcı sözleşmeleri
+
+## 🛠️ Teknoloji Stack
+
+### **Frontend Framework**
+- **React 19.1.0** - Modern React hooks ve functional components
+- **React Router DOM 7.7.1** - Client-side routing
+- **Vite 7.0.4** - Hızlı build tool ve development server
+
+### **Haritalama & Konum**
+- **@googlemaps/react-wrapper** - React için Google Maps wrapper
+- **@googlemaps/js-api-loader** - Google Maps API yükleyici
+- **Gerçek zamanlı konum takibi** - Otobüs ve durak konumları
+
+### **HTTP & API**
+- **Axios 1.11.0** - HTTP client ve API entegrasyonu
+- **JWT Token** - Güvenli kimlik doğrulama
+- **Interceptors** - Request/response işleme
+
+### **UI & Styling**
+- **Lucide React 0.533.0** - Modern ikon seti
+- **CSS Custom Properties** - Tema sistemi (Light/Dark)
+- **Responsive Design** - Mobil uyumlu tasarım
+- **CSS Modules** - Component-based styling
+
+### **Güvenlik & Şifreleme**
+- **Crypto-js 4.2.0** - Veri şifreleme
+- **Protected Routes** - Yetki kontrolü
+- **Session Management** - Oturum yönetimi
+
+### **Development Tools**
+- **ESLint 9.30.1** - Kod kalitesi
+- **TypeScript** - Tip güvenliği
+- **Hot Reload** - Geliştirme deneyimi
+
+## 🚀 Kurulum
+
+### **Gereksinimler**
+- Node.js 18+ 
+- npm veya yarn
+- Google Maps API anahtarı
+
+### **Adım 1: Projeyi Klonlayın**
+```bash
 git clone https://github.com/denizztt/bincard-web.git
-
-# Proje dizinine gidin
 cd bincard-web
+```
 
-# Bağımlılıkları yükleyin
+### **Adım 2: Bağımlılıkları Yükleyin**
+```bash
 npm install
+```
 
-# Geliştirme sunucusunu başlatın
+### **Adım 3: Environment Variables**
+`.env` dosyası oluşturun:
+```env
+# Google Maps API anahtarı
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# Backend API URL
+VITE_API_BASE_URL=http://localhost:8080
+
+# Ortam
+VITE_ENVIRONMENT=development
+```
+
+### **Adım 4: Uygulamayı Başlatın**
+```bash
+# Development server
 npm run dev
 
 # Production build
 npm run build
+
+# Build preview
+npm run preview
 ```
 
-### ⚙️ Konfigürasyon
-
-`.env` dosyası oluşturun veya güncelleyin:
-```env
-# Google Maps API anahtarı
-VITE_GOOGLE_MAPS_API_KEY=AIzaSyALXqOX99y2ojPxVTfLmN9kPKiUrjOx6dc
-
-# Backend API URL
-VITE_API_BASE_URL=http://localhost:8080
-
-# Ortam (development / production)
-VITE_ENVIRONMENT=development
-```
-
-### 🏗️ Proje Yapısı
+## 🏗️ Proje Yapısı
 
 ```
 bincard-web/
-├── src/
-│   ├── components/         # Yeniden kullanılabilir bileşenler
-│   │   ├── ProtectedRoute.jsx
-│   │   └── ThemeToggle.jsx
-│   ├── context/           # React Context API
-│   │   ├── AuthContext.jsx
-│   │   └── ThemeContext.jsx
-│   ├── pages/             # Sayfa bileşenleri
-│   │   ├── Dashboard.jsx
-│   │   ├── UserManagement.jsx
-│   │   ├── NewsManagement.jsx
-│   │   └── ...
-│   ├── services/          # API servisleri
-│   │   ├── apiService.ts
-│   │   └── authService.js
-│   ├── styles/            # CSS stilleri
-│   │   ├── common-components.css
-│   │   └── ...
-│   └── utils/             # Yardımcı fonksiyonlar
-├── public/                # Statik dosyalar
+├── 📁 src/
+│   ├── 🎨 assets/              # Resimler ve statik dosyalar
+│   ├── 🧩 components/          # Yeniden kullanılabilir bileşenler
+│   │   ├── GoogleMapWrapper.jsx    # Google Maps entegrasyonu
+│   │   ├── ProtectedRoute.jsx      # Yetki kontrolü
+│   │   └── ThemeToggle.jsx         # Tema değiştirici
+│   ├── ⚙️ config/              # Konfigürasyon dosyaları
+│   │   ├── config.js               # Genel ayarlar
+│   │   └── googleMaps.js          # Google Maps ayarları
+│   ├── 🔧 constants/            # Sabit değerler
+│   │   ├── busTypes.js             # Otobüs türleri
+│   │   ├── driverTypes.js          # Şoför türleri
+│   │   ├── routeTypes.js           # Rota türleri
+│   │   └── stationTypes.js         # Durak türleri
+│   ├── 🔄 context/               # React Context API
+│   │   ├── AuthContext.jsx         # Kimlik doğrulama
+│   │   ├── EnhancedAuthContext.jsx # Gelişmiş auth
+│   │   └── ThemeContext.jsx        # Tema yönetimi
+│   ├── 📄 main.jsx               # Uygulama giriş noktası
+│   ├── 📱 pages/                 # Sayfa bileşenleri
+│   │   ├── 🏠 Dashboard.jsx          # Ana sayfa
+│   │   ├── 🚌 BusList.jsx            # Otobüs listesi
+│   │   ├── 🗺️ BusMap.jsx             # Otobüs haritası
+│   │   ├── 👤 DriverList.jsx         # Şoför listesi
+│   │   ├── 🛤️ RouteAdd.jsx           # Rota ekleme
+│   │   ├── 🚏 StationList.jsx        # Durak listesi
+│   │   ├── 💰 PaymentPointList.jsx   # Ödeme noktaları
+│   │   └── ...                     # Diğer sayfalar
+│   ├── 🔌 services/              # API servisleri
+│   │   ├── apiService.ts            # Ana API servisi
+│   │   └── authService.js           # Kimlik doğrulama
+│   ├── 🎨 styles/                 # CSS stilleri
+│   │   ├── index.css                # Global stiller
+│   │   ├── App.css                  # Ana uygulama stilleri
+│   │   └── ...                     # Sayfa stilleri
+│   ├── 📝 types/                  # TypeScript tip tanımları
+│   │   └── index.ts                 # Ana tip tanımları
+│   └── 🛠️ utils/                  # Yardımcı fonksiyonlar
+│       ├── phoneUtils.js            # Telefon yardımcıları
+│       └── tokenManager.js          # Token yönetimi
+├── 📁 public/                     # Statik dosyalar
+├── 📄 package.json                # Proje bağımlılıkları
+├── ⚙️ vite.config.js             # Vite konfigürasyonu
+└── 📖 README.md                   # Bu dosya
 ```
 
+## 🎯 Kullanım Örnekleri
 
- ### 🚀 Features
- - 📊 **Dashboard**
-	 - Statistics: user, driver, bus, station counts
-	 - Recent activities: user registration, driver actions, route updates
-	 - System health checks
- - 👥 **User Management**
-	 - Create, edit, delete users
-	 - Role and permission settings
- - 🚌 **Bus & Vehicle Tracking**
-	 - Real-time location tracking (BusMap)
-	 - Route drawing on maps
- - 🚏 **Stop Management (StationMap)**
-	 - Add, edit, delete stops
-	 - Google Maps integration for location display
- - 🛤️ **Route Management**
-	 - Add and list routes
-	 - Route details and optimization
- - 👤 **Driver Management**
-	 - Add, edit, delete drivers
-	 - License documents and penalty tracking
-	 - Performance analytics and statistics
- - 💰 **Payment Points & Wallet**
-	 - Manage payment points (add/edit/view)
-	 - Update wallet status and transfers
- - 🔐 **Authentication**
-	 - Registration, login, SMS verification (2FA)
- - 📰 **News & Announcements**
-	 - Create, edit, delete announcements
- - 📈 **Analytics & Reports**
-	 - Charts and reports (usage, revenue, performance)
- - ⚙️ **Settings**
-	 - Theme (Light/Dark) support
-	 - System configuration
- - 📱 **Responsive Design**
-	 - Mobile, tablet, and desktop compatibility
-- **� Stop Management**: Bus stop locations and information systems
- - **Frontend**
-	 - React 19.1.0, Vite 7.0.6
-	 - React Router DOM 7.7.1
-	 - Axios, JWT token management
- - **Mapping**
-	 - @googlemaps/react-wrapper
-	 - @googlemaps/js-api-loader
- - **Styling & UI**
-	 - CSS Custom Properties / Modules
-	 - Lucide React icon set
- - **Tools**
-	 - Node.js, npm
-	 - PowerShell (Windows development)
-### 🛠️ Tech Stack
+### **Rota Oluşturma (Harita ile)**
+1. **Adım 1**: Rota bilgilerini girin (ad, kod, tür, renk)
+2. **Adım 2**: Haritayı açın ve durakları tıklayarak seçin
+3. **Adım 3**: Tarife saatlerini belirleyin
+4. **Adım 4**: Güzergah detaylarını planlayın
 
-- **Frontend**: React 19.1.0, React Router DOM 7.7.1
-- **Build Tool**: Vite 7.0.6 (Fast development and optimization)
-- **UI/UX**: Lucide React icons, CSS Custom Properties
-- **HTTP Client**: Axios (for API integration)
-- **Authentication**: JWT token management
-- **Theme System**: Light/Dark mode support
+### **Otobüs Takibi**
+- Gerçek zamanlı konum görüntüleme
+- Rota üzerinde ilerleme takibi
+- Şoför bilgileri ve iletişim
 
-### 📦 Installation
+### **Durak Yönetimi**
+- Google Maps ile konum belirleme
+- Durak özellikleri ve bilgileri
+- Rota bağlantıları
+
+## 🔧 Konfigürasyon
+
+### **Google Maps API**
+```javascript
+// src/config/googleMaps.js
+export const GOOGLE_MAPS_CONFIG = {
+  apiKey: process.env.VITE_GOOGLE_MAPS_API_KEY,
+  version: 'weekly',
+  libraries: ['places', 'geometry', 'drawing'],
+  language: 'tr',
+  region: 'TR'
+};
+```
+
+### **API Servisleri**
+```typescript
+// src/services/apiService.ts
+export const routeApi = {
+  createBidirectionalRoute: async (data) => { /* ... */ },
+  getRouteStations: async (routeId) => { /* ... */ },
+  addStationToRoute: async (routeId, stationId) => { /* ... */ }
+};
+```
+
+## 📱 Responsive Tasarım
+
+- **Desktop**: Tam özellikli arayüz
+- **Tablet**: Optimize edilmiş layout
+- **Mobile**: Touch-friendly tasarım
+- **Breakpoints**: 768px, 1024px, 1440px
+
+## 🌙 Tema Sistemi
+
+- **Light Theme**: Varsayılan açık tema
+- **Dark Theme**: Göz yormayan koyu tema
+- **CSS Variables**: Dinamik renk değişimi
+- **Theme Toggle**: Kolay tema değiştirme
+
+## 🚀 Performance Özellikleri
+
+- **Code Splitting**: Lazy loading
+- **Bundle Optimization**: Vite ile hızlı build
+- **Image Optimization**: Responsive images
+- **Caching**: API response caching
+
+## 🧪 Testing
 
 ```bash
-# Clone the repository
-git clone https://github.com/denizztt/bincard-web.git
+# Lint kontrolü
+npm run lint
 
-# Navigate to project directory
-cd bincard-web
+# Type checking
+npm run type-check
 
- Create or update `.env` file:
- ```env
-# Google Maps API key
-VITE_GOOGLE_MAPS_API_KEY=AIzaSyALXqOX99y2ojPxVTfLmN9kPKiUrjOx6dc
-
-# Backend API URL
-VITE_API_BASE_URL=http://localhost:8080
-
-# Environment (development / production)
-VITE_ENVIRONMENT=development
-```
-
-# Production build
+# Build test
 npm run build
 ```
 
-### ⚙️ Configuration
+## 📦 Build & Deployment
 
-Create `.env` file:
-```env
-VITE_API_URL=http://localhost:8080
-VITE_APP_NAME=BinCard Admin Panel
+```bash
+# Development
+npm run dev
+
+# Production build
+npm run build
+
+# Preview build
+npm run preview
+
+# Deploy to Vercel/Netlify
+npm run build
+# dist/ klasörünü deploy edin
 ```
 
-### 🏗️ Project Structure
+## 🤝 Katkıda Bulunma
 
-```
-bincard-web/
-├── src/
-│   ├── components/         # Reusable components
-│   │   ├── ProtectedRoute.jsx
-│   │   └── ThemeToggle.jsx
-│   ├── context/           # React Context API
-│   │   ├── AuthContext.jsx
-│   │   └── ThemeContext.jsx
-│   ├── pages/             # Page components
-│   │   ├── Dashboard.jsx
-│   │   ├── UserManagement.jsx
-│   │   ├── NewsManagement.jsx
-│   │   └── ...
-│   ├── services/          # API services
-│   │   ├── apiService.ts
- 1. Fork the repository
- 2. Create a feature branch (`git checkout -b feature/YourFeature`)
- 3. Commit your changes (`git commit -m 'Add YourFeature'`)
- 4. Push to your branch (`git push origin feature/YourFeature`)
- 5. Open a Pull Request
-│   │   └── authService.js
- This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-│   │   ├── common-components.css
- - **Demo**: [Live Demo](https://bincard-web.vercel.app)
- - **API Docs**: https://api.bincard.com/docs
- - **Issues**: https://github.com/denizztt/bincard-web/issues
-└── README.md
- - **Geliştirici / Developer**: Deniz Tatar
- - **E-posta / Email**: deniz@bincard.com
- - **GitHub**: https://github.com/denizztt
+1. **Fork** yapın
+2. **Feature branch** oluşturun (`git checkout -b feature/AmazingFeature`)
+3. **Commit** yapın (`git commit -m 'Add AmazingFeature'`)
+4. **Push** yapın (`git push origin feature/AmazingFeature`)
+5. **Pull Request** açın
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## 📄 Lisans
 
-### 📄 License
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📞 İletişim
 
-### 🔗 Links
+- **👨‍💻 Geliştirici**: Deniz Tatar
+- **📧 E-posta**: deniz@bincard.com
+- **🐙 GitHub**: [@denizztt](https://github.com/denizztt)
+- **🌐 Demo**: [Live Demo](https://bincard-web.vercel.app)
 
-- **Demo**: [Live Demo](https://bincard-web.vercel.app)
-- **API Documentation**: [Backend API Docs](https://api.bincard.com/docs)
-- **Issues**: [GitHub Issues](https://github.com/denizztt/bincard-web/issues)
+## 🙏 Teşekkürler
 
-### 📞 Contact
-
-- **Developer**: Deniz Tatar
-- **Email**: deniz@bincard.com
-- **GitHub**: [@denizztt](https://github.com/denizztt)
+- **React Team** - Harika framework için
+- **Vite Team** - Hızlı build tool için
+- **Google Maps** - Harita servisleri için
+- **Lucide** - Güzel ikonlar için
 
 ---
 
-⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın! / If you like this project, don't forget to give it a star!
+⭐ **Bu projeyi beğendiyseniz yıldız vermeyi unutmayın!** / **Don't forget to star this project if you like it!**
+
+---
+
+*Son güncelleme: Aralık 2024*
