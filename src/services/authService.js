@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
 export const authService = {
   async login(telephone, password) {
     try {
-      const response = await apiClient.post('/v1/api/auth/superadmin-login', {
+      const response = await apiClient.post('/v1/api/auth/login', {
         telephone,
         password
       });

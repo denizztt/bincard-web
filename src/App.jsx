@@ -43,6 +43,9 @@ import ContractManagement from './pages/ContractManagement';
 import UserContractTracking from './pages/UserContractTracking';
 import ComplianceCheck from './pages/ComplianceCheck';
 import SystemHealth from './pages/SystemHealth';
+import BusCardManagement from './pages/BusCardManagement';
+import BusCardPricing from './pages/BusCardPricing';
+import BusCardPricingList from './pages/BusCardPricingList';
 import './App.css';
 
 function App() {
@@ -507,6 +510,32 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SystemHealth />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Bus Card Management Routes */}
+            <Route
+              path="/buscard-management"
+              element={
+                <ProtectedRoute>
+                  <BusCardManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-pricing"
+              element={
+                <ProtectedRoute>
+                  <BusCardPricing />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-pricing-list"
+              element={
+                <ProtectedRoute>
+                  <BusCardPricingList />
                 </ProtectedRoute>
               }
             />

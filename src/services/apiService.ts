@@ -72,14 +72,19 @@ apiClient.interceptors.request.use(
         const token = getAccessToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          console.log('🔑 Token added to request');
+          console.log('🔑 Token added to request:', {
+            tokenLength: token.length,
+            tokenPreview: token.substring(0, 20) + '...',
+            url: config.url,
+            fullToken: token // DEBUG: Tam token'ı göster
+          });
           
           // Log warning if token is expiring soon
           if (isTokenExpiring(60)) {
             console.warn('⚠️ Token expiring soon (< 1 minute)');
           }
         } else {
-          console.log('⚠️ No token found');
+          console.log('⚠️ No token found for URL:', config.url);
         }
       } catch (error) {
         console.error('❌ Token validation error:', error);
@@ -172,7 +177,7 @@ const apiService = new ApiService();
 // Auth API endpoints
 export const authApi = {
   login: async (credentials: { telephone: string; password: string }): Promise<LoginResponse> => {
-    const response = await apiClient.post('/auth/superadmin-login', credentials);
+    const response = await apiClient.post('/auth/login', credentials);
     return response.data;
   },
 
@@ -1309,6 +1314,133 @@ export const routeApi = {
   // 18. Durak sırasını güncelle (PUT /{id}/update-station-order)
   updateStationOrder: async (routeId: number, stationId: number, newOrder: number) => {
     const response = await apiClient.put(`/route/${routeId}/update-station-order`, { stationId, newOrder });
+    return response.data;
+  }
+};
+
+// Bus Card API endpoints
+export const busCardApi = {
+  // Kart bloklama (POST /v1/api/buscard/card-blocked)
+  blockCard: async (uid: string) => {
+    console.log('🔒 BusCard blockCard API çağrısı başlatılıyor:', { uid });
+    try {
+      const response = await apiClient.post('/buscard/card-blocked', { uid });
+      console.log('✅ BusCard blockCard başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ BusCard blockCard hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kart blokunu kaldırma (DELETE /v1/api/buscard/card-blocked)
+  unblockCard: async (uid: string) => {
+    console.log('🔓 BusCard unblockCard API çağrısı başlatılıyor:', { uid });
+    try {
+      const response = await apiClient.delete('/buscard/card-blocked', { data: { uid } });
+      console.log('✅ BusCard unblockCard başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ BusCard unblockCard hatası:', error);
+      throw error;
+    }
+  },
+
+  // Bloke kartları listeleme (GET /v1/api/buscard/card-blocked)
+  getBlockedCards: async () => {
+    console.log('📋 Bloke kartları listeleniyor...');
+    try {
+      const response = await apiClient.get('/buscard/card-blocked');
+      console.log('✅ Bloke kartları başarıyla alındı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Bloke kartları alma hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kart fiyatlandırma oluşturma (POST /v1/api/buscard/card-pricing)
+  createCardPricing: async (pricingData: { cardType: string; price: string | number }) => {
+    const response = await apiClient.post('/buscard/card-pricing', pricingData);
+    return response.data;
+  },
+
+  // Kart fiyatlandırma güncelleme (PUT /v1/api/buscard/card-pricing)
+  updateCardPricing: async (pricingData: { cardType: string; price: string | number }) => {
+    console.log('💰 Kart fiyatı güncelleniyor:', pricingData);
+    console.log('📤 Gönderilen request body:', JSON.stringify(pricingData, null, 2));
+    console.log('📤 CardType değeri:', pricingData.cardType, 'Type:', typeof pricingData.cardType);
+    console.log('📤 Price değeri:', pricingData.price, 'Type:', typeof pricingData.price);
+    console.log('📤 Full URL:', `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/buscard/card-pricing`);
+    
+    try {
+      const response = await apiClient.put('/buscard/card-pricing', pricingData);
+      console.log('✅ Kart fiyatı başarıyla güncellendi:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kart fiyatı güncelleme hatası:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      throw error;
+    }
+  },
+
+  // Tüm kart fiyatlandırmalarını getirme (GET /v1/api/buscard/card-pricing)
+  getAllCardPricing: async () => {
+    const response = await apiClient.get('/buscard/card-pricing');
+    return response.data;
+  },
+
+  // Kart okuma (POST /v1/api/buscard/read)
+  readCard: async (uid: string) => {
+    console.log('🔍 BusCard readCard API çağrısı başlatılıyor:', { uid });
+    try {
+      const response = await apiClient.post('/buscard/read', { 
+        uid: uid
+      });
+      console.log('✅ BusCard readCard başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ BusCard readCard hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kart kayıt (POST /v1/api/buscard/register)
+  registerCard: async (cardData: any) => {
+    const response = await apiClient.post('/buscard/register', cardData);
+    return response.data;
+  },
+
+  // Bakiye yükleme (POST /v1/api/buscard/top-up)
+  topUpBalance: async (uid: string, amount: number) => {
+    const response = await apiClient.post('/buscard/top-up', { uid, amount });
+    return response.data;
+  },
+
+  // Kart vize (POST /v1/api/buscard/card-visa)
+  cardVisa: async (cardData: any) => {
+    const response = await apiClient.post('/buscard/card-visa', cardData);
+    return response.data;
+  },
+
+  // Biniş işlemi (POST /v1/api/buscard/get-on)
+  getOn: async (uid: string) => {
+    const response = await apiClient.post('/buscard/get-on', { uid });
+    return response.data;
+  },
+
+  // QR kod oluşturma (POST /v1/api/buscard/generate-qr)
+  generateQrCode: async () => {
+    const response = await apiClient.post('/buscard/generate-qr', {}, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  // QR kod tarama (POST /v1/api/buscard/scan-qr)
+  scanQrCode: async (qrToken: string) => {
+    const response = await apiClient.post('/buscard/scan-qr', { qrToken });
     return response.data;
   }
 };

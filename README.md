@@ -41,6 +41,15 @@ BinCard Web, modern şehir içi toplu taşıma sistemlerinin dijital yönetimi i
 - **Belge Takibi**: Lisans, ehliyet, sağlık raporu
 - **Performans Analizi**: İstatistikler ve raporlar
 
+### 💳 **BusCard Yönetimi**
+- **Kart Okuma**: Kart detayları ve bilgileri görüntüleme
+- **Kart Bloklama**: Güvenlik için kart bloklama işlemi
+- **Kart Aktif Etme**: Bloke kartları tekrar aktif etme
+- **Bloke Kart Listesi**: Tüm bloke kartları görüntüleme
+- **Kart Fiyatlandırma**: Kart türlerine göre fiyat belirleme
+- **Fiyat Güncelleme**: Mevcut fiyatları güncelleme
+- **Fiyat Listesi**: Tüm kart fiyatlarını görüntüleme
+
 ### 💰 **Ödeme & Cüzdan Sistemi**
 - **Ödeme Noktaları**: CRUD işlemleri ve detay görüntüleme
 - **Cüzdan Durumu**: Güncelleme ve takip
@@ -174,6 +183,9 @@ bincard-web/
 │   │   ├── 🏠 Dashboard.jsx          # Ana sayfa
 │   │   ├── 🚌 BusList.jsx            # Otobüs listesi
 │   │   ├── 🗺️ BusMap.jsx             # Otobüs haritası
+│   │   ├── 💳 BusCardManagement.jsx # BusCard yönetimi
+│   │   ├── 💰 BusCardPricing.jsx    # Kart fiyatlandırma
+│   │   ├── 📋 BusCardPricingList.jsx # Fiyat listesi
 │   │   ├── 👤 DriverList.jsx         # Şoför listesi
 │   │   ├── 🛤️ RouteAdd.jsx           # Rota ekleme
 │   │   ├── 🚏 StationList.jsx        # Durak listesi
@@ -198,6 +210,12 @@ bincard-web/
 ```
 
 ## 🎯 Kullanım Örnekleri
+
+### **BusCard Yönetimi**
+1. **Kart Okuma**: UID ile kart detaylarını görüntüleme
+2. **Kart Bloklama**: Güvenlik için kartı bloklama
+3. **Kart Aktif Etme**: Bloke kartları tekrar aktif etme
+4. **Fiyat Yönetimi**: Kart türlerine göre fiyat belirleme
 
 ### **Rota Oluşturma (Harita ile)**
 1. **Adım 1**: Rota bilgilerini girin (ad, kod, tür, renk)
@@ -236,6 +254,16 @@ export const routeApi = {
   createBidirectionalRoute: async (data) => { /* ... */ },
   getRouteStations: async (routeId) => { /* ... */ },
   addStationToRoute: async (routeId, stationId) => { /* ... */ }
+};
+
+export const busCardApi = {
+  readCard: async (uid) => { /* Kart okuma */ },
+  blockCard: async (uid) => { /* Kart bloklama */ },
+  unblockCard: async (uid) => { /* Kart aktif etme */ },
+  getBlockedCards: async () => { /* Bloke kartları listeleme */ },
+  createCardPricing: async (data) => { /* Fiyat oluşturma */ },
+  updateCardPricing: async (data) => { /* Fiyat güncelleme */ },
+  getAllCardPricing: async () => { /* Fiyat listesi */ }
 };
 ```
 

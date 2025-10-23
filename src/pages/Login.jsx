@@ -126,26 +126,108 @@ const Login = () => {
       console.log('🔐 Şifre uzunluğu:', formData.password.length);
       
       // Call API directly for login with token response expected
+      // Try most common phone number formats first to avoid brute force protection
+      const phoneFormats = [
+        `+90${phoneDigits}`, // +905550000000 (international format - backend expects this)
+        phoneDigits, // 5550000000 (fallback)
+        `0${phoneDigits}`, // 05550000000 (local format)
+      ];
+      
+      console.log('🚀 API login call yapılıyor...', { original: phoneDigits, formats: phoneFormats });
+      
+      let response;
+      let result;
+      let success = false;
+      
+      // Try the most likely format first (without +90 prefix - backend expects this)
       const loginPayload = {
         telephone: phoneDigits,
         password: formData.password
       };
       
-      console.log('🚀 API login call yapılıyor...', loginPayload);
+      console.log('🔄 İlk deneme (orijinal format):', loginPayload);
       
-      // Direct API call to get tokens (backend should return accessToken and refreshToken)
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginPayload)
-      });
+      try {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(loginPayload)
+        });
+        
+        result = await response.json();
+        console.log('📤 İlk deneme Response:', result);
+        
+        if (response.ok && result.success) {
+          console.log('✅ İlk deneme başarılı!');
+          // SMS doğrulama gerekiyor
+          if (result.message && result.message.includes('SMS')) {
+            console.log('📱 SMS doğrulama gerekiyor');
+            sessionStorage.setItem('verificationPhone', phoneDigits);
+            setMessage({ text: result.message || 'SMS doğrulama gerekli', isError: false });
+            
+            setTimeout(() => {
+              console.log('🚀 SMS verification sayfasına yönlendiriliyor...');
+              navigate('/verify-sms');
+            }, 1500);
+            return;
+          }
+          success = true;
+        } else if (response.status === 400) {
+          console.log('❌ 400 hatası - brute force protection tetiklendi');
+          setMessage({ text: 'Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyin.', isError: true });
+          return;
+        }
+      } catch (error) {
+        console.log('❌ İlk deneme hatası:', error);
+      }
       
-      const result = await response.json();
-      console.log('📤 LOGIN API RESPONSE:', result);
+      // If first attempt failed and no 400 error, try different phone formats
+      if (!success && response?.status !== 400) {
+        const alternativePayload = {
+          telephone: `+90${phoneDigits}`, // Try with +90 prefix
+          password: formData.password
+        };
+        
+        console.log('🔄 Alternatif format ile deneme:', alternativePayload);
+        
+        try {
+          response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(alternativePayload)
+          });
+          
+          result = await response.json();
+          console.log('📤 Alternatif format Response:', result);
+          
+          if (response.ok && result.success) {
+            console.log('✅ Alternatif format ile başarılı');
+            // SMS doğrulama gerekiyor
+            if (result.message && result.message.includes('SMS')) {
+              console.log('📱 SMS doğrulama gerekiyor');
+              sessionStorage.setItem('verificationPhone', phoneDigits);
+              setMessage({ text: result.message || 'SMS doğrulama gerekli', isError: false });
+              
+              setTimeout(() => {
+                console.log('🚀 SMS verification sayfasına yönlendiriliyor...');
+                navigate('/verify-sms');
+              }, 1500);
+              return;
+            }
+            success = true;
+          }
+        } catch (error) {
+          console.log('❌ Alternatif format deneme hatası:', error);
+        }
+      }
       
-      if (response.ok && result.success) {
+      console.log('📤 FINAL LOGIN API RESPONSE:', result);
+      
+      if (success && response.ok && result.success) {
         // Expect backend to return: { success: true, accessToken: "...", refreshToken: "...", user: {...} }
         const { accessToken, refreshToken, user } = result;
         

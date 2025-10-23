@@ -502,6 +502,24 @@ const Dashboard = () => {
             </div>
           )}
 
+          {/* Otobüs Kart Yönetimi */}
+          {renderMenuItem(
+            CreditCard, 
+            'Otobüs Kart Yönetimi', 
+            null, 
+            expandedMenus.payment, 
+            true, 
+            () => toggleMenu('payment'),
+            ['Kart Yönetimi', 'Fiyatlandırma Yönetimi', 'Fiyatlandırma Listesi']
+          )}
+          {expandedMenus.payment && !sidebarCollapsed && (
+            <div className="submenu">
+              {renderSubmenuItem('Kart Yönetimi', '/buscard-management')}
+              {renderSubmenuItem('Fiyatlandırma Yönetimi', '/buscard-pricing')}
+              {renderSubmenuItem('Fiyatlandırma Listesi', '/buscard-pricing-list')}
+            </div>
+          )}
+
           {/* Sistem Yönetimi */}
           {renderMenuItem(
             Activity, 
