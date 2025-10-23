@@ -90,7 +90,11 @@ npm run preview
 
 ## 📄 Lisans
 
-MIT License
+Bu proje özel lisans altındadır. Kullanım için yazılı izin gereklidir.
+Detaylar için [LICENSE](LICENSE) dosyasını inceleyiniz.
+
+**⚠️ UYARI**: Bu yazılım, geliştiricinin açık yazılı izni olmadan 
+hiçbir şekilde kullanılamaz, kopyalanamaz veya dağıtılamaz.
 
 ## 📞 İletişim
 
