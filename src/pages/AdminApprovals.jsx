@@ -13,7 +13,7 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { adminApprovalsApi } from '../services/apiService';
+import { superAdminApi } from '../services/apiService';
 import { AdminRequestStatus, getAdminRequestStatusDisplayName } from '../types';
 import '../styles/AdminApprovals.css';
 
@@ -48,7 +48,7 @@ const AdminApprovals = () => {
       setStatusMessage('Admin onay istekleri yükleniyor...');
 
       // API çağrısı - AdminApprovalsPage'deki parseAdminRequestsResponse mantığına benzer
-      const response = await adminApprovalsApi.getPendingAdminRequests(0, 50);
+      const response = await superAdminApi.getPendingAdminRequests(0, 50);
       
       if (response && response.success) {
         const requests = parseAdminRequestsFromResponse(response);
@@ -171,8 +171,8 @@ const AdminApprovals = () => {
     try {
       setStatusMessage('Admin onaylanıyor...');
       
-      const adminId = parseInt(request.adminId);
-      const response = await adminApprovalsApi.approveAdminRequest(adminId);
+      const requestId = parseInt(request.id);
+      const response = await superAdminApi.approveAdminRequest(requestId);
       
       if (response && response.success) {
         // İsteği güncelle
@@ -209,7 +209,7 @@ const AdminApprovals = () => {
       setStatusMessage('Admin reddediliyor...');
       
       const adminId = parseInt(request.adminId);
-      const response = await adminApprovalsApi.rejectAdminRequest(adminId);
+      const response = await superAdminApi.rejectAdminRequest(adminId);
       
       if (response && response.success) {
         // İsteği güncelle

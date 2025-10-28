@@ -26,6 +26,11 @@ import Analytics from './pages/Analytics';
 import AdminApprovals from './pages/AdminApprovals';
 import IdentityRequests from './pages/IdentityRequests';
 import AuditLogs from './pages/AuditLogs';
+import BusIncomeReports from './pages/BusIncomeReports';
+import AdminList from './pages/AdminList';
+import AdminAdd from './pages/AdminAdd';
+import AdminEdit from './pages/AdminEdit';
+import RoleManagement from './pages/RoleManagement';
 import Statistics from './pages/Statistics';
 import WalletStatusUpdate from './pages/WalletStatusUpdate';
 import AllWallets from './pages/AllWallets';
@@ -448,6 +453,48 @@ function App() {
               element={
                 <ProtectedRoute>
                   <IdentityRequests />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* SuperAdmin Routes */}
+            <Route
+              path="/admin/list"
+              element={
+                <ProtectedRoute>
+                  <AdminList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/add"
+              element={
+                <ProtectedRoute>
+                  <AdminAdd />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles/:id"
+              element={
+                <ProtectedRoute>
+                  <RoleManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bus-income-reports"
+              element={
+                <ProtectedRoute>
+                  <BusIncomeReports />
                 </ProtectedRoute>
               }
             />

@@ -457,12 +457,14 @@ const Dashboard = () => {
             expandedMenus.system, 
             true, 
             () => toggleMenu('system'),
-            ['Admin Onayları', 'Kimlik İstekleri']
+            ['Admin Listesi', 'Admin Ekle', 'Admin Onayları', 'Rol Yönetimi']
           )}
           {expandedMenus.system && !sidebarCollapsed && (
             <div className="submenu">
+              {renderSubmenuItem('Admin Listesi', '/admin/list')}
+              {renderSubmenuItem('Admin Ekle', '/admin/add')}
               {renderSubmenuItem('Admin Onayları', '/admin-approvals')}
-              {renderSubmenuItem('Kimlik İstekleri', '/identity-requests')}
+              {renderSubmenuItem('Rol Yönetimi', '/admin/roles')}
             </div>
           )}
 
@@ -471,13 +473,14 @@ const Dashboard = () => {
             BarChart3, 
             'Raporlar & Analiz', 
             null, 
-            expandedMenus.news, 
+            expandedMenus.reports, 
             true, 
-            () => toggleMenu('news'),
-            ['İstatistikler', 'Analitik', 'Denetim Kayıtları']
+            () => toggleMenu('reports'),
+            ['Gelir Raporları', 'İstatistikler', 'Analitik', 'Denetim Kayıtları']
           )}
-          {expandedMenus.news && !sidebarCollapsed && (
+          {expandedMenus.reports && !sidebarCollapsed && (
             <div className="submenu">
+              {renderSubmenuItem('Gelir Raporları', '/bus-income-reports')}
               {renderSubmenuItem('İstatistikler', '/statistics')}
               {renderSubmenuItem('Analitik', '/analytics')}
               {renderSubmenuItem('Denetim Kayıtları', '/audit-logs')}

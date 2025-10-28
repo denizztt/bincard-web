@@ -1445,4 +1445,92 @@ export const busCardApi = {
   }
 };
 
+// SuperAdmin API endpoints
+export const superAdminApi = {
+  // Admin İstekleri
+  getPendingAdminRequests: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/superadmin/admin-requests/pending?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  approveAdminRequest: async (requestId: number) => {
+    const response = await apiClient.post(`/superadmin/admin-requests/${requestId}/approve`);
+    return response.data;
+  },
+
+  rejectAdminRequest: async (adminId: number) => {
+    const response = await apiClient.post(`/superadmin/admin-requests/${adminId}/reject`);
+    return response.data;
+  },
+
+  // Rol Yönetimi
+  addRole: async (request: { adminId: number; roles: any[] }) => {
+    const response = await apiClient.post('/superadmin/roles/add', request);
+    return response.data;
+  },
+
+  removeRole: async (request: { adminId: number; roles: any[] }) => {
+    const response = await apiClient.delete('/superadmin/roles/remove', { data: request });
+    return response.data;
+  },
+
+  getAdminRoles: async (adminId: number) => {
+    const response = await apiClient.get(`/superadmin/roles/${adminId}`);
+    return response.data;
+  },
+
+  // Gelir Raporları
+  getDailyBusIncome: async (date: string) => {
+    const response = await apiClient.get(`/superadmin/bus-income/daily?date=${date}`);
+    return response.data;
+  },
+
+  getWeeklyBusIncome: async (startDate: string, endDate: string) => {
+    const response = await apiClient.get(`/superadmin/bus-income/weekly?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  },
+
+  getMonthlyBusIncome: async (year: number, month: number) => {
+    const response = await apiClient.get(`/superadmin/bus-income/monthly?year=${year}&month=${month}`);
+    return response.data;
+  },
+
+  getIncomeSummary: async () => {
+    const response = await apiClient.get('/superadmin/income-summary');
+    return response.data;
+  },
+
+  // Audit Logs
+  getAuditLogs: async (fromDate?: string, toDate?: string, action?: string) => {
+    const params = new URLSearchParams();
+    if (fromDate) params.append('fromDate', fromDate);
+    if (toDate) params.append('toDate', toDate);
+    if (action) params.append('action', action);
+    
+    const response = await apiClient.get(`/superadmin/audit-logs?${params.toString()}`);
+    return response.data;
+  },
+
+  // Admin Yönetimi
+  createAdmin: async (adminData: any) => {
+    const response = await apiClient.post('/superadmin/admins', adminData);
+    return response.data;
+  },
+
+  updateAdmin: async (adminId: number, adminData: any) => {
+    const response = await apiClient.put(`/superadmin/admins/${adminId}`, adminData);
+    return response.data;
+  },
+
+  deleteAdmin: async (adminId: number) => {
+    const response = await apiClient.delete(`/superadmin/admins/${adminId}`);
+    return response.data;
+  },
+
+  toggleAdminStatus: async (adminId: number) => {
+    const response = await apiClient.patch(`/superadmin/admins/${adminId}/toggle-status`);
+    return response.data;
+  }
+};
+
 export default apiService; 
