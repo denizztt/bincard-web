@@ -28,7 +28,6 @@ const AdminList = () => {
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    // Şimdilik mock data, backend admin listesi için API yok
     loadAdmins();
   }, []);
 
@@ -40,38 +39,30 @@ const AdminList = () => {
     try {
       setLoading(true);
       setError('');
-      
-      // TODO: Backend'den admin listesi API'si eklendiğinde buraya eklenecek
-      // const response = await superAdminApi.getAllAdmins();
-      // setAdmins(response.data);
-      
-      // Mock data
-      const mockAdmins = [
-        {
-          id: 1,
-          name: 'Ahmet',
-          surname: 'Yılmaz',
-          email: 'ahmet@example.com',
-          phone: '5551234567',
-          status: 'ACTIVE',
-          roles: ['ADMIN_ALL', 'ADMIN_STATION']
-        },
-        {
-          id: 2,
-          name: 'Mehmet',
-          surname: 'Demir',
-          email: 'mehmet@example.com',
-          phone: '5557654321',
-          status: 'INACTIVE',
-          roles: ['ADMIN_BUS']
+      try {
+        const response = await superAdminApi.getAllAdmins(0, 50);
+        if (response && response.success && Array.isArray(response.data)) {
+          const items = response.data.map((a) => ({
+            id: a.id,
+            name: a.profileInfo?.name,
+            surname: a.profileInfo?.surname,
+            email: a.profileInfo?.email,
+            phone: a.userNumber,
+            status: a.status,
+            roles: Array.isArray(a.roles) ? a.roles : []
+          }));
+          setAdmins(items);
+        } else {
+          throw new Error(response?.message || 'Admin listesi alınamadı');
         }
-      ];
-      
-      setAdmins(mockAdmins);
+      } catch (innerErr) {
+        console.warn('Admin listesi endpointi yok veya hata verdi:', innerErr);
+        setAdmins([]);
+      }
       setLoading(false);
     } catch (err) {
       console.error('Admin listesi yüklenirken hata:', err);
-      setError('Admin listesi yüklenemedi');
+      setError(err.response?.data?.message || err.message || 'Admin listesi yüklenemedi');
       setAdmins([]);
       setLoading(false);
     }

@@ -11,7 +11,7 @@ import {
   Wifi,
   Monitor
 } from 'lucide-react';
-import { auditLogsApi } from '../services/apiService';
+import { superAdminApi } from '../services/apiService';
 import { ActionType, getActionTypeDisplayName } from '../types';
 import '../styles/AuditLogs.css';
 
@@ -46,7 +46,7 @@ const AuditLogs = () => {
         : undefined;
 
       // API çağrısı - AuditLogsPage'deki parseAuditLogsResponse mantığına benzer
-      const response = await auditLogsApi.getAuditLogs(fromDate, toDate, actionParam);
+      const response = await superAdminApi.getAuditLogs(fromDate, toDate, actionParam);
       
       if (response && response.success) {
         const logs = parseAuditLogsFromResponse(response);

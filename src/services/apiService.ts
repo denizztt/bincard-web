@@ -1512,6 +1512,21 @@ export const superAdminApi = {
   },
 
   // Admin Yönetimi
+  getAllAdmins: async (page: number = 0, size: number = 20, status?: string) => {
+    // Önerilen endpoint; backend yoksa 404 dönebilir
+    const params = new URLSearchParams();
+    params.append('page', String(page));
+    params.append('size', String(size));
+    if (status) params.append('status', status);
+    const response = await apiClient.get(`/superadmin/admins?${params.toString()}`);
+    return response.data;
+  },
+
+  getAdminById: async (adminId: number) => {
+    // Önerilen endpoint; backend yoksa 404 dönebilir
+    const response = await apiClient.get(`/superadmin/admins/${adminId}`);
+    return response.data;
+  },
   createAdmin: async (adminData: any) => {
     const response = await apiClient.post('/superadmin/admins', adminData);
     return response.data;

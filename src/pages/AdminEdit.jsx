@@ -27,12 +27,12 @@ const AdminEdit = () => {
   });
 
   const roleOptions = [
-    { value: 'ADMIN_ALL', label: 'Tüm Yetkiler' },
-    { value: 'ADMIN_STATION', label: 'İstasyon Yöneticisi' },
-    { value: 'ADMIN_BUS', label: 'Otobüs Yöneticisi' },
-    { value: 'ADMIN_NEWS', label: 'Haber Yöneticisi' },
-    { value: 'ADMIN_WALLET', label: 'Cüzdan Yöneticisi' },
-    { value: 'ADMIN_REPORT', label: 'Rapor Yöneticisi' }
+  { value: 'ADMIN_ALL', label: 'Tüm Yetkiler' },
+  { value: 'STATION_ADMIN', label: 'İstasyon Yöneticisi' },
+  { value: 'BUS_ADMIN', label: 'Otobüs Yöneticisi' },
+  { value: 'NEWS_ADMIN', label: 'Haber Yöneticisi' },
+  { value: 'WALLET_ADMIN', label: 'Cüzdan Yöneticisi' },
+  { value: 'REPORT_ADMIN', label: 'Rapor Yöneticisi' }
   ];
 
   useEffect(() => {
@@ -43,25 +43,34 @@ const AdminEdit = () => {
     try {
       setLoading(true);
       setError('');
-      
-      // TODO: Backend'den admin detayı API'si eklendiğinde
-      // const response = await superAdminApi.getAdminById(id);
-      // setFormData(response.data);
-      
-      // Mock data
-      const mockData = {
-        name: 'Ahmet',
-        surname: 'Yılmaz',
-        email: 'ahmet@example.com',
-        password: '',
-        roles: ['ADMIN_ALL', 'ADMIN_STATION']
-      };
-      
-      setFormData(mockData);
+      const adminId = parseInt(id);
+      if (Number.isNaN(adminId)) {
+        throw new Error('Geçersiz admin ID');
+      }
+
+      // Admin detayı (backend eklenmemiş olabilir; 404 gelirse kullanıcıya gösteririz)
+      try {
+        const response = await superAdminApi.getAdminById(adminId);
+        if (response && response.success && response.data) {
+          const data = response.data;
+          setFormData({
+            name: data.profileInfo?.name || '',
+            surname: data.profileInfo?.surname || '',
+            email: data.profileInfo?.email || '',
+            password: '',
+            roles: Array.isArray(data.roles) ? data.roles : []
+          });
+        } else {
+          throw new Error(response?.message || 'Admin detayı alınamadı');
+        }
+      } catch (innerErr) {
+        // Detay endpoint yoksa kullanıcı forma manuel girebilir
+        console.warn('Admin detayı alınamadı:', innerErr);
+      }
       setLoading(false);
     } catch (err) {
       console.error('Admin detayları yüklenirken hata:', err);
-      setError('Admin detayları yüklenemedi');
+      setError(err.response?.data?.message || err.message || 'Admin detayları yüklenemedi');
       setLoading(false);
     }
   };
@@ -111,13 +120,19 @@ const AdminEdit = () => {
       }
       
       const response = await superAdminApi.updateAdmin(parseInt(id), updateData);
-      
-      if (response && response.success) {
-        alert('Admin başarıyla güncellendi');
-        navigate('/admin/list');
-      } else {
-        throw new Error(response?.message || 'Admin güncelleme başarısız');
+
+      const serverMessage = response?.message || '';
+      const looksFailed =
+        !response?.success ||
+        /bulunamad[ıi]/i.test(serverMessage) ||
+        /not\s*found/i.test(serverMessage);
+
+      if (looksFailed) {
+        throw new Error(serverMessage || 'Admin güncelleme başarısız');
       }
+
+      alert(serverMessage || 'Admin başarıyla güncellendi');
+      navigate('/admin/list');
     } catch (err) {
       console.error('Admin güncelleme hatası:', err);
       setError(err.response?.data?.message || err.message || 'Admin güncellenemedi');

@@ -23,11 +23,11 @@ const RoleManagement = () => {
   
   const allRoles = [
     { value: 'ADMIN_ALL', label: 'Tüm Yetkiler' },
-    { value: 'ADMIN_STATION', label: 'İstasyon Yöneticisi' },
-    { value: 'ADMIN_BUS', label: 'Otobüs Yöneticisi' },
-    { value: 'ADMIN_NEWS', label: 'Haber Yöneticisi' },
-    { value: 'ADMIN_WALLET', label: 'Cüzdan Yöneticisi' },
-    { value: 'ADMIN_REPORT', label: 'Rapor Yöneticisi' }
+    { value: 'STATION_ADMIN', label: 'İstasyon Yöneticisi' },
+    { value: 'BUS_ADMIN', label: 'Otobüs Yöneticisi' },
+    { value: 'NEWS_ADMIN', label: 'Haber Yöneticisi' },
+    { value: 'WALLET_ADMIN', label: 'Cüzdan Yöneticisi' },
+    { value: 'REPORT_ADMIN', label: 'Rapor Yöneticisi' }
   ];
 
   useEffect(() => {
@@ -38,26 +38,24 @@ const RoleManagement = () => {
     try {
       setLoading(true);
       setError('');
-      
-      // TODO: Mock data - Backend'den admin bilgisi ve rolleri
-      // const response = await superAdminApi.getAdminRoles(parseInt(id));
-      // setCurrentRoles(response.data);
-      
-      // Mock data
-      const mockRoles = ['ADMIN_ALL', 'ADMIN_STATION'];
-      const mockAdmin = {
-        id: parseInt(id),
-        name: 'Ahmet',
-        surname: 'Yılmaz',
-        email: 'ahmet@example.com'
-      };
-      
-      setCurrentRoles(mockRoles);
-      setAdminInfo(mockAdmin);
+      const adminId = parseInt(id);
+      if (Number.isNaN(adminId)) {
+        throw new Error('Geçersiz admin ID');
+      }
+
+      const response = await superAdminApi.getAdminRoles(adminId);
+
+      if (response && response.success) {
+        const roles = Array.isArray(response.data) ? response.data : [];
+        setCurrentRoles(roles);
+        setAdminInfo({ id: adminId });
+      } else {
+        throw new Error(response?.message || 'Roller getirilemedi');
+      }
       setLoading(false);
     } catch (err) {
       console.error('Rol bilgileri yüklenirken hata:', err);
-      setError('Rol bilgileri yüklenemedi');
+      setError(err.response?.data?.message || err.message || 'Rol bilgileri yüklenemedi');
       setLoading(false);
     }
   };
@@ -69,7 +67,7 @@ const RoleManagement = () => {
       
       const response = await superAdminApi.addRole({
         adminId: parseInt(id),
-        roles: [roleValue]
+        roles: [String(roleValue).toUpperCase()]
       });
       
       if (response && response.success) {
@@ -97,7 +95,7 @@ const RoleManagement = () => {
       
       const response = await superAdminApi.removeRole({
         adminId: parseInt(id),
-        roles: [roleValue]
+        roles: [String(roleValue).toUpperCase()]
       });
       
       if (response && response.success) {

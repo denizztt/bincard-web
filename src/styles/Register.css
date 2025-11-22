@@ -204,60 +204,7 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .register-container {
-    background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
-  }
-  
-  .register-card {
-    background: var(--gray-800);
-    border: 1px solid var(--gray-700);
-  }
-  
-  .back-button {
-    background: var(--gray-700);
-    color: var(--gray-300);
-    border-color: var(--gray-600);
-  }
-  
-  .back-button:hover {
-    background: var(--gray-600);
-    color: var(--gray-200);
-  }
-  
-  .register-header h1 {
-    color: var(--white);
-  }
-  
-  .register-header p {
-    color: var(--gray-300);
-  }
-  
-  .info-message {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: rgba(59, 130, 246, 0.3);
-  }
-  
-  .info-message h3 {
-    color: var(--info-color);
-  }
-  
-  .info-message p {
-    color: var(--gray-300);
-  }
-  
-  .back-to-login-button {
-    border-color: var(--gray-600);
-    color: var(--gray-300);
-  }
-  
-  .back-to-login-button:hover {
-    border-color: var(--secondary-color);
-    color: var(--secondary-color);
-    background: rgba(100, 116, 139, 0.1);
-  }
-}
+/* Dark mode removed - always use light theme */
 
 /* Animation for the register card */
 .register-card {

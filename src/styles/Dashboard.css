@@ -8,7 +8,7 @@
 
 /* Sidebar */
 .sidebar {
-  width: 280px;
+  width: 320px;
   background: var(--background-secondary);
   color: var(--text-primary);
   transform: translateX(-100%);
@@ -44,17 +44,31 @@
   gap: var(--spacing-4);
 }
 
+.sidebar-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--spacing-6);
+}
+
 .sidebar-header h2 {
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: 700;
-  color: var(--white);
+  color: #000000;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  flex: 1;
+  min-width: 0;
+  margin-right: auto;
 }
 
 .sidebar-collapse-toggle {
   background: none;
   border: none;
-  color: white;
+  color: #000000;
   cursor: pointer;
   padding: 8px;
   border-radius: var(--radius-md);
@@ -62,11 +76,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: flex-end;
+  flex-shrink: 0;
+  margin-left: var(--spacing-4);
 }
 
 .sidebar-collapse-toggle:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.1);
   transform: scale(1.1);
 }
 
@@ -253,7 +268,7 @@
   }
   
   .main-content {
-    margin-left: 280px;
+    margin-left: 320px;
   }
   
   .sidebar-toggle {

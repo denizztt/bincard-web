@@ -406,17 +406,6 @@ const Login = () => {
             </form>
           </div>
 
-          {/* Card Footer */}
-          <div className="card-footer">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="back-button"
-            >
-              <ArrowLeft className="back-icon" />
-              Ana Menüye Dön
-            </button>
-          </div>
         </div>
 
         {/* Security Notice */}

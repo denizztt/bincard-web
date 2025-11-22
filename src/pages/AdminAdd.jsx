@@ -29,11 +29,11 @@ const AdminAdd = () => {
 
   const roleOptions = [
     { value: 'ADMIN_ALL', label: 'Tüm Yetkiler' },
-    { value: 'ADMIN_STATION', label: 'İstasyon Yöneticisi' },
-    { value: 'ADMIN_BUS', label: 'Otobüs Yöneticisi' },
-    { value: 'ADMIN_NEWS', label: 'Haber Yöneticisi' },
-    { value: 'ADMIN_WALLET', label: 'Cüzdan Yöneticisi' },
-    { value: 'ADMIN_REPORT', label: 'Rapor Yöneticisi' }
+    { value: 'STATION_ADMIN', label: 'İstasyon Yöneticisi' },
+    { value: 'BUS_ADMIN', label: 'Otobüs Yöneticisi' },
+    { value: 'NEWS_ADMIN', label: 'Haber Yöneticisi' },
+    { value: 'WALLET_ADMIN', label: 'Cüzdan Yöneticisi' },
+    { value: 'REPORT_ADMIN', label: 'Rapor Yöneticisi' }
   ];
 
   const handleChange = (e) => {
@@ -75,7 +75,14 @@ const AdminAdd = () => {
       setLoading(true);
       setError('');
       
-      const response = await superAdminApi.createAdmin(formData);
+      // Backend Role enum isimleriyle birebir göndermek için roles'i normalize et
+      const payload = {
+        ...formData,
+        telephone: String(formData.telephone || '').trim(),
+        roles: (formData.roles || []).map(r => String(r).toUpperCase())
+      };
+
+      const response = await superAdminApi.createAdmin(payload);
       
       if (response && response.success) {
         alert('Admin başarıyla oluşturuldu');

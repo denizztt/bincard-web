@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import ThemeToggle from '../components/ThemeToggle';
 import {
   FileText,
   Plus,
@@ -224,7 +223,6 @@ const ContractManagement = () => {
         </div>
         
         <div className="header-right">
-          <ThemeToggle />
           <button 
             className="refresh-button"
             onClick={loadContracts}

@@ -171,8 +171,8 @@ const AdminApprovals = () => {
     try {
       setStatusMessage('Admin onaylanıyor...');
       
-      const requestId = parseInt(request.id);
-      const response = await superAdminApi.approveAdminRequest(requestId);
+      // Backend implementasyonu adminId'ye göre arama yaptığı için adminId gönderiyoruz
+      const response = await superAdminApi.approveAdminRequest(parseInt(request.adminId));
       
       if (response && response.success) {
         // İsteği güncelle

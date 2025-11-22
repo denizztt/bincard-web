@@ -91,8 +91,10 @@ export default function SMSVerification() {
 
     // Auto-verify when 6th digit is entered
     if (value && index === 5) {
+      // Use the new code directly instead of state to avoid async state update issue
+      const finalCode = [...newCode];
       setTimeout(() => {
-        handleVerify();
+        handleVerifyWithCode(finalCode.join(''));
       }, 200);
     }
   };
@@ -126,11 +128,9 @@ export default function SMSVerification() {
     }
   };
 
-  const handleVerify = async () => {
-    const verificationCode = code.join('');
-
-    if (verificationCode.length !== 6) {
-      setError('6 haneli doğrulama kodunu giriniz');
+  const handleVerifyWithCode = async (verificationCode) => {
+    // Skip validation if code is already 6 digits (called from auto-verify)
+    if (!verificationCode || verificationCode.length !== 6) {
       return;
     }
 
@@ -165,6 +165,17 @@ export default function SMSVerification() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleVerify = async () => {
+    const verificationCode = code.join('');
+
+    if (verificationCode.length !== 6) {
+      setError('6 haneli doğrulama kodunu giriniz');
+      return;
+    }
+
+    await handleVerifyWithCode(verificationCode);
   };
 
   const handleResendCode = async () => {
@@ -484,8 +495,25 @@ export default function SMSVerification() {
               type="button"
               onClick={() => navigate('/login')}
               className="back-button"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'transparent',
+                color: '#6b7280',
+                border: '2px solid #e5e7eb',
+                borderRadius: '10px',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                minHeight: '44px'
+              }}
             >
-              <ArrowLeft className="back-icon" />
+              <ArrowLeft className="back-icon" style={{ width: '16px', height: '16px' }} />
               Giriş Sayfasına Dön
             </button>
           </div>

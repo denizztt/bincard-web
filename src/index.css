@@ -221,36 +221,7 @@
   --primary-hover: var(--blue-600);
 }
 
-/* Dark Theme Variables */
-[data-theme="dark"] {
-  --background-primary: var(--gray-900);
-  --background-secondary: var(--gray-800);
-  --background-tertiary: var(--gray-700);
-  --background-hover: var(--gray-700);
-  --text-primary: var(--gray-100);
-  --text-secondary: var(--gray-300);
-  --text-tertiary: var(--gray-400);
-  --border-color: var(--gray-700);
-  --border-hover: var(--gray-600);
-  --error-color: var(--red-400);
-  --error-hover: var(--red-500);
-  --error-bg: var(--red-900);
-  --error-border: var(--red-700);
-  --error-text: var(--red-200);
-  --success-color: var(--green-400);
-  --success-hover: var(--green-500);
-  --primary-hover: var(--blue-400);
-  
-  /* Override specific colors for dark theme */
-  --gray-50: var(--gray-900);
-  --white: var(--gray-800);
-}
-
-/* Dark theme body styling */
-.dark-theme {
-  background-color: var(--background-primary);
-  color: var(--text-primary);
-}
+/* Dark theme removed - always use light theme */
 
 /* Base HTML Elements */
 html {

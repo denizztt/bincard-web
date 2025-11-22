@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import ThemeToggle from '../components/ThemeToggle';
 import {
   Shield,
   Search,
@@ -146,7 +145,6 @@ const ComplianceCheck = () => {
         </div>
         
         <div className="header-right">
-          <ThemeToggle />
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
             Çıkış Yap

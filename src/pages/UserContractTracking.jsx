@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import ThemeToggle from '../components/ThemeToggle';
 import {
   FileText,
   Search,
@@ -167,7 +166,6 @@ const UserContractTracking = () => {
         </div>
         
         <div className="header-right">
-          <ThemeToggle />
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
             Çıkış Yap

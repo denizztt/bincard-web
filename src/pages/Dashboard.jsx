@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/EnhancedAuthContext';
-import ThemeToggle from '../components/ThemeToggle';
 import { 
   BarChart3, 
   FileText, 
@@ -283,7 +282,7 @@ const Dashboard = () => {
       <div className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-title">
-            {!sidebarCollapsed && <h2>City Card Admin</h2>}
+            {!sidebarCollapsed && <h2>City Card Süper Admin</h2>}
             <button 
               className="sidebar-collapse-toggle"
               onClick={toggleSidebarCollapse}
@@ -583,7 +582,6 @@ const Dashboard = () => {
             >
               <RefreshCw className={loading ? 'spinning' : ''} size={20} />
             </button>
-            <ThemeToggle />
           </div>
         </div>
 
