@@ -9,12 +9,12 @@ import {
   Trash2, 
   RefreshCw, 
   Calendar, 
-  BarChart3,
   Settings,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { newsApi } from '../services/apiService';
 import '../styles/NewsList.css';
@@ -49,7 +49,6 @@ const NewsManagement = () => {
   const [selectedNews, setSelectedNews] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [previewNews, setPreviewNews] = useState(null);
-  const [showStatistics, setShowStatistics] = useState(false);
 
   useEffect(() => {
     // URL parametrelerini filters state'ine senkronize et
@@ -94,6 +93,7 @@ const NewsManagement = () => {
         );
       }
       
+      // Normal response kontrolü - content varsa PagedResponse
       if (response && response.content) {
         filteredNews = response.content;
         
@@ -110,10 +110,44 @@ const NewsManagement = () => {
         setNews(filteredNews);
         setTotalPages(response.totalPages || 0);
         setTotalElements(response.totalElements || 0);
+      } else {
+        // Response var ama content yok veya response yok
+        setNews([]);
+        setTotalPages(0);
+        setTotalElements(0);
       }
     } catch (err) {
       console.error('News loading failed:', err);
-      setError('Haberler yüklenirken hata oluştu: ' + (err.message || err));
+      
+      // Backend'den gelen hata mesajını al
+      let errorMessage = 'Haberler yüklenirken hata oluştu';
+      
+      // Business error (200 OK ile dönen hata)
+      if (err.isBusinessError && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } 
+      // Normal HTTP error
+      else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } 
+      // Network error
+      else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Yetkisizlik hatalarını özel olarak handle et
+      if (errorMessage.includes('Yetkisiz') || 
+          errorMessage.includes('Unauthorized') || 
+          errorMessage.includes('yetkiniz') ||
+          errorMessage.includes('yetki')) {
+        setError('Bu işlem için yetkiniz bulunmamaktadır. Lütfen sistem yöneticinizle iletişime geçin.');
+      } else {
+        setError(errorMessage);
+      }
+      
+      setNews([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
@@ -279,14 +313,6 @@ const NewsManagement = () => {
         </div>
         
         <div className="header-right">
-          <button 
-            className="btn-secondary"
-            onClick={() => setShowStatistics(!showStatistics)}
-          >
-            <BarChart3 size={20} />
-            <span>İstatistikler</span>
-          </button>
-          
           <button 
             className="btn-secondary"
             onClick={() => setShowFilters(!showFilters)}

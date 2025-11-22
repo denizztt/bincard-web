@@ -16,7 +16,6 @@ import {
   UserCheck,
   Settings,
   LogOut,
-  Menu,
   X,
   Home,
   ChevronDown,
@@ -42,7 +41,9 @@ import {
   HardDrive,
   Mail,
   Image,
-  Map
+  Map,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { healthApi } from '../services/apiService';
 import '../styles/Dashboard.css';
@@ -70,6 +71,19 @@ const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
+  const [statsSliderIndex, setStatsSliderIndex] = useState(0);
+  const [quickActions, setQuickActions] = useState([
+    { id: 1, label: 'Haber Ekle', path: '/news/add', icon: FileText },
+    { id: 2, label: 'İstasyon Ekle', path: '/station/add', icon: MapPin },
+    { id: 3, label: 'Otobüs Ekle', path: '/bus/create', icon: Bus },
+    { id: 4, label: 'Şoför Ekle', path: '/driver/add', icon: UserSearch },
+    { id: 5, label: 'Ödeme Noktası', path: '/payment-point/add', icon: CreditCard },
+    { id: 6, label: 'Rota Ekle', path: '/route/add', icon: Route }
+  ]);
+  const [quickActionsSliderIndex, setQuickActionsSliderIndex] = useState(0);
+  const [showQuickActionModal, setShowQuickActionModal] = useState(false);
+  const [monthlyIncomeData, setMonthlyIncomeData] = useState([]);
+  const [userActivityData, setUserActivityData] = useState([]);
 
   // Expandable menu state
   const [expandedMenus, setExpandedMenus] = useState({
@@ -93,20 +107,28 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
       
-  // Stats data removed; optionally add UI metrics here
+      // Initialize with empty/zero values - will be populated by real API calls
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        dailyIncome: 0,
+        monthlyIncome: 0,
+        pendingRequests: 0,
+        todayTransactions: 0,
+        systemStatus: 'Normal',
+        totalBuses: 0,
+        totalStations: 0
+      });
       
-      // Mock recent activities
-      const mockActivities = [
-        { id: 1, message: 'Yeni kullanıcı kaydı: test@example.com', timestamp: Date.now() - 5 * 60 * 1000 },
-        { id: 2, message: 'Şoför sisteme giriş yaptı: Ahmet Yılmaz', timestamp: Date.now() - 15 * 60 * 1000 },
-        { id: 3, message: 'Rota güncellendi: Merkez - Üniversite', timestamp: Date.now() - 30 * 60 * 1000 }
-      ];
-      setRecentActivities(mockActivities);
+      // Empty activities - will be populated by real API calls
+      setRecentActivities([]);
       
-      // Load system health data
-  // Mock system health data
-  const mockHealth = { status: 'online', database: 'up', uptime: '99.8%' };
-  setSystemHealth(mockHealth);
+      // System health will be loaded from API if available
+      setSystemHealth(null);
+      
+      // Empty chart data - will be populated by real API calls
+      setMonthlyIncomeData([]);
+      setUserActivityData([]);
       
       setLastUpdate(new Date());
       
@@ -138,16 +160,18 @@ const Dashboard = () => {
     loadDashboardData();
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
   const toggleSearch = () => {
     setSearchVisible(!searchVisible);
+  };
+
+  const handleSearchClick = () => {
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+    }
   };
 
   const toggleMenu = (menuKey) => {
@@ -276,6 +300,185 @@ const Dashboard = () => {
     }
   };
 
+  // Stats slider functions
+  const statsCards = [
+    { key: 'users', component: 'users' },
+    { key: 'income', component: 'income' },
+    { key: 'requests', component: 'requests' },
+    { key: 'system', component: 'system' },
+    { key: 'buses', component: 'infrastructure' },
+    { key: 'stations', component: 'infrastructure' }
+  ];
+
+  const handleStatsPrev = () => {
+    setStatsSliderIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleStatsNext = () => {
+    const maxIndex = Math.max(0, statsCards.length - 3);
+    setStatsSliderIndex(prev => Math.min(maxIndex, prev + 1));
+  };
+
+  // Quick actions functions
+  const availablePages = [
+    { label: 'Haber Ekle', path: '/news/add', icon: FileText },
+    { label: 'Haberler', path: '/news', icon: FileText },
+    { label: 'İstasyon Ekle', path: '/station/add', icon: MapPin },
+    { label: 'İstasyon Listesi', path: '/station', icon: MapPin },
+    { label: 'Otobüs Ekle', path: '/bus/create', icon: Bus },
+    { label: 'Otobüs Listesi', path: '/bus', icon: Bus },
+    { label: 'Şoför Ekle', path: '/driver/add', icon: UserSearch },
+    { label: 'Şoför Listesi', path: '/driver', icon: UserSearch },
+    { label: 'Ödeme Noktası Ekle', path: '/payment-point/add', icon: CreditCard },
+    { label: 'Ödeme Noktaları', path: '/payment-point', icon: CreditCard },
+    { label: 'Rota Ekle', path: '/route/add', icon: Route },
+    { label: 'Rota Listesi', path: '/route', icon: Route },
+    { label: 'Admin Ekle', path: '/admin/add', icon: UserCheck },
+    { label: 'Admin Listesi', path: '/admin/list', icon: UserCheck },
+    { label: 'Geri Bildirimler', path: '/feedback', icon: MessageSquare },
+    { label: 'Cüzdanlar', path: '/all-wallets', icon: Wallet },
+    { label: 'Raporlar', path: '/bus-income-reports', icon: BarChart3 },
+    { label: 'İstatistikler', path: '/statistics', icon: BarChart3 },
+    { label: 'Sistem Sağlığı', path: '/system-health', icon: Activity }
+  ];
+
+  const handleAddQuickAction = (page) => {
+    if (!quickActions.find(qa => qa.path === page.path)) {
+      const newAction = {
+        id: Date.now(),
+        label: page.label,
+        path: page.path,
+        icon: page.icon
+      };
+      setQuickActions([...quickActions, newAction]);
+    }
+    setShowQuickActionModal(false);
+  };
+
+  const handleRemoveQuickAction = (id) => {
+    setQuickActions(quickActions.filter(qa => qa.id !== id));
+  };
+
+  const handleQuickActionsPrev = () => {
+    setQuickActionsSliderIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleQuickActionsNext = () => {
+    const maxIndex = Math.max(0, quickActions.length - 3);
+    setQuickActionsSliderIndex(prev => Math.min(maxIndex, prev + 1));
+  };
+
+  // Chart rendering functions
+  const renderIncomeChart = () => {
+    if (monthlyIncomeData.length === 0) {
+      return (
+        <div className="chart-placeholder">
+          <PieChart size={100} />
+          <p>Veri bulunmuyor</p>
+        </div>
+      );
+    }
+
+    const maxIncome = Math.max(...monthlyIncomeData.map(d => d.income));
+    const chartHeight = 200;
+    const chartWidth = 100;
+    const barWidth = chartWidth / monthlyIncomeData.length - 2;
+
+    return (
+      <div className="chart-container">
+        <svg width="100%" height={chartHeight + 40} viewBox={`0 0 ${monthlyIncomeData.length * 30} ${chartHeight + 40}`}>
+          {monthlyIncomeData.map((data, index) => {
+            const barHeight = (data.income / maxIncome) * chartHeight;
+            const x = index * 30 + 5;
+            const y = chartHeight - barHeight;
+            return (
+              <g key={index}>
+                <rect
+                  x={x}
+                  y={y + 20}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="var(--primary-color)"
+                  rx="4"
+                />
+                <text
+                  x={x + barWidth / 2}
+                  y={chartHeight + 35}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="var(--text-secondary)"
+                >
+                  {data.month}
+                </text>
+                <text
+                  x={x + barWidth / 2}
+                  y={y + 15}
+                  textAnchor="middle"
+                  fontSize="9"
+                  fill="var(--text-primary)"
+                  fontWeight="600"
+                >
+                  {(data.income / 1000).toFixed(0)}k
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    );
+  };
+
+  const renderActivityChart = () => {
+    if (userActivityData.length === 0) {
+      return (
+        <div className="chart-placeholder">
+          <BarChart3 size={100} />
+          <p>Veri bulunmuyor</p>
+        </div>
+      );
+    }
+
+    const maxUsers = Math.max(...userActivityData.map(d => d.activeUsers));
+    const chartHeight = 200;
+    const chartWidth = 100;
+    const barWidth = chartWidth / userActivityData.length - 1;
+
+    return (
+      <div className="chart-container">
+        <svg width="100%" height={chartHeight + 40} viewBox={`0 0 ${userActivityData.length * 8} ${chartHeight + 40}`}>
+          {userActivityData.map((data, index) => {
+            const barHeight = (data.activeUsers / maxUsers) * chartHeight;
+            const x = index * 8 + 2;
+            const y = chartHeight - barHeight;
+            return (
+              <g key={index}>
+                <rect
+                  x={x}
+                  y={y + 20}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="var(--secondary-color)"
+                  rx="4"
+                />
+                {index % 5 === 0 && (
+                  <text
+                    x={x + barWidth / 2}
+                    y={chartHeight + 35}
+                    textAnchor="middle"
+                    fontSize="8"
+                    fill="var(--text-secondary)"
+                  >
+                    {data.date.split(' ')[0]}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-container">
       {/* Sidebar */}
@@ -294,13 +497,14 @@ const Dashboard = () => {
           
           {/* Search */}
           <div className={`sidebar-search ${searchVisible || !sidebarCollapsed ? 'visible' : ''}`}>
-            <div className="search-input-container">
+            <div className="search-input-container" onClick={handleSearchClick}>
               <Search size={16} className="search-icon" />
               <input
                 type="text"
                 placeholder="Menü ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onClick={handleSearchClick}
                 className="search-input"
               />
             </div>
@@ -560,12 +764,6 @@ const Dashboard = () => {
         {/* Header */}
         <div className="header">
           <div className="header-left">
-            <button 
-              className="sidebar-toggle"
-              onClick={toggleSidebar}
-            >
-              <Menu size={24} />
-            </button>
             <h1>Dashboard</h1>
           </div>
           
@@ -613,107 +811,214 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="stats-grid">
-            <div className="stat-card users">
-              <div className="stat-icon">
-                <Users size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Toplam Kullanıcı</h3>
-                <div className="stat-number">{formatNumber(stats.totalUsers)}</div>
-                <div className="stat-subtitle">Aktif: {formatNumber(stats.activeUsers)}</div>
-              </div>
-            </div>
-
-            <div className="stat-card income">
-              <div className="stat-icon">
-                <DollarSign size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Günlük Gelir</h3>
-                <div className="stat-number">{formatCurrency(stats.dailyIncome)}</div>
-                <div className="stat-subtitle">İşlem: {formatNumber(stats.todayTransactions)}</div>
-              </div>
-            </div>
-
-            <div className="stat-card requests">
-              <div className="stat-icon">
-                <Clock size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Bekleyen İstekler</h3>
-                <div className="stat-number">{formatNumber(stats.pendingRequests)}</div>
-                <div className="stat-subtitle">İnceleme Gerekli</div>
-              </div>
-            </div>
-
-            <div className="stat-card system">
-              <div className="stat-icon">
-                <Activity size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Sistem Durumu</h3>
-                <div className="stat-number" style={{ color: getStatusColor(stats.systemStatus) }}>
-                  {stats.systemStatus}
+          {/* Stats Grid with Slider */}
+          <div className="stats-slider-container">
+            <button 
+              className="slider-nav-btn slider-nav-left"
+              onClick={handleStatsPrev}
+              disabled={statsSliderIndex === 0}
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <div className="stats-slider">
+              <div 
+                className="stats-slider-track"
+                style={{ transform: `translateX(-${statsSliderIndex * 33.333}%)` }}
+              >
+                <div className="stat-card users">
+                  <div className="stat-icon">
+                    <Users size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Toplam Kullanıcı</h3>
+                    <div className="stat-number">{formatNumber(stats.totalUsers)}</div>
+                    <div className="stat-subtitle">Aktif: {formatNumber(stats.activeUsers)}</div>
+                  </div>
                 </div>
-                <div className="stat-subtitle">Güvenli</div>
-              </div>
-            </div>
 
-            <div className="stat-card infrastructure">
-              <div className="stat-icon">
-                <Bus size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Toplam Otobüs</h3>
-                <div className="stat-number">{formatNumber(stats.totalBuses)}</div>
-                <div className="stat-subtitle">Aktif Rotalar</div>
-              </div>
-            </div>
+                <div className="stat-card income">
+                  <div className="stat-icon">
+                    <DollarSign size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Günlük Gelir</h3>
+                    <div className="stat-number">{formatCurrency(stats.dailyIncome)}</div>
+                    <div className="stat-subtitle">İşlem: {formatNumber(stats.todayTransactions)}</div>
+                  </div>
+                </div>
 
-            <div className="stat-card infrastructure">
-              <div className="stat-icon">
-                <MapPin size={24} />
-              </div>
-              <div className="stat-content">
-                <h3>Toplam İstasyon</h3>
-                <div className="stat-number">{formatNumber(stats.totalStations)}</div>
-                <div className="stat-subtitle">Hizmet Noktaları</div>
+                <div className="stat-card requests">
+                  <div className="stat-icon">
+                    <Clock size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Bekleyen İstekler</h3>
+                    <div className="stat-number">{formatNumber(stats.pendingRequests)}</div>
+                    <div className="stat-subtitle">İnceleme Gerekli</div>
+                  </div>
+                </div>
+
+                <div className="stat-card system">
+                  <div className="stat-icon">
+                    <Activity size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Sistem Durumu</h3>
+                    <div className="stat-number" style={{ color: getStatusColor(stats.systemStatus) }}>
+                      {stats.systemStatus}
+                    </div>
+                    <div className="stat-subtitle">Güvenli</div>
+                  </div>
+                </div>
+
+                <div className="stat-card infrastructure">
+                  <div className="stat-icon">
+                    <Bus size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Toplam Otobüs</h3>
+                    <div className="stat-number">{formatNumber(stats.totalBuses)}</div>
+                    <div className="stat-subtitle">Aktif Rotalar</div>
+                  </div>
+                </div>
+
+                <div className="stat-card infrastructure">
+                  <div className="stat-icon">
+                    <MapPin size={24} />
+                  </div>
+                  <div className="stat-content">
+                    <h3>Toplam İstasyon</h3>
+                    <div className="stat-number">{formatNumber(stats.totalStations)}</div>
+                    <div className="stat-subtitle">Hizmet Noktaları</div>
+                  </div>
+                </div>
               </div>
             </div>
+            <button 
+              className="slider-nav-btn slider-nav-right"
+              onClick={handleStatsNext}
+              disabled={statsSliderIndex >= statsCards.length - 3}
+            >
+              <ChevronRight size={24} />
+            </button>
           </div>
 
           {/* Quick Actions */}
           <div className="quick-actions">
-            <h3>Hızlı İşlemler</h3>
-            <div className="quick-actions-grid">
-              <div className="quick-action-card" onClick={() => navigate('/news/add')}>
-                <FileText size={24} />
-                <span>Haber Ekle</span>
+            <div className="quick-actions-header">
+              <h3>Hızlı İşlemler</h3>
+              <button 
+                className="add-quick-action-btn"
+                onClick={() => setShowQuickActionModal(true)}
+                title="Hızlı İşlem Ekle"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+            {quickActions.length > 3 ? (
+              <div className="quick-actions-slider-container">
+                <button 
+                  className="slider-nav-btn slider-nav-left"
+                  onClick={handleQuickActionsPrev}
+                  disabled={quickActionsSliderIndex === 0}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <div className="quick-actions-slider">
+                <div 
+                  className="quick-actions-slider-track"
+                  style={{ transform: `translateX(-${quickActionsSliderIndex * 33.333}%)` }}
+                >
+                    {quickActions.map((action) => {
+                      const IconComponent = action.icon;
+                      return (
+                        <div key={action.id} className="quick-action-card-wrapper">
+                          <div className="quick-action-card" onClick={() => navigate(action.path)}>
+                            <IconComponent size={24} />
+                            <span>{action.label}</span>
+                          </div>
+                          <button 
+                            className="remove-quick-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveQuickAction(action.id);
+                            }}
+                            title="Kaldır"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button 
+                  className="slider-nav-btn slider-nav-right"
+                  onClick={handleQuickActionsNext}
+                  disabled={quickActionsSliderIndex >= quickActions.length - 3}
+                >
+                  <ChevronRight size={24} />
+                </button>
               </div>
-              <div className="quick-action-card" onClick={() => navigate('/station/add')}>
-                <MapPin size={24} />
-                <span>İstasyon Ekle</span>
+            ) : (
+              <div className="quick-actions-grid">
+                {quickActions.map((action) => {
+                  const IconComponent = action.icon;
+                  return (
+                    <div key={action.id} className="quick-action-card-wrapper">
+                      <div className="quick-action-card" onClick={() => navigate(action.path)}>
+                        <IconComponent size={24} />
+                        <span>{action.label}</span>
+                      </div>
+                      <button 
+                        className="remove-quick-action-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveQuickAction(action.id);
+                        }}
+                        title="Kaldır"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="quick-action-card" onClick={() => navigate('/bus/create')}>
-                <Bus size={24} />
-                <span>Otobüs Ekle</span>
-              </div>
-              <div className="quick-action-card" onClick={() => navigate('/driver/add')}>
-                <UserSearch size={24} />
-                <span>Şoför Ekle</span>
-              </div>
-              <div className="quick-action-card" onClick={() => navigate('/payment-point/add')}>
-                <CreditCard size={24} />
-                <span>Ödeme Noktası</span>
-              </div>
-              <div className="quick-action-card" onClick={() => navigate('/route/add')}>
-                <Route size={24} />
-                <span>Rota Ekle</span>
+            )}
+          </div>
+
+          {/* Quick Action Modal */}
+          {showQuickActionModal && (
+            <div className="modal-overlay" onClick={() => setShowQuickActionModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>Hızlı İşlem Ekle</h3>
+                  <button className="modal-close" onClick={() => setShowQuickActionModal(false)}>
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <div className="available-pages-list">
+                    {availablePages
+                      .filter(page => !quickActions.find(qa => qa.path === page.path))
+                      .map((page) => {
+                        const IconComponent = page.icon;
+                        return (
+                          <div
+                            key={page.path}
+                            className="available-page-item"
+                            onClick={() => handleAddQuickAction(page)}
+                          >
+                            <IconComponent size={20} />
+                            <span>{page.label}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Charts Section */}
           <div className="charts-section">
@@ -724,10 +1029,7 @@ const Dashboard = () => {
                   {formatCurrency(stats.monthlyIncome)}
                 </div>
               </div>
-              <div className="chart-placeholder">
-                <PieChart size={100} />
-                <p>Grafik verileri yükleniyor...</p>
-              </div>
+              {renderIncomeChart()}
             </div>
 
             <div className="chart-card">
@@ -739,10 +1041,7 @@ const Dashboard = () => {
                   <button className="chart-btn">3A</button>
                 </div>
               </div>
-              <div className="chart-placeholder">
-                <BarChart3 size={100} />
-                <p>Aktivite grafiği hazırlanıyor...</p>
-              </div>
+              {renderActivityChart()}
             </div>
           </div>
 

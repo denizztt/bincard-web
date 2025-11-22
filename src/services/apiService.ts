@@ -102,6 +102,32 @@ apiClient.interceptors.request.use(
 // Response interceptor with enhanced token management
 apiClient.interceptors.response.use(
   async (response) => {
+    // Backend'den 200 OK ile dönse bile response body'de hata olabilir
+    const responseData = response.data;
+    
+    // Eğer response bir ApiResponse formatındaysa ve success: false ise
+    if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+      if (responseData.success === false) {
+        // Backend'den gelen hata mesajını logla
+        console.error('❌ BACKEND BUSINESS ERROR:', {
+          status: response.status,
+          url: response.config.url,
+          message: responseData.message,
+          data: responseData
+        });
+        
+        // Hata mesajını içeren bir error oluştur
+        const error = new Error(responseData.message || 'Backend hatası');
+        (error as any).response = {
+          ...response,
+          data: responseData,
+          status: response.status
+        };
+        (error as any).isBusinessError = true;
+        return Promise.reject(error);
+      }
+    }
+    
     console.log('✅ API RESPONSE SUCCESS:', {
       status: response.status,
       statusText: response.statusText,
@@ -224,7 +250,7 @@ export const newsApi = {
     return response.data;
   },
 
-  getActiveNewsForAdmin: async (platform?: string, type?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News>> => {
+  getActiveNewsForAdmin: async (platform?: string, type?: string, page: number = 0, size: number = 10): Promise<PagedResponse<News> | ApiResponse<any>> => {
     const params = new URLSearchParams();
     if (platform) params.append('platform', platform);
     if (type) params.append('type', type);
@@ -232,7 +258,15 @@ export const newsApi = {
     params.append('size', size.toString());
     
     const response = await apiClient.get(`/news/active-admin?${params.toString()}`);
-    return response.data;
+    const data = response.data;
+    
+    // Backend'den hata mesajı gelirse ApiResponse formatında olabilir
+    if (data && typeof data === 'object' && 'success' in data && !data.success) {
+      return data as ApiResponse<any>;
+    }
+    
+    // Normal PagedResponse
+    return data as PagedResponse<News>;
   },
 
   getNewsById: async (id: number): Promise<News> => {
