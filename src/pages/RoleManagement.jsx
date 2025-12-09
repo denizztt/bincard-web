@@ -22,12 +22,27 @@ const RoleManagement = () => {
   const [adminInfo, setAdminInfo] = useState(null);
   
   const allRoles = [
-    { value: 'ADMIN_ALL', label: 'Tüm Yetkiler' },
-    { value: 'STATION_ADMIN', label: 'İstasyon Yöneticisi' },
-    { value: 'BUS_ADMIN', label: 'Otobüs Yöneticisi' },
-    { value: 'NEWS_ADMIN', label: 'Haber Yöneticisi' },
-    { value: 'WALLET_ADMIN', label: 'Cüzdan Yöneticisi' },
-    { value: 'REPORT_ADMIN', label: 'Rapor Yöneticisi' }
+    { value: 'SUPERADMIN', label: 'Super Admin', description: 'Sistem genelinde tüm yetkiler' },
+    { value: 'ADMIN_ALL', label: 'Tüm Yetkiler', description: 'Admin kapsamındaki tüm yetkiler' },
+    { value: 'STATION_ADMIN', label: 'İstasyon Yöneticisi', description: 'İstasyon CRUD ve durum yönetimi' },
+    { value: 'BUS_ADMIN', label: 'Otobüs Yöneticisi', description: 'Otobüs CRUD, sürücü atama, konum' },
+    { value: 'DRIVER_ADMIN', label: 'Sürücü Yöneticisi', description: 'Sürücü CRUD ve belge yönetimi' },
+    { value: 'ROUTE_ADMIN', label: 'Rota Yöneticisi', description: 'Rota ve durak yönetimi' },
+    { value: 'NEWS_ADMIN', label: 'Haber Yöneticisi', description: 'Duyuru/haber yönetimi' },
+    { value: 'WALLET_ADMIN', label: 'Cüzdan Yöneticisi', description: 'Cüzdan ve transfer işlemleri' },
+    { value: 'BUS_CARD_ADMIN', label: 'Kart Yöneticisi', description: 'Kart okuma, bloke, vize, bakiye' },
+    { value: 'REPORT_ADMIN', label: 'Rapor Yöneticisi', description: 'Rapor ve metrik görüntüleme' },
+    { value: 'PAYMENT_POINT_ADMIN', label: 'Ödeme Noktası Yöneticisi', description: 'Ödeme noktası CRUD' },
+    { value: 'CONTRACT_ADMIN', label: 'Sözleşme Yöneticisi', description: 'Sözleşme içerikleri ve durum' },
+    { value: 'NOTIFICATION_ADMIN', label: 'Bildirim Yöneticisi', description: 'Bildirim gönderimi ve geçmiş' },
+    { value: 'HEALTH_ADMIN', label: 'Sistem Sağlık', description: 'Sistem sağlık ve altyapı görünümü' },
+    { value: 'GEO_ALERT_ADMIN', label: 'Coğrafi Uyarı', description: 'Jeo-uyarı yapılandırmaları' },
+    { value: 'AUTO_TOP_UP_ADMIN', label: 'Otomatik Yükleme', description: 'Oto bakiye yükleme kuralları' },
+    { value: 'FEED_BACK_ADMIN', label: 'Geri Bildirim', description: 'Geri bildirim listeleme ve detay' },
+    { value: 'LOCATION_ADMIN', label: 'Konum Yönetimi', description: 'Konum ve geçmiş verileri' },
+    { value: 'SCHEDULE_ADMIN', label: 'Takvim/Sefer', description: 'Sefer ve zamanlama yönetimi' },
+    { value: 'USER_ADMIN', label: 'Kullanıcı Yönetimi', description: 'Kullanıcı hesap ve durum yönetimi' },
+    { value: 'MODERATOR', label: 'Moderatör', description: 'Sınırlı düzenleme yetkileri' }
   ];
 
   useEffect(() => {
@@ -43,14 +58,26 @@ const RoleManagement = () => {
         throw new Error('Geçersiz admin ID');
       }
 
-      const response = await superAdminApi.getAdminRoles(adminId);
+      const [rolesResponse, adminResponse] = await Promise.all([
+        superAdminApi.getAdminRoles(adminId),
+        superAdminApi.getAdminById(adminId)
+      ]);
 
-      if (response && response.success) {
-        const roles = Array.isArray(response.data) ? response.data : [];
+      if (rolesResponse && rolesResponse.success) {
+        const roles = Array.isArray(rolesResponse.data) ? rolesResponse.data : [];
         setCurrentRoles(roles);
-        setAdminInfo({ id: adminId });
       } else {
-        throw new Error(response?.message || 'Roller getirilemedi');
+        throw new Error(rolesResponse?.message || 'Roller getirilemedi');
+      }
+
+      if (adminResponse && adminResponse.success) {
+        const admin = adminResponse.data;
+        setAdminInfo({
+          id: adminId,
+          name: admin.profileInfo?.name || admin.name,
+          surname: admin.profileInfo?.surname || admin.surname,
+          email: admin.profileInfo?.email || admin.email
+        });
       }
       setLoading(false);
     } catch (err) {

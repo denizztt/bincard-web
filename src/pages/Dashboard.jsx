@@ -660,14 +660,17 @@ const Dashboard = () => {
             expandedMenus.system, 
             true, 
             () => toggleMenu('system'),
-            ['Admin Listesi', 'Admin Ekle', 'Admin Onayları', 'Rol Yönetimi']
+            ['Admin Listesi', 'Admin Ekle', 'Admin Onayları', 'Rol Yönetimi', 'Profilim', 'Ayarlar', 'Aktivitelerim']
           )}
           {expandedMenus.system && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Admin Listesi', '/admin/list')}
               {renderSubmenuItem('Admin Ekle', '/admin/add')}
               {renderSubmenuItem('Admin Onayları', '/admin-approvals')}
-              {renderSubmenuItem('Rol Yönetimi', '/admin/roles')}
+              <div className="submenu-divider"></div>
+              {renderSubmenuItem('Profilim', '/admin/profile')}
+              {renderSubmenuItem('Ayarlar', '/admin/settings')}
+              {renderSubmenuItem('Aktivitelerim', '/admin/activity')}
             </div>
           )}
 

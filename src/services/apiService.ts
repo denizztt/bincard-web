@@ -913,8 +913,71 @@ export const walletApi = {
   }
 };
 
-// Admin API endpoints
+// Admin API endpoints (for admin users themselves)
 export const adminApi = {
+  // Profile Management
+  getProfile: async () => {
+    const response = await apiClient.get('/admin/profile');
+    return response.data;
+  },
+
+  updateProfile: async (profileData: { name?: string; surname?: string; email?: string }) => {
+    const response = await apiClient.put('/admin/update-profile', profileData);
+    return response.data;
+  },
+
+  changePassword: async (passwordData: { currentPassword: string; newPassword: string }) => {
+    const response = await apiClient.put('/admin/change-password', passwordData);
+    return response.data;
+  },
+
+  // Device & Location Management
+  updateDeviceInfo: async (deviceData: {
+    fcmToken?: string;
+    ipAddress?: string;
+    lastKnownLatitude?: number;
+    lastKnownLongitude?: number;
+    lastLoginDevice?: string;
+    lastLoginPlatform?: string;
+    lastLoginAppVersion?: string;
+    profilePicture?: string;
+  }) => {
+    const response = await apiClient.put('/admin/update-device-info', deviceData);
+    return response.data;
+  },
+
+  getLocation: async () => {
+    const response = await apiClient.get('/admin/location');
+    return response.data;
+  },
+
+  updateLocation: async (locationData: {
+    latitude: number;
+    longitude: number;
+    speed?: number;
+    accuracy?: number;
+  }) => {
+    const response = await apiClient.put('/admin/location', locationData);
+    return response.data;
+  },
+
+  // Activity & History
+  getLoginHistory: async (page: number = 0, size: number = 10, sort: string = 'id,desc') => {
+    const response = await apiClient.get(`/admin/login-history?page=${page}&size=${size}&sort=${sort}`);
+    return response.data;
+  },
+
+  getAuditLogs: async (fromDate?: string, toDate?: string, action?: string) => {
+    const params = new URLSearchParams();
+    if (fromDate) params.append('fromDate', fromDate);
+    if (toDate) params.append('toDate', toDate);
+    if (action) params.append('action', action);
+    
+    const response = await apiClient.get(`/admin/audit-logs?${params.toString()}`);
+    return response.data;
+  },
+
+  // Legacy endpoints (for superadmin operations)
   getAdminApprovals: async (page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/admin/approvals?page=${page}&size=${size}`);
     return response.data;
@@ -1546,12 +1609,13 @@ export const superAdminApi = {
   },
 
   // Admin Yönetimi
-  getAllAdmins: async (page: number = 0, size: number = 20, status?: string) => {
-    // Önerilen endpoint; backend yoksa 404 dönebilir
+  getAllAdmins: async (page: number = 0, size: number = 20, status?: string, role?: string, searchTerm?: string) => {
     const params = new URLSearchParams();
     params.append('page', String(page));
     params.append('size', String(size));
     if (status) params.append('status', status);
+    if (role) params.append('role', role);
+    if (searchTerm) params.append('searchTerm', searchTerm);
     const response = await apiClient.get(`/superadmin/admins?${params.toString()}`);
     return response.data;
   },
@@ -1578,6 +1642,77 @@ export const superAdminApi = {
 
   toggleAdminStatus: async (adminId: number) => {
     const response = await apiClient.patch(`/superadmin/admins/${adminId}/toggle-status`);
+    return response.data;
+  },
+
+  // ===== RAPOR YÖNETİMİ (SADECE SUPERADMIN) =====
+  
+  // Tüm şikayetleri görüntüleme (sadece SUPERADMIN)
+  getAllReports: async (params: {
+    category?: string;
+    status?: string;
+    priority?: string;
+    hasUnread?: boolean;
+    includeDeleted?: boolean;
+    assignedAdminUsername?: string;
+    page?: number;
+    size?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.category) queryParams.append('category', params.category);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.priority) queryParams.append('priority', params.priority);
+    if (params.hasUnread !== undefined) queryParams.append('hasUnread', String(params.hasUnread));
+    if (params.includeDeleted !== undefined) queryParams.append('includeDeleted', String(params.includeDeleted));
+    if (params.assignedAdminUsername) queryParams.append('assignedAdminUsername', params.assignedAdminUsername);
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
+    if (params.size !== undefined) queryParams.append('size', params.size.toString());
+    
+    const response = await apiClient.get(`/admin/report/all?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Şikayeti başka admin'e atama (sadece SUPERADMIN)
+  assignReportToAdmin: async (reportId: number, targetAdminUsername: string, request: any) => {
+    const response = await apiClient.post(
+      `/admin/report/assign-to-admin?targetAdminUsername=${encodeURIComponent(targetAdminUsername)}`,
+      request
+    );
+    return response.data;
+  },
+
+  // Silinmiş şikayetleri görüntüleme (sadece SUPERADMIN)
+  getDeletedReports: async (params: {
+    category?: string;
+    status?: string;
+    page?: number;
+    size?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.category) queryParams.append('category', params.category);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.page !== undefined) queryParams.append('page', params.page.toString());
+    if (params.size !== undefined) queryParams.append('size', params.size.toString());
+    
+    const response = await apiClient.get(`/admin/report/deleted?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Silinmiş şikayeti geri yükleme (sadece SUPERADMIN)
+  restoreReport: async (reportId: number) => {
+    const response = await apiClient.patch(`/admin/report/restore/${reportId}`);
+    return response.data;
+  },
+
+  // Tüm admin performanslarını görüntüleme (sadece SUPERADMIN)
+  getAllAdminPerformances: async (page: number = 0, size: number = 20) => {
+    const response = await apiClient.get(`/admin/report/admin-performances?page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  // Admin listesi (şikayet atama için - sadece SUPERADMIN)
+  getAdminsListForReports: async () => {
+    const response = await apiClient.get('/admin/report/admins');
     return response.data;
   }
 };

@@ -10,7 +10,8 @@ import {
   UserX,
   Search,
   Filter,
-  User
+  User,
+  Shield
 } from 'lucide-react';
 import { superAdminApi } from '../services/apiService';
 import '../styles/AdminList.css';
@@ -26,6 +27,7 @@ const AdminList = () => {
   // Filtreleme state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
 
   useEffect(() => {
     loadAdmins();
@@ -33,25 +35,53 @@ const AdminList = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [searchTerm, statusFilter, admins]);
+  }, [searchTerm, statusFilter, roleFilter, admins]);
 
+  // Debounce için searchTerm değişikliğini izle
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.length === 0 || searchTerm.length >= 3) {
+        loadAdmins();
+      }
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+  
+  // Status ve role filtreleri değiştiğinde sadece frontend filtreleme yapılacak
+  // Backend'e gönderilmeyecek çünkü enum bekliyor
+
+  // Filtreler değiştiğinde sadece frontend filtreleme yapılacak, backend'e gönderilmeyecek
+  // Çünkü backend status ve role parametrelerini enum olarak bekliyor
   const loadAdmins = async () => {
     try {
       setLoading(true);
       setError('');
       try {
-        const response = await superAdminApi.getAllAdmins(0, 50);
-        if (response && response.success && Array.isArray(response.data)) {
-          const items = response.data.map((a) => ({
+        // Status ve role filtrelerini backend'e göndermiyoruz çünkü backend enum bekliyor
+        // Bu filtreler sadece frontend'de uygulanacak
+        // Sadece searchTerm backend'e gönderiliyor
+        const response = await superAdminApi.getAllAdmins(0, 50, undefined, undefined, searchTerm || undefined);
+        if (response && response.success) {
+          // Backend'den gelen data bir liste olabilir veya PageDTO içinde olabilir
+          let items = [];
+          if (Array.isArray(response.data)) {
+            items = response.data;
+          } else if (response.data?.content && Array.isArray(response.data.content)) {
+            items = response.data.content;
+          } else if (response.data?.data && Array.isArray(response.data.data)) {
+            items = response.data.data;
+          }
+          
+          const formattedItems = items.map((a) => ({
             id: a.id,
-            name: a.profileInfo?.name,
-            surname: a.profileInfo?.surname,
-            email: a.profileInfo?.email,
-            phone: a.userNumber,
+            name: a.profileInfo?.name || a.name,
+            surname: a.profileInfo?.surname || a.surname,
+            email: a.profileInfo?.email || a.email,
+            phone: a.userNumber || a.phone,
             status: a.status,
-            roles: Array.isArray(a.roles) ? a.roles : []
+            roles: Array.isArray(a.roles) ? a.roles : (a.role ? [a.role] : [])
           }));
-          setAdmins(items);
+          setAdmins(formattedItems);
         } else {
           throw new Error(response?.message || 'Admin listesi alınamadı');
         }
@@ -71,8 +101,8 @@ const AdminList = () => {
   const applyFilters = () => {
     let filtered = [...admins];
     
-    // Arama filtresi
-    if (searchTerm) {
+    // Arama filtresi (sadece frontend'de, backend'de zaten filtrelenmiş olabilir)
+    if (searchTerm && !searchTerm.includes('backend')) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(admin => 
         admin.name?.toLowerCase().includes(search) ||
@@ -82,9 +112,16 @@ const AdminList = () => {
       );
     }
     
-    // Durum filtresi
+    // Durum filtresi (sadece frontend'de, backend'de zaten filtrelenmiş olabilir)
     if (statusFilter) {
       filtered = filtered.filter(admin => admin.status === statusFilter);
+    }
+    
+    // Rol filtresi
+    if (roleFilter) {
+      filtered = filtered.filter(admin => 
+        admin.roles && admin.roles.some(role => role === roleFilter)
+      );
     }
     
     setFilteredAdmins(filtered);
@@ -236,6 +273,34 @@ const AdminList = () => {
               <option value="INACTIVE">Pasif</option>
             </select>
           </div>
+          
+          <div className="filter-group">
+            <Filter size={16} />
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="role-filter"
+            >
+              <option value="">Tüm Roller</option>
+              <option value="SUPERADMIN">Super Admin</option>
+              <option value="ADMIN_ALL">Tüm Yetkiler</option>
+              <option value="STATION_ADMIN">İstasyon Yöneticisi</option>
+              <option value="BUS_ADMIN">Otobüs Yöneticisi</option>
+              <option value="DRIVER_ADMIN">Sürücü Yöneticisi</option>
+              <option value="ROUTE_ADMIN">Rota Yöneticisi</option>
+              <option value="NEWS_ADMIN">Haber Yöneticisi</option>
+              <option value="WALLET_ADMIN">Cüzdan Yöneticisi</option>
+              <option value="BUS_CARD_ADMIN">Kart Yöneticisi</option>
+              <option value="REPORT_ADMIN">Rapor Yöneticisi</option>
+              <option value="PAYMENT_POINT_ADMIN">Ödeme Noktası Yöneticisi</option>
+              <option value="CONTRACT_ADMIN">Sözleşme Yöneticisi</option>
+              <option value="NOTIFICATION_ADMIN">Bildirim Yöneticisi</option>
+              <option value="HEALTH_ADMIN">Sistem Sağlık</option>
+              <option value="GEO_ALERT_ADMIN">Coğrafi Uyarı</option>
+              <option value="AUTO_TOP_UP_ADMIN">Otomatik Yükleme</option>
+              <option value="FEED_BACK_ADMIN">Geri Bildirim</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -285,6 +350,13 @@ const AdminList = () => {
                           title="Düzenle"
                         >
                           <Edit size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon" 
+                          onClick={() => navigate(`/admin/roles/${admin.id}`)}
+                          title="Rol Yönetimi"
+                        >
+                          <Shield size={16} />
                         </button>
                         <button 
                           className="btn-icon" 

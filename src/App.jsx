@@ -30,6 +30,9 @@ import BusIncomeReports from './pages/BusIncomeReports';
 import AdminList from './pages/AdminList';
 import AdminAdd from './pages/AdminAdd';
 import AdminEdit from './pages/AdminEdit';
+import AdminProfile from './pages/AdminProfile';
+import AdminSettings from './pages/AdminSettings';
+import AdminActivity from './pages/AdminActivity';
 import RoleManagement from './pages/RoleManagement';
 import Statistics from './pages/Statistics';
 import WalletStatusUpdate from './pages/WalletStatusUpdate';
@@ -435,6 +438,32 @@ function App() {
               element={
                 <ProtectedRoute>
                   <WalletStatusUpdate />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Routes (for admin users themselves) */}
+            <Route
+              path="/admin/profile"
+              element={
+                <ProtectedRoute>
+                  <AdminProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <AdminSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activity"
+              element={
+                <ProtectedRoute>
+                  <AdminActivity />
                 </ProtectedRoute>
               }
             />
