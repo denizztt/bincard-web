@@ -97,7 +97,9 @@ const RoleManagement = () => {
         roles: [String(roleValue).toUpperCase()]
       });
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setCurrentRoles(prev => [...prev, roleValue]);
         alert('Rol başarıyla eklendi');
       } else {
@@ -125,7 +127,9 @@ const RoleManagement = () => {
         roles: [String(roleValue).toUpperCase()]
       });
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setCurrentRoles(prev => prev.filter(r => r !== roleValue));
         alert('Rol başarıyla kaldırıldı');
       } else {

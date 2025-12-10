@@ -191,15 +191,15 @@ const Analytics = () => {
     const data = analyticsData[dataType];
     switch (selectedPeriod) {
       case 'today':
-        return { current: data.today, previous: data.yesterday };
+        return { current: data.today, previous: data.yesterday || 0 };
       case 'week':
-        return { current: data.week, previous: data.week * 0.85 }; // Mock previous week
+        return { current: data.week, previous: data.previousWeek || 0 };
       case 'month':
-        return { current: data.month, previous: data.month * 0.92 }; // Mock previous month
+        return { current: data.month, previous: data.previousMonth || 0 };
       case 'year':
-        return { current: data.year, previous: data.year * 0.88 }; // Mock previous year
+        return { current: data.year, previous: data.previousYear || 0 };
       default:
-        return { current: data.today, previous: data.yesterday };
+        return { current: data.today, previous: data.yesterday || 0 };
     }
   };
 

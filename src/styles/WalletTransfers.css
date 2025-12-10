@@ -2,7 +2,7 @@
   padding: 20px;
   max-width: 1800px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: white;
   min-height: 100vh;
 }
 
@@ -374,7 +374,7 @@
 }
 
 .transfers-table thead {
-  background: #f8f9fa;
+  background: white;
 }
 
 .transfers-table th {
@@ -393,7 +393,7 @@
 }
 
 .transfers-table tr:hover {
-  background: #f8f9fa;
+  background: white;
 }
 
 /* Table Cell Content */

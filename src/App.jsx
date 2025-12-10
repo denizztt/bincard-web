@@ -39,6 +39,7 @@ import WalletStatusUpdate from './pages/WalletStatusUpdate';
 import AllWallets from './pages/AllWallets';
 import WalletTransfers from './pages/WalletTransfers';
 import BusList from './pages/BusList';
+import BusAdd from './pages/BusAdd';
 import BusMap from './pages/BusMap';
 import DriverList from './pages/DriverList';
 import RouteList from './pages/RouteList';
@@ -54,6 +55,10 @@ import SystemHealth from './pages/SystemHealth';
 import BusCardManagement from './pages/BusCardManagement';
 import BusCardPricing from './pages/BusCardPricing';
 import BusCardPricingList from './pages/BusCardPricingList';
+import BusCardSubscription from './pages/BusCardSubscription';
+import BusCardEdit from './pages/BusCardEdit';
+import BusCardRegister from './pages/BusCardRegister';
+import AutoTopUpLogs from './pages/AutoTopUpLogs';
 import './App.css';
 
 function App() {
@@ -263,7 +268,7 @@ function App() {
               path="/bus/create"
               element={
                 <ProtectedRoute>
-                  <BusList />
+                  <BusAdd />
                 </ProtectedRoute>
               }
             />
@@ -600,6 +605,30 @@ function App() {
               }
             />
             <Route
+              path="/buscard-register"
+              element={
+                <ProtectedRoute>
+                  <BusCardRegister />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-edit/:uid"
+              element={
+                <ProtectedRoute>
+                  <BusCardEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-subscription"
+              element={
+                <ProtectedRoute>
+                  <BusCardSubscription />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/buscard-pricing"
               element={
                 <ProtectedRoute>
@@ -612,6 +641,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BusCardPricingList />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Log Kayıtları Routes */}
+            <Route
+              path="/auto-top-up-logs"
+              element={
+                <ProtectedRoute>
+                  <AutoTopUpLogs />
                 </ProtectedRoute>
               }
             />

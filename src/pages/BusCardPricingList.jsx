@@ -30,82 +30,6 @@ const BusCardPricingList = () => {
   const [selectedPricing, setSelectedPricing] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Mock data for demonstration
-  const mockPricingList = [
-    { 
-      id: 1, 
-      cardType: 'TAM', 
-      price: 20.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-12-20T14:45:00',
-      previousPrice: 18.00,
-      changePercent: 11.11
-    },
-    { 
-      id: 2, 
-      cardType: 'ÖĞRENCİ', 
-      price: 12.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-11-15T09:20:00',
-      previousPrice: 12.00,
-      changePercent: 0
-    },
-    { 
-      id: 3, 
-      cardType: 'ÖĞRETMEN', 
-      price: 15.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-10-10T16:30:00',
-      previousPrice: 15.00,
-      changePercent: 0
-    },
-    { 
-      id: 4, 
-      cardType: 'YAŞLI', 
-      price: 10.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-09-05T11:15:00',
-      previousPrice: 8.00,
-      changePercent: 25.00
-    },
-    { 
-      id: 5, 
-      cardType: 'ENGELLİ', 
-      price: 10.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-08-20T13:45:00',
-      previousPrice: 10.00,
-      changePercent: 0
-    },
-    { 
-      id: 6, 
-      cardType: 'ÇOCUK', 
-      price: 10.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-07-15T15:20:00',
-      previousPrice: 10.00,
-      changePercent: 0
-    },
-    { 
-      id: 7, 
-      cardType: 'TURİST', 
-      price: 18.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-06-10T12:30:00',
-      previousPrice: 20.00,
-      changePercent: -10.00
-    },
-    { 
-      id: 8, 
-      cardType: 'ABONMAN', 
-      price: 0.00, 
-      createdAt: '2024-01-15T10:30:00', 
-      updatedAt: '2024-01-15T10:30:00',
-      previousPrice: 0.00,
-      changePercent: 0
-    }
-  ];
-
   useEffect(() => {
     loadPricingList();
   }, []);
@@ -143,9 +67,8 @@ const BusCardPricingList = () => {
       console.error('❌ Fiyatlandırma listesi yüklenirken hata:', err);
       setError('Fiyatlandırma listesi yüklenirken hata oluştu');
       
-      // Hata durumunda mock data kullan
-      console.log('⚠️ API hatası, mock data kullanılıyor');
-      setPricingList(mockPricingList);
+      // Hata durumunda boş liste göster
+      setPricingList([]);
     } finally {
       setLoading(false);
     }

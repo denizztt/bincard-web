@@ -61,7 +61,9 @@ const AdminList = () => {
         // Bu filtreler sadece frontend'de uygulanacak
         // Sadece searchTerm backend'e gönderiliyor
         const response = await superAdminApi.getAllAdmins(0, 50, undefined, undefined, searchTerm || undefined);
-        if (response && response.success) {
+        // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+        const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+        if (response && isSuccess) {
           // Backend'den gelen data bir liste olabilir veya PageDTO içinde olabilir
           let items = [];
           if (Array.isArray(response.data)) {
@@ -135,7 +137,9 @@ const AdminList = () => {
     try {
       const response = await superAdminApi.toggleAdminStatus(admin.id);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setAdmins(prevAdmins => 
           prevAdmins.map(ad => 
             ad.id === admin.id 
@@ -161,7 +165,9 @@ const AdminList = () => {
     try {
       const response = await superAdminApi.deleteAdmin(admin.id);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setAdmins(prevAdmins => prevAdmins.filter(ad => ad.id !== admin.id));
         alert('Admin başarıyla silindi');
       } else {

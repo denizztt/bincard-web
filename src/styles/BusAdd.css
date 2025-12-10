@@ -1,6 +1,6 @@
-/* Driver Add Page Styles */
+/* Bus Add Page Styles */
 
-.driver-add-container {
+.bus-add-container {
   padding: 2rem;
   max-width: 1000px;
   margin: 0 auto;
@@ -153,13 +153,6 @@
   padding-left: 2.5rem;
 }
 
-/* Age Info */
-.age-info {
-  font-size: 0.75rem;
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
 /* Error Text */
 .error-text {
   font-size: 0.75rem;
@@ -269,7 +262,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .driver-add-container {
+  .bus-add-container {
     padding: 1rem;
   }
   
@@ -297,3 +290,4 @@
     gap: 0.5rem;
   }
 }
+

@@ -95,6 +95,15 @@
   transform: translateX(-2px);
 }
 
+.btn-back svg,
+.btn-secondary svg,
+.btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 /* Loading Spinner */
 .spinner-small {
   width: 16px;

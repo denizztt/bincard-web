@@ -161,13 +161,16 @@ const DriverEdit = () => {
     try {
       const response = await driverApi.updateDriver(parseInt(id), formData);
 
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      
+      if (response && isSuccess) {
         setSuccess('Şoför bilgileri başarıyla güncellendi!');
         setTimeout(() => {
           navigate('/driver');
         }, 2000);
       } else {
-        setError(response.message || 'Şoför güncellenirken hata oluştu');
+        setError(response?.message || 'Şoför güncellenirken hata oluştu');
       }
     } catch (err) {
       console.error('Error updating driver:', err);
@@ -341,9 +344,10 @@ const DriverEdit = () => {
                     type="text"
                     value={formData.licenseNumber}
                     onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                    placeholder="Ehliyet numarası"
+                    placeholder="Örn: 123456789 veya ABC123456"
                     className={`form-input ${errors.licenseNumber ? 'error' : ''}`}
                   />
+                  <small className="form-hint">Ehliyet numarasını girin. Örnek: 123456789, ABC123456, 987654321</small>
                   {errors.licenseNumber && (
                     <span className="error-text">{errors.licenseNumber}</span>
                   )}
@@ -437,11 +441,12 @@ const DriverEdit = () => {
                   <textarea
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="Tam adres bilgisi..."
+                    placeholder="Örn: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul"
                     className={`form-textarea ${errors.address ? 'error' : ''}`}
                     rows={3}
                   />
                 </div>
+                <small className="form-hint">Tam adres bilgisini girin. Örnek: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul</small>
                 {errors.address && (
                   <span className="error-text">{errors.address}</span>
                 )}

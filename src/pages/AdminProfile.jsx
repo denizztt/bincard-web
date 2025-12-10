@@ -34,6 +34,9 @@ const AdminProfile = () => {
     roles: []
   });
 
+  const [myRoles, setMyRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
   const [profileForm, setProfileForm] = useState({
     name: '',
     surname: '',
@@ -48,6 +51,7 @@ const AdminProfile = () => {
 
   useEffect(() => {
     loadProfile();
+    loadMyRoles();
   }, []);
 
   const loadProfile = async () => {
@@ -56,7 +60,9 @@ const AdminProfile = () => {
       setError('');
       const response = await adminApi.getProfile();
       
-      if (response && response.success && response.data) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess && response.data) {
         const data = response.data;
         setProfileData({
           name: data.name || '',
@@ -82,6 +88,26 @@ const AdminProfile = () => {
       setError(err.response?.data?.message || err.message || 'Profil bilgileri yüklenemedi');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMyRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      const response = await adminApi.getMyRoles();
+      
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess && response.data) {
+        const roles = Array.isArray(response.data) ? response.data : [];
+        setMyRoles(roles);
+      }
+    } catch (err) {
+      // SuperAdmin kullanıcılar için Admin tablosunda kayıt olmayabilir, bu normal bir durum
+      // Roller zaten profileData.roles içinde geliyor, bu yüzden sessizce devam et
+      setMyRoles([]);
+    } finally {
+      setLoadingRoles(false);
     }
   };
 
@@ -116,7 +142,9 @@ const AdminProfile = () => {
       
       const response = await adminApi.updateProfile(profileForm);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Profil bilgileriniz başarıyla güncellendi');
         await loadProfile();
         setTimeout(() => setSuccess(''), 3000);
@@ -159,7 +187,9 @@ const AdminProfile = () => {
         newPassword: passwordForm.newPassword
       });
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Şifreniz başarıyla değiştirildi');
         setPasswordForm({
           currentPassword: '',
@@ -286,9 +316,19 @@ const AdminProfile = () => {
                 <label>Roller</label>
                 <div className="info-value">
                   <div className="roles-badge">
-                    {profileData.roles?.map((role, index) => (
-                      <span key={index} className="role-badge">{role}</span>
-                    )) || 'Yok'}
+                    {loadingRoles ? (
+                      <span>Yükleniyor...</span>
+                    ) : myRoles.length > 0 ? (
+                      myRoles.map((role, index) => (
+                        <span key={index} className="role-badge">{role}</span>
+                      ))
+                    ) : profileData.roles?.length > 0 ? (
+                      profileData.roles.map((role, index) => (
+                        <span key={index} className="role-badge">{role}</span>
+                      ))
+                    ) : (
+                      'Yok'
+                    )}
                   </div>
                 </div>
               </div>

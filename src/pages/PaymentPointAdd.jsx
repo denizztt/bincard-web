@@ -303,7 +303,7 @@ const PaymentPointAdd = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'white', borderRadius: '12px', padding: '25px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -311,7 +311,7 @@ const PaymentPointAdd = () => {
             onClick={() => navigate('/payment-point')}
             style={{ background: '#6c757d', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} style={{ display: 'block', width: '20px', height: '20px', flexShrink: 0 }} />
             Geri Dön
           </button>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>➕ Yeni Ödeme Noktası Ekle</h1>
@@ -345,10 +345,13 @@ const PaymentPointAdd = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="örn: Merkez Ödeme Noktası"
+                placeholder="Örn: Merkez Ödeme Noktası veya Taksim Şubesi"
                 required
                 style={{ width: '100%', padding: '15px', border: '2px solid #bdc3c7', borderRadius: '8px', fontSize: '16px', transition: 'border-color 0.3s ease' }}
               />
+              <small style={{ display: 'block', fontSize: '12px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                Ödeme noktasının adını girin. Örnek: Merkez Ödeme Noktası, Taksim Şubesi, Kadıköy Terminali
+              </small>
             </div>
 
             {/* Harita ve Konum Seçimi */}
@@ -363,7 +366,7 @@ const PaymentPointAdd = () => {
                   style={{ 
                     width: '100%', 
                     height: '300px',
-                    background: '#f8f9fa'
+                    background: 'white'
                   }}
                 />
                 {!mapLoaded && (
@@ -387,7 +390,7 @@ const PaymentPointAdd = () => {
             </div>
 
             {/* Adres Bilgileri */}
-            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: '#f8f9fa' }}>
+            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: 'white' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#34495e' }}>Adres Bilgileri</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -400,7 +403,7 @@ const PaymentPointAdd = () => {
                     name="address.city"
                     value={formData.address.city}
                     onChange={handleInputChange}
-                    placeholder="İstanbul"
+                    placeholder="Örn: İstanbul veya Ankara"
                     required
                     style={{ 
                       width: '100%', 
@@ -410,6 +413,9 @@ const PaymentPointAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    Şehir adını girin. Örnek: İstanbul, Ankara, İzmir
+                  </small>
                   {validationErrors['address.city'] && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -427,7 +433,7 @@ const PaymentPointAdd = () => {
                     name="address.district"
                     value={formData.address.district}
                     onChange={handleInputChange}
-                    placeholder="Kadıköy"
+                    placeholder="Örn: Kadıköy veya Beyoğlu"
                     required
                     style={{ 
                       width: '100%', 
@@ -437,6 +443,9 @@ const PaymentPointAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    İlçe adını girin. Örnek: Kadıköy, Beyoğlu, Beşiktaş
+                  </small>
                   {validationErrors['address.district'] && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -484,7 +493,7 @@ const PaymentPointAdd = () => {
                   name="address.fullAddress"
                   value={formData.address.fullAddress}
                   onChange={handleInputChange}
-                  placeholder="Tam adres bilgisi (haritadan otomatik doldurulur)..."
+                  placeholder="Örn: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul (haritadan otomatik doldurulur)"
                   required
                   rows={3}
                   style={{ 
@@ -496,6 +505,9 @@ const PaymentPointAdd = () => {
                     resize: 'vertical' 
                   }}
                 />
+                <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                  Tam adres bilgisini girin. Haritadan otomatik doldurulur veya manuel girebilirsiniz. Örnek: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul
+                </small>
                 {validationErrors['address.fullAddress'] && (
                   <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                     <AlertCircle size={12} />
@@ -517,9 +529,12 @@ const PaymentPointAdd = () => {
                   name="contactNumber"
                   value={formData.contactNumber}
                   onChange={handleInputChange}
-                  placeholder="örn: 0212 555 12 34"
+                  placeholder="Örn: 0212 555 12 34 veya +90 212 555 12 34"
                   style={{ width: '100%', padding: '15px', border: '2px solid #bdc3c7', borderRadius: '8px', fontSize: '16px' }}
                 />
+                <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                  İletişim telefon numarası (opsiyonel). Örnek: 0212 555 12 34, +90 212 555 12 34
+                </small>
               </div>
 
               <div>
@@ -532,9 +547,12 @@ const PaymentPointAdd = () => {
                   name="workingHours"
                   value={formData.workingHours}
                   onChange={handleInputChange}
-                  placeholder="örn: 09:00 - 18:00"
+                  placeholder="Örn: 09:00 - 18:00 veya Pazartesi-Cuma: 09:00-18:00"
                   style={{ width: '100%', padding: '15px', border: '2px solid #bdc3c7', borderRadius: '8px', fontSize: '16px' }}
                 />
+                <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                  Çalışma saatlerini girin (opsiyonel). Örnek: 09:00 - 18:00, Pazartesi-Cuma: 09:00-18:00, Hafta içi: 08:00-17:00
+                </small>
               </div>
             </div>
 

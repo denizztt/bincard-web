@@ -279,7 +279,7 @@ const StationAdd = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'white', borderRadius: '12px', padding: '25px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -287,7 +287,7 @@ const StationAdd = () => {
             onClick={() => navigate('/station')}
             style={{ background: '#6c757d', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} style={{ display: 'block', width: '20px', height: '20px', flexShrink: 0 }} />
             Geri Dön
           </button>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>🚇 Yeni Durak Ekle</h1>
@@ -321,7 +321,7 @@ const StationAdd = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="örn: Taksim Meydanı"
+                placeholder="Örn: Taksim Meydanı veya Kadıköy İskele"
                 required
                 style={{ 
                   width: '100%', 
@@ -332,6 +332,9 @@ const StationAdd = () => {
                   transition: 'border-color 0.3s ease' 
                 }}
               />
+              <small style={{ display: 'block', fontSize: '12px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                Durak adını girin. Örnek: Taksim Meydanı, Kadıköy İskele, Beşiktaş Terminali
+              </small>
               {validationErrors.name && (
                 <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                   <AlertCircle size={12} />
@@ -387,7 +390,7 @@ const StationAdd = () => {
                   style={{ 
                     width: '100%', 
                     height: '300px',
-                    background: '#f8f9fa'
+                    background: 'white'
                   }}
                 />
                 {!mapLoaded && (
@@ -414,7 +417,7 @@ const StationAdd = () => {
             </div>
 
             {/* Adres Bilgileri */}
-            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: '#f8f9fa' }}>
+            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: 'white' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#34495e' }}>Adres Bilgileri</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -427,7 +430,7 @@ const StationAdd = () => {
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    placeholder="İstanbul"
+                    placeholder="Örn: İstanbul veya Ankara"
                     required
                     style={{ 
                       width: '100%', 
@@ -437,6 +440,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    Şehir adını girin. Örnek: İstanbul, Ankara, İzmir
+                  </small>
                   {validationErrors.city && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -454,7 +460,7 @@ const StationAdd = () => {
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
-                    placeholder="Beyoğlu"
+                    placeholder="Örn: Beyoğlu veya Kadıköy"
                     required
                     style={{ 
                       width: '100%', 
@@ -464,6 +470,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    İlçe adını girin. Örnek: Beyoğlu, Kadıköy, Beşiktaş
+                  </small>
                   {validationErrors.district && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -483,7 +492,7 @@ const StationAdd = () => {
                     name="street"
                     value={formData.street}
                     onChange={handleInputChange}
-                    placeholder="İstiklal Caddesi"
+                    placeholder="Örn: İstiklal Caddesi veya Bağdat Caddesi"
                     required
                     style={{ 
                       width: '100%', 
@@ -493,6 +502,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    Sokak veya cadde adını girin. Örnek: İstiklal Caddesi, Bağdat Caddesi, Atatürk Bulvarı
+                  </small>
                   {validationErrors.street && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -510,9 +522,12 @@ const StationAdd = () => {
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
-                    placeholder="34000"
+                    placeholder="Örn: 34000 veya 34700"
                     style={{ width: '100%', padding: '12px', border: '2px solid #bdc3c7', borderRadius: '6px', fontSize: '14px' }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    5 haneli posta kodu (opsiyonel). Örnek: 34000, 34700, 06100
+                  </small>
                 </div>
               </div>
             </div>

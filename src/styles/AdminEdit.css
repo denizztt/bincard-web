@@ -65,6 +65,14 @@
   background: var(--border-color);
 }
 
+.btn-secondary svg,
+.btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .error-banner {
   background: #fee;
   color: #c00;

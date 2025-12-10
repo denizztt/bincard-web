@@ -14,18 +14,6 @@ import {
   Users,
   Shield,
   UserCheck,
-  Settings,
-  LogOut,
-  X,
-  Home,
-  ChevronDown,
-  ChevronRight,
-  Wallet,
-  ArrowLeftRight,
-  Edit3,
-  PieChart,
-  ChevronLeft,
-  Search,
   Bus,
   Route,
   FileCheck,
@@ -43,15 +31,19 @@ import {
   Image,
   Map,
   Plus,
-  Trash2
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  PieChart,
+  Wallet
 } from 'lucide-react';
 import { healthApi } from '../services/apiService';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -68,9 +60,6 @@ const Dashboard = () => {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
   const [systemHealth, setSystemHealth] = useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchVisible, setSearchVisible] = useState(false);
   const [statsSliderIndex, setStatsSliderIndex] = useState(0);
   const [quickActions, setQuickActions] = useState([
     { id: 1, label: 'Haber Ekle', path: '/news/add', icon: FileText },
@@ -85,18 +74,6 @@ const Dashboard = () => {
   const [monthlyIncomeData, setMonthlyIncomeData] = useState([]);
   const [userActivityData, setUserActivityData] = useState([]);
 
-  // Expandable menu state
-  const [expandedMenus, setExpandedMenus] = useState({
-    news: false,
-    feedback: false,
-    station: false,
-    payment: false,
-    admin: false,
-    wallet: false,
-    reports: false,
-    contracts: false,
-    system: false
-  });
 
   useEffect(() => {
   loadDashboardData(); // API calls for dashboard removed, using mock data within function
@@ -140,46 +117,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleMenuClick = (path) => {
-    if (path) {
-      navigate(path);
-      setSidebarOpen(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   const handleRefresh = () => {
     loadDashboardData();
   };
 
-  const toggleSidebarCollapse = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
-  const toggleSearch = () => {
-    setSearchVisible(!searchVisible);
-  };
-
-  const handleSearchClick = () => {
-    if (sidebarCollapsed) {
-      setSidebarCollapsed(false);
-    }
-  };
-
-  const toggleMenu = (menuKey) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuKey]: !prev[menuKey]
-    }));
-  };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -222,68 +164,6 @@ const Dashboard = () => {
     }).format(d);
   };
 
-  const shouldShowMenuItem = (label, subItems = []) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return label.toLowerCase().includes(query) || 
-           subItems.some(item => item.toLowerCase().includes(query));
-  };
-
-  const renderMenuItem = (icon, label, path, isExpanded = false, hasSubmenu = false, onClick, subItems = []) => {
-    const IconComponent = icon;
-    
-    if (!shouldShowMenuItem(label, subItems)) {
-      return null;
-    }
-    
-    if (hasSubmenu) {
-      return (
-        <div key={label} className="menu-item-container">
-          <div 
-            className={`menu-item ${isExpanded ? 'expanded' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
-            onClick={onClick}
-            title={sidebarCollapsed ? label : ''}
-          >
-            <div className="menu-item-content">
-              <IconComponent size={20} />
-              {!sidebarCollapsed && <span>{label}</span>}
-            </div>
-            {!sidebarCollapsed && (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div 
-        key={path || label}
-        className={`menu-item ${sidebarCollapsed ? 'collapsed' : ''}`}
-        onClick={() => handleMenuClick(path)}
-        title={sidebarCollapsed ? label : ''}
-      >
-        <div className="menu-item-content">
-          <IconComponent size={20} />
-          {!sidebarCollapsed && <span>{label}</span>}
-        </div>
-      </div>
-    );
-  };
-
-  const renderSubmenuItem = (label, path) => {
-    if (!shouldShowMenuItem(label)) {
-      return null;
-    }
-    
-    return (
-      <div 
-        key={path}
-        className="submenu-item"
-        onClick={() => handleMenuClick(path)}
-      >
-        <span>{label}</span>
-      </div>
-    );
-  };
 
   const getActivityIcon = (type) => {
     switch (type) {
@@ -480,290 +360,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-title">
-            {!sidebarCollapsed && <h2>City Card Süper Admin</h2>}
-            <button 
-              className="sidebar-collapse-toggle"
-              onClick={toggleSidebarCollapse}
-              title={sidebarCollapsed ? 'Genişlet' : 'Daralt'}
-            >
-              {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-            </button>
-          </div>
-          
-          {/* Search */}
-          <div className={`sidebar-search ${searchVisible || !sidebarCollapsed ? 'visible' : ''}`}>
-            <div className="search-input-container" onClick={handleSearchClick}>
-              <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Menü ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClick={handleSearchClick}
-                className="search-input"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="sidebar-menu">
-          {renderMenuItem(Home, 'Dashboard', '/dashboard')}
-          
-          {/* Haber Yönetimi */}
-          {renderMenuItem(
-            FileText, 
-            'Haber Yönetimi', 
-            null, 
-            expandedMenus.news, 
-            true, 
-            () => toggleMenu('news'),
-            ['Haberler', 'Haber Ekle']
-          )}
-          {expandedMenus.news && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Haberler', '/news')}
-              {renderSubmenuItem('Haber Ekle', '/news/add')}
-            </div>
-          )}
-
-          {/* Geri Bildirim Yönetimi */}
-          {renderMenuItem(
-            MessageSquare, 
-            'Geri Bildirim', 
-            null, 
-            expandedMenus.feedback, 
-            true, 
-            () => toggleMenu('feedback'),
-            ['Geri Bildirimler']
-          )}
-          {expandedMenus.feedback && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Geri Bildirimler', '/feedback')}
-            </div>
-          )}
-
-          {/* İstasyon Yönetimi */}
-          {renderMenuItem(
-            MapPin, 
-            'İstasyon Yönetimi', 
-            null, 
-            expandedMenus.station, 
-            true, 
-            () => toggleMenu('station'),
-            ['İstasyon Listesi', 'İstasyon Ekle', 'Harita Görünümü']
-          )}
-          {expandedMenus.station && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('İstasyon Listesi', '/station')}
-              {renderSubmenuItem('İstasyon Ekle', '/station/add')}
-              {renderSubmenuItem('Harita Görünümü', '/station/map')}
-            </div>
-          )}
-
-          {/* Ödeme Noktası Yönetimi */}
-          {renderMenuItem(
-            CreditCard, 
-            'Ödeme Noktaları', 
-            null, 
-            expandedMenus.payment, 
-            true, 
-            () => toggleMenu('payment'),
-            ['Ödeme Noktaları', 'Yeni Nokta Ekle']
-          )}
-          {expandedMenus.payment && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Ödeme Noktaları', '/payment-point')}
-              {renderSubmenuItem('Yeni Nokta Ekle', '/payment-point/add')}
-            </div>
-          )}
-
-          {/* Otobüs Yönetimi */}
-          {renderMenuItem(
-            Bus, 
-            'Otobüs Yönetimi', 
-            null, 
-            expandedMenus.admin, 
-            true, 
-            () => toggleMenu('admin'),
-            ['Otobüs Listesi', 'Otobüs Ekle', 'Harita Görünümü']
-          )}
-          {expandedMenus.admin && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Otobüs Listesi', '/bus')}
-              {renderSubmenuItem('Otobüs Ekle', '/bus/create')}
-              {renderSubmenuItem('Harita Görünümü', '/bus/map')}
-            </div>
-          )}
-
-          {/* Şoför Yönetimi */}
-          {renderMenuItem(
-            UserSearch, 
-            'Şoför Yönetimi', 
-            null, 
-            expandedMenus.wallet, 
-            true, 
-            () => toggleMenu('wallet'),
-            ['Şoför Listesi', 'Şoför Ekle']
-          )}
-          {expandedMenus.wallet && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Şoför Listesi', '/driver')}
-              {renderSubmenuItem('Şoför Ekle', '/driver/add')}
-            </div>
-          )}
-
-          {/* Rota Yönetimi */}
-          {renderMenuItem(
-            Route, 
-            'Rota Yönetimi', 
-            null, 
-            expandedMenus.reports, 
-            true, 
-            () => toggleMenu('reports'),
-            ['Rota Listesi', 'Rota Ekle']
-          )}
-          {expandedMenus.reports && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Rota Listesi', '/route')}
-              {renderSubmenuItem('Rota Ekle', '/route/add')}
-            </div>
-          )}
-
-          {/* Cüzdan Yönetimi */}
-          {renderMenuItem(
-            Wallet, 
-            'Cüzdan Yönetimi', 
-            null, 
-            expandedMenus.contracts, 
-            true, 
-            () => toggleMenu('contracts'),
-            ['Tüm Cüzdanlar', 'Cüzdan Durumu', 'Cüzdan Transferleri']
-          )}
-          {expandedMenus.contracts && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Tüm Cüzdanlar', '/all-wallets')}
-              {renderSubmenuItem('Cüzdan Durumu', '/wallet-status')}
-              {renderSubmenuItem('Cüzdan Transferleri', '/wallet-transfers')}
-            </div>
-          )}
-
-          {/* Admin Yönetimi */}
-          {renderMenuItem(
-            UserCheck, 
-            'Admin Yönetimi', 
-            null, 
-            expandedMenus.system, 
-            true, 
-            () => toggleMenu('system'),
-            ['Admin Listesi', 'Admin Ekle', 'Admin Onayları', 'Rol Yönetimi', 'Profilim', 'Ayarlar', 'Aktivitelerim']
-          )}
-          {expandedMenus.system && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Admin Listesi', '/admin/list')}
-              {renderSubmenuItem('Admin Ekle', '/admin/add')}
-              {renderSubmenuItem('Admin Onayları', '/admin-approvals')}
-              <div className="submenu-divider"></div>
-              {renderSubmenuItem('Profilim', '/admin/profile')}
-              {renderSubmenuItem('Ayarlar', '/admin/settings')}
-              {renderSubmenuItem('Aktivitelerim', '/admin/activity')}
-            </div>
-          )}
-
-          {/* Raporlar & Analiz */}
-          {renderMenuItem(
-            BarChart3, 
-            'Raporlar & Analiz', 
-            null, 
-            expandedMenus.reports, 
-            true, 
-            () => toggleMenu('reports'),
-            ['Gelir Raporları', 'İstatistikler', 'Analitik', 'Denetim Kayıtları']
-          )}
-          {expandedMenus.reports && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Gelir Raporları', '/bus-income-reports')}
-              {renderSubmenuItem('İstatistikler', '/statistics')}
-              {renderSubmenuItem('Analitik', '/analytics')}
-              {renderSubmenuItem('Denetim Kayıtları', '/audit-logs')}
-            </div>
-          )}
-
-          {/* Sözleşmeler */}
-          {renderMenuItem(
-            FileCheck, 
-            'Sözleşmeler', 
-            null, 
-            expandedMenus.feedback, 
-            true, 
-            () => toggleMenu('feedback'),
-            ['Sözleşme Yönetimi', 'Kullanıcı Takibi', 'Uyumluluk Kontrolü']
-          )}
-          {expandedMenus.feedback && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Sözleşme Yönetimi', '/contract-management')}
-              {renderSubmenuItem('Kullanıcı Takibi', '/user-contract-tracking')}
-              {renderSubmenuItem('Uyumluluk Kontrolü', '/compliance-check')}
-            </div>
-          )}
-
-          {/* Otobüs Kart Yönetimi */}
-          {renderMenuItem(
-            CreditCard, 
-            'Otobüs Kart Yönetimi', 
-            null, 
-            expandedMenus.payment, 
-            true, 
-            () => toggleMenu('payment'),
-            ['Kart Yönetimi', 'Fiyatlandırma Yönetimi', 'Fiyatlandırma Listesi']
-          )}
-          {expandedMenus.payment && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Kart Yönetimi', '/buscard-management')}
-              {renderSubmenuItem('Fiyatlandırma Yönetimi', '/buscard-pricing')}
-              {renderSubmenuItem('Fiyatlandırma Listesi', '/buscard-pricing-list')}
-            </div>
-          )}
-
-          {/* Sistem Yönetimi */}
-          {renderMenuItem(
-            Activity, 
-            'Sistem Yönetimi', 
-            null, 
-            expandedMenus.station, 
-            true, 
-            () => toggleMenu('station'),
-            ['Sistem Sağlığı']
-          )}
-          {expandedMenus.station && !sidebarCollapsed && (
-            <div className="submenu">
-              {renderSubmenuItem('Sistem Sağlığı', '/system-health')}
-            </div>
-          )}
-        </div>
-
-        <div className="sidebar-footer">
-          <div className="user-info" title={sidebarCollapsed ? 'Superadmin' : ''}>
-            <UserCheck size={20} />
-            {!sidebarCollapsed && <span>Superadmin</span>}
-          </div>
-          <button 
-            className="logout-btn"
-            onClick={handleLogout}
-            title={sidebarCollapsed ? 'Çıkış Yap' : ''}
-          >
-            <LogOut size={20} />
-            {!sidebarCollapsed && 'Çıkış Yap'}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="main-content">
+    <div className="dashboard-content-wrapper">
+      {/* Header */}
         {/* Header */}
         <div className="header">
           <div className="header-left">
@@ -1215,12 +813,22 @@ const Dashboard = () => {
                   const ActivityIcon = getActivityIcon(activity.type);
                   return (
                     <div key={index} className="activity-item">
-                      <div className="activity-icon" style={{ backgroundColor: `var(--${activity.color}-100)` }}>
-                        <ActivityIcon size={16} style={{ color: `var(--${activity.color}-600)` }} />
+                      <div
+                        className="activity-icon"
+                        style={{
+                          backgroundColor: `var(--${activity.color || 'blue'}-100)`
+                        }}
+                      >
+                        <ActivityIcon
+                          size={16}
+                          style={{ color: `var(--${activity.color || 'blue'}-600)` }}
+                        />
                       </div>
                       <div className="activity-content">
                         <p className="activity-text">{activity.message}</p>
-                        <span className="activity-time">{formatTime(activity.timestamp)}</span>
+                        <span className="activity-time">
+                          {formatTime(activity.timestamp)}
+                        </span>
                       </div>
                     </div>
                   );
@@ -1234,15 +842,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

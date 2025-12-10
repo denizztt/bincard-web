@@ -35,7 +35,6 @@ const NewsManagement = () => {
     platform: searchParams.get('platform') || '',
     type: searchParams.get('type') || '',
     active: searchParams.get('active') || 'AKTIF', // Default olarak aktif haberler
-    dateRange: searchParams.get('dateRange') || '',
     search: searchParams.get('search') || ''
   });
   
@@ -56,7 +55,6 @@ const NewsManagement = () => {
       platform: searchParams.get('platform') || '',
       type: searchParams.get('type') || '',
       active: searchParams.get('active') || 'AKTIF',
-      dateRange: searchParams.get('dateRange') || '',
       search: searchParams.get('search') || ''
     };
     

@@ -44,9 +44,12 @@ const ComplianceCheck = () => {
       const response = await contractApi.checkUserMandatoryStatus(searchUsername.trim());
       console.log('Compliance check result:', response);
       
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isCompliant = response.success !== undefined ? response.success : response.isSuccess;
+      
       setComplianceData({
         username: searchUsername.trim(),
-        isCompliant: response.success,
+        isCompliant: isCompliant,
         message: response.message,
         checkedAt: new Date()
       });

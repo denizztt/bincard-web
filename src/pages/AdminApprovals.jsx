@@ -50,8 +50,14 @@ const AdminApprovals = () => {
       // API çağrısı - AdminApprovalsPage'deki parseAdminRequestsResponse mantığına benzer
       const response = await superAdminApi.getPendingAdminRequests(0, 50);
       
-      if (response && response.success) {
+      // Debug: Response'u kontrol et
+      console.log('Admin onay istekleri response:', response);
+      
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         const requests = parseAdminRequestsFromResponse(response);
+        console.log('Parse edilen istekler:', requests);
         setAdminRequests(requests);
         
         if (requests.length === 0) {
@@ -78,13 +84,20 @@ const AdminApprovals = () => {
     const requests = [];
     
     try {
-      if (response.data && Array.isArray(response.data)) {
-        response.data.forEach(item => {
+      // Response.data kontrolü - backend'den gelen data field'ı
+      const data = response.data;
+      console.log('Response data:', data);
+      
+      if (data && Array.isArray(data)) {
+        data.forEach(item => {
+          console.log('Parsing item:', item);
           const request = parseAdminRequestObject(item);
           if (request) {
             requests.push(request);
           }
         });
+      } else {
+        console.warn('Response.data is not an array or is null:', data);
       }
     } catch (error) {
       console.error('Admin requests parse hatası:', error);
@@ -174,7 +187,9 @@ const AdminApprovals = () => {
       // Backend implementasyonu adminId'ye göre arama yaptığı için adminId gönderiyoruz
       const response = await superAdminApi.approveAdminRequest(parseInt(request.adminId));
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         // İsteği güncelle
         setAdminRequests(prevRequests => 
           prevRequests.map(req => 
@@ -211,7 +226,9 @@ const AdminApprovals = () => {
       const adminId = parseInt(request.adminId);
       const response = await superAdminApi.rejectAdminRequest(adminId);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         // İsteği güncelle
         setAdminRequests(prevRequests => 
           prevRequests.map(req => 

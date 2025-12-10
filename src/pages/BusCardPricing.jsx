@@ -43,18 +43,6 @@ const BusCardPricing = () => {
     { value: 'ENGELLİ_AKTARMA', label: 'Engelli Aktarma' }
   ];
 
-  // Mock data for demonstration
-  const mockPricingList = [
-    { id: 1, cardType: 'TAM', price: 20.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 2, cardType: 'ÖĞRENCİ', price: 12.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 3, cardType: 'ÖĞRETMEN', price: 15.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 4, cardType: 'YAŞLI', price: 10.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 5, cardType: 'ENGELLİ', price: 10.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 6, cardType: 'ÇOCUK', price: 10.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 7, cardType: 'TURİST', price: 18.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' },
-    { id: 8, cardType: 'ABONMAN', price: 0.00, createdAt: '2024-01-15', updatedAt: '2024-01-15' }
-  ];
-
   useEffect(() => {
     loadPricingList();
   }, []);
@@ -75,9 +63,8 @@ const BusCardPricing = () => {
       console.error('❌ Fiyatlandırma listesi yüklenirken hata:', err);
       setError('Fiyatlandırma listesi yüklenirken hata oluştu');
       
-      // Hata durumunda mock data kullan
-      console.log('⚠️ API hatası, mock data kullanılıyor');
-      setPricingList(mockPricingList);
+      // Hata durumunda boş liste göster
+      setPricingList([]);
     } finally {
       setLoading(false);
     }
@@ -149,7 +136,15 @@ const BusCardPricing = () => {
       await loadPricingList();
     } catch (err) {
       console.error('Fiyatlandırma kaydetme hatası:', err);
-      setError('Fiyatlandırma kaydedilirken hata oluştu');
+      const errorMessage = err.response?.data?.message || err.message || 'Fiyatlandırma kaydedilirken hata oluştu';
+      setError(errorMessage);
+      
+      // Hata durumunda formu kapatma, kullanıcı düzeltebilsin
+      if (!editingPricing) {
+        // Yeni ekleme hatası durumunda formu kapat
+        setShowForm(false);
+        setFormData({ cardType: '', price: '' });
+      }
     } finally {
       setActionLoading(false);
     }
@@ -289,11 +284,12 @@ const BusCardPricing = () => {
                     id="price"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
+                    placeholder="Örn: 5.50 veya 10.00"
                     step="0.01"
                     min="0"
                     className={`form-input ${formErrors.price ? 'error' : ''}`}
                   />
+                  <small className="form-hint">Kart fiyatını TL cinsinden girin. Ondalıklı değer girebilirsiniz. Örnek: 5.50, 10.00, 15.75</small>
                   {formErrors.price && (
                     <span className="error-message">{formErrors.price}</span>
                   )}
@@ -357,8 +353,8 @@ const BusCardPricing = () => {
           </div>
         ) : (
           <div className="pricing-grid">
-            {pricingList.map((pricing) => (
-              <div key={pricing.id} className="pricing-card">
+            {pricingList.map((pricing, index) => (
+              <div key={pricing.id || pricing.cardType || `pricing-${index}`} className="pricing-card">
                 <div className="card-header">
                   <div className="card-type">
                     <span className="type-badge">{getCardTypeLabel(pricing.cardType)}</span>

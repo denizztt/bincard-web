@@ -246,10 +246,11 @@ const NewsAdd = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                placeholder="Haber başlığını girin..."
+                placeholder="Örn: Yeni Otobüs Hattı Açıldı veya Kart Fiyatları Güncellendi"
                 maxLength={150}
                 required
               />
+              <small className="form-hint">Haber başlığını girin (maksimum 150 karakter). Örnek: Yeni Otobüs Hattı Açıldı, Kart Fiyatları Güncellendi</small>
               <small>{formData.title.length}/150 karakter</small>
             </div>
 
@@ -262,10 +263,11 @@ const NewsAdd = () => {
                 name="content"
                 value={formData.content}
                 onChange={handleInputChange}
-                placeholder="Haber içeriğini girin..."
+                placeholder="Örn: İstanbul Büyükşehir Belediyesi tarafından yeni bir otobüs hattı açıldı..."
                 rows="8"
                 required
               ></textarea>
+              <small className="form-hint">Haber içeriğini detaylı olarak girin. Örnek: İstanbul Büyükşehir Belediyesi tarafından yeni bir otobüs hattı açıldı. Bu hat Taksim ve Kadıköy arasında hizmet verecek...</small>
               <small>{formData.content.length} karakter</small>
             </div>
           </div>

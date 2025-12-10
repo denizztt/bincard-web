@@ -166,7 +166,7 @@ const PaymentPointDetail = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '30px', marginBottom: '25px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -386,7 +386,7 @@ const PaymentPointDetail = () => {
                   </button>
                   
                   <div style={{ 
-                    background: '#f8f9fa', 
+                    background: 'white', 
                     padding: '8px 12px', 
                     borderRadius: '6px', 
                     fontSize: '12px', 

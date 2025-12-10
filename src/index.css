@@ -234,7 +234,7 @@ body {
   font-size: var(--font-size-base);
   line-height: 1.6;
   color: var(--gray-800);
-  background-color: var(--gray-50);
+  background-color: var(--white);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;

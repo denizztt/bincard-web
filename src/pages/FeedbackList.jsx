@@ -1,10 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { feedbackApi } from '../services/apiService';
-import { FeedbackType, FeedbackSource, getFeedbackTypeDisplayName, getFeedbackSourceDisplayName, getFeedbackTypeColor } from '../types';
+import { FeedbackType, FeedbackSource } from '../types';
 import '../styles/FeedbackList.css';
 
 // Helper removed: inline truncation applied in JSX
+
+// Source değerlerini normalize et (backend'den gelen farklı formatları enum değerlerine çevir)
+const normalizeSource = (source) => {
+  if (!source) return '';
+  const normalized = source.toUpperCase().trim().replace(/[-\s]/g, '_');
+  
+  // Bilinen mapping'ler - backend'den gelen farklı formatları enum değerlerine çevir
+  const sourceMapping = {
+    'MOBILE': 'MOBILE_APP',
+    'MOBILEAPP': 'MOBILE_APP',
+    'MOBILE_APP': 'MOBILE_APP',
+    'WEB': 'WEB_APP',
+    'WEBAPP': 'WEB_APP',
+    'WEB_APP': 'WEB_APP',
+    'WEB_PORTAL': 'WEB_APP',
+    'CALL_CENTER': 'PHONE',
+    'CALL': 'PHONE',
+    'TELEFON': 'PHONE',
+    'PHONE': 'PHONE',
+    'EMAIL': 'EMAIL',
+    'SOCIAL_MEDIA': 'SOCIAL_MEDIA',
+    'OTHER': 'OTHER'
+  };
+  
+  // Önce tam eşleşme kontrolü
+  if (sourceMapping[normalized]) {
+    return sourceMapping[normalized];
+  }
+  
+  // Kısmi eşleşme kontrolü (mobile içeriyorsa MOBILE_APP)
+  if (normalized.includes('MOBILE')) {
+    return 'MOBILE_APP';
+  }
+  if (normalized.includes('WEB')) {
+    return 'WEB_APP';
+  }
+  if (normalized.includes('CALL') || normalized.includes('PHONE') || normalized.includes('TELEFON')) {
+    return 'PHONE';
+  }
+  
+  return normalized;
+};
 
 const FeedbackList = () => {
   const navigate = useNavigate();
@@ -47,11 +90,42 @@ const FeedbackList = () => {
       });
       
       if (response && response.data && response.data.content) {
-        setFeedbacks(response.data.content);
+        // Backend'den gelen verileri normalize et (source ve type değerlerini uppercase yap)
+        const normalizedFeedbacks = response.data.content.map(feedback => {
+          const originalSource = feedback.source;
+          const normalizedSource = normalizeSource(feedback.source);
+          
+          // Debug: Backend'den gelen source değerlerini logla
+          if (originalSource && originalSource !== normalizedSource) {
+            console.log(`Source normalize: "${originalSource}" -> "${normalizedSource}"`);
+          }
+          
+          return {
+            ...feedback,
+            type: (feedback.type || '').toUpperCase().trim(),
+            source: normalizedSource
+          };
+        });
+        setFeedbacks(normalizedFeedbacks);
         setTotalPages(response.data.totalPages || 0);
       } else if (response && response.content) {
         // Fallback for direct content response
-        setFeedbacks(response.content);
+        const normalizedFeedbacks = response.content.map(feedback => {
+          const originalSource = feedback.source;
+          const normalizedSource = normalizeSource(feedback.source);
+          
+          // Debug: Backend'den gelen source değerlerini logla
+          if (originalSource && originalSource !== normalizedSource) {
+            console.log(`Source normalize: "${originalSource}" -> "${normalizedSource}"`);
+          }
+          
+          return {
+            ...feedback,
+            type: (feedback.type || '').toUpperCase().trim(),
+            source: normalizedSource
+          };
+        });
+        setFeedbacks(normalizedFeedbacks);
         setTotalPages(response.totalPages || 0);
       }
       setError('');
@@ -66,14 +140,22 @@ const FeedbackList = () => {
   const applyFilters = () => {
     let filtered = [...feedbacks];
     
-    // Type filter
+    // Type filter - Case-insensitive karşılaştırma
     if (filters.type !== 'Tümü') {
-      filtered = filtered.filter(item => item.type === filters.type);
+      const filterType = filters.type.toUpperCase().trim();
+      filtered = filtered.filter(item => {
+        const itemType = (item.type || '').toUpperCase().trim();
+        return itemType === filterType;
+      });
     }
     
-    // Source filter
+    // Source filter - Normalize edilmiş karşılaştırma
     if (filters.source !== 'Tümü') {
-      filtered = filtered.filter(item => item.source === filters.source);
+      const filterSource = normalizeSource(filters.source);
+      filtered = filtered.filter(item => {
+        const itemSource = normalizeSource(item.source);
+        return itemSource === filterSource;
+      });
     }
     
     // Date range filter
@@ -114,7 +196,7 @@ const FeedbackList = () => {
   };
 
   const handleViewDetail = (feedback) => {
-    navigate(`/feedback/detail/${feedback.id}`, { state: { feedback } });
+    navigate(`/feedback/${feedback.id}`, { state: { feedback } });
   };
 
   const formatDate = (dateString) => {
@@ -180,7 +262,7 @@ const FeedbackList = () => {
                 >
                   <option value="Tümü">Tüm Türler</option>
                   {Object.values(FeedbackType).map(type => (
-                    <option key={type} value={type}>{getFeedbackTypeDisplayName(type)}</option>
+                    <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
               </div>
@@ -199,7 +281,7 @@ const FeedbackList = () => {
                 >
                   <option value="Tümü">Tüm Kaynaklar</option>
                   {Object.values(FeedbackSource).map(source => (
-                    <option key={source} value={source}>{getFeedbackSourceDisplayName(source)}</option>
+                    <option key={source} value={source}>{source}</option>
                   ))}
                 </select>
               </div>
@@ -262,16 +344,13 @@ const FeedbackList = () => {
                   </div>
                 </td>
                 <td>
-                  <span 
-                    className="type-badge"
-                    style={{ backgroundColor: getFeedbackTypeColor(feedback.type) }}
-                  >
-                    {getFeedbackTypeDisplayName(feedback.type)}
+                  <span className="type-badge">
+                    {feedback.type}
                   </span>
                 </td>
                 <td>
                   <span className="source-badge">
-                    {getFeedbackSourceDisplayName(feedback.source)}
+                    {feedback.source}
                   </span>
                 </td>
                 <td className="user-cell">
@@ -292,7 +371,7 @@ const FeedbackList = () => {
                       className="btn btn-view"
                       title="Detayları Görüntüle"
                     >
-                      👁️
+                      <Search size={18} />
                     </button>
                   </div>
                 </td>
