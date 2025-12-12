@@ -426,8 +426,11 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+<<<<<<< HEAD
   width: 100%;
   flex: 1;
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 }
 
 /* Contract Details */
@@ -476,7 +479,10 @@
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+<<<<<<< HEAD
   max-width: 100%;
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 }
 
 .contract-management .form-group {

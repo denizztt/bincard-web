@@ -39,8 +39,11 @@ import AllWallets from './pages/AllWallets';
 import WalletTransfers from './pages/WalletTransfers';
 import BusList from './pages/BusList';
 import BusAdd from './pages/BusAdd';
+<<<<<<< HEAD
 import BusDetail from './pages/BusDetail';
 import BusEdit from './pages/BusEdit';
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 import BusMap from './pages/BusMap';
 import DriverList from './pages/DriverList';
 import RouteList from './pages/RouteList';

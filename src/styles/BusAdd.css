@@ -217,12 +217,19 @@
 
 .btn-primary {
   background: var(--primary-color);
+<<<<<<< HEAD
   color: white !important;
+=======
+  color: white;
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+<<<<<<< HEAD
   color: white !important;
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }

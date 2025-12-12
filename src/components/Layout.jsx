@@ -362,12 +362,20 @@ const Layout = ({ children }) => {
             expandedMenus.reports, 
             true, 
             () => toggleMenu('reports'),
+<<<<<<< HEAD
             ['Gelir Raporları', 'İstatistikler', 'Denetim Kayıtları']
+=======
+            ['Gelir Raporları', 'İstatistikler', 'Analitik', 'Denetim Kayıtları']
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
           )}
           {expandedMenus.reports && !sidebarCollapsed && (
             <div className="submenu">
               {renderSubmenuItem('Gelir Raporları', '/bus-income-reports')}
               {renderSubmenuItem('İstatistikler', '/statistics')}
+<<<<<<< HEAD
+=======
+              {renderSubmenuItem('Analitik', '/analytics')}
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
               {renderSubmenuItem('Denetim Kayıtları', '/audit-logs')}
             </div>
           )}

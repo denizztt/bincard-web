@@ -34,7 +34,12 @@ const AdminProfile = () => {
     roles: []
   });
 
+<<<<<<< HEAD
   // Roller profileData.roles içinden alınacak, ayrı state'e gerek yok
+=======
+  const [myRoles, setMyRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -50,8 +55,12 @@ const AdminProfile = () => {
 
   useEffect(() => {
     loadProfile();
+<<<<<<< HEAD
     // getMyRoles endpoint'i Admin tablosunda arama yaptığı için SuperAdmin kullanıcıları için hata veriyor
     // Roller zaten getProfile endpoint'inden geliyor, ayrıca çağırmaya gerek yok
+=======
+    loadMyRoles();
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
   }, []);
 
   const loadProfile = async () => {
@@ -91,7 +100,29 @@ const AdminProfile = () => {
     }
   };
 
+<<<<<<< HEAD
   // loadMyRoles fonksiyonu kaldırıldı - Roller getProfile endpoint'inden geliyor
+=======
+  const loadMyRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      const response = await adminApi.getMyRoles();
+      
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess && response.data) {
+        const roles = Array.isArray(response.data) ? response.data : [];
+        setMyRoles(roles);
+      }
+    } catch (err) {
+      // SuperAdmin kullanıcılar için Admin tablosunda kayıt olmayabilir, bu normal bir durum
+      // Roller zaten profileData.roles içinde geliyor, bu yüzden sessizce devam et
+      setMyRoles([]);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -298,6 +329,7 @@ const AdminProfile = () => {
                 <label>Roller</label>
                 <div className="info-value">
                   <div className="roles-badge">
+<<<<<<< HEAD
                     {profileData.roles && profileData.roles.length > 0 ? (
                       Array.isArray(profileData.roles) ? (
                         profileData.roles.map((role, index) => (
@@ -313,6 +345,18 @@ const AdminProfile = () => {
                           </span>
                         ))
                       )
+=======
+                    {loadingRoles ? (
+                      <span>Yükleniyor...</span>
+                    ) : myRoles.length > 0 ? (
+                      myRoles.map((role, index) => (
+                        <span key={index} className="role-badge">{role}</span>
+                      ))
+                    ) : profileData.roles?.length > 0 ? (
+                      profileData.roles.map((role, index) => (
+                        <span key={index} className="role-badge">{role}</span>
+                      ))
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
                     ) : (
                       'Yok'
                     )}

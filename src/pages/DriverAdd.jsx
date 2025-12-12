@@ -167,9 +167,12 @@ const DriverAdd = () => {
         shift: formData.shift // DAYTIME veya NIGHT
       };
 
+<<<<<<< HEAD
       console.log('Creating driver with data:', submitData);
       const response = await driverApi.createDriver(submitData);
 
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
       // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
       const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
       

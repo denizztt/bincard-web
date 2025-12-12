@@ -83,13 +83,20 @@
 
 .btn-primary {
   background: #007bff;
+<<<<<<< HEAD
   color: white !important;
+=======
+  color: white;
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
   box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: #0056b3;
+<<<<<<< HEAD
   color: white !important;
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
   box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
   transform: translateY(-1px);
 }
@@ -97,7 +104,10 @@
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+<<<<<<< HEAD
   color: white !important;
+=======
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
 }
 
 .btn-secondary {

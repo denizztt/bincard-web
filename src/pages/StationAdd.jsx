@@ -425,7 +425,11 @@ const StationAdd = () => {
                   style={{ 
                     width: '100%', 
                     height: '300px',
+<<<<<<< HEAD
                     background: '#f5f5f5'
+=======
+                    background: 'white'
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
                   }}
                 />
                 {!mapLoaded && (

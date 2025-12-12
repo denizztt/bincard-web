@@ -271,7 +271,11 @@ const BusAdd = () => {
                       <option value="">Rota seçiniz (Opsiyonel)</option>
                       {routes.map(route => (
                         <option key={route.id} value={route.id}>
+<<<<<<< HEAD
                           {route.name || route.routeName} ({route.code || route.routeCode})
+=======
+                          {route.routeName} ({route.routeCode})
+>>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
                         </option>
                       ))}
                     </select>
