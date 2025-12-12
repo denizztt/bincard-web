@@ -193,9 +193,10 @@ const AdminEdit = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Admin adı"
+                  placeholder="Örn: Ahmet veya Mehmet"
                   required
                 />
+                <small className="form-hint">Admin'in adını girin. Örnek: Ahmet, Mehmet, Ayşe</small>
               </div>
 
               <div className="form-group">
@@ -208,9 +209,10 @@ const AdminEdit = () => {
                   name="surname"
                   value={formData.surname}
                   onChange={handleChange}
-                  placeholder="Admin soyadı"
+                  placeholder="Örn: Yılmaz veya Demir"
                   required
                 />
+                <small className="form-hint">Admin'in soyadını girin. Örnek: Yılmaz, Demir, Kaya</small>
               </div>
             </div>
 
@@ -224,9 +226,10 @@ const AdminEdit = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="ornek@email.com"
+                placeholder="Örn: admin@example.com veya mehmet.yilmaz@citycard.gov.tr"
                 required
               />
+              <small className="form-hint">Geçerli bir e-posta adresi girin. Örnek: admin@example.com, mehmet.yilmaz@citycard.gov.tr</small>
             </div>
 
             <div className="form-group">

@@ -84,7 +84,9 @@ const AdminAdd = () => {
 
       const response = await superAdminApi.createAdmin(payload);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         alert('Admin başarıyla oluşturuldu');
         navigate('/admin/list');
       } else {
@@ -139,9 +141,10 @@ const AdminAdd = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Admin adı"
+                  placeholder="Örn: Ahmet veya Mehmet"
                   required
                 />
+                <small className="form-hint">Admin'in adını girin. Örnek: Ahmet, Mehmet, Ayşe</small>
               </div>
 
               <div className="form-group">
@@ -154,9 +157,10 @@ const AdminAdd = () => {
                   name="surname"
                   value={formData.surname}
                   onChange={handleChange}
-                  placeholder="Admin soyadı"
+                  placeholder="Örn: Yılmaz veya Demir"
                   required
                 />
+                <small className="form-hint">Admin'in soyadını girin. Örnek: Yılmaz, Demir, Kaya</small>
               </div>
             </div>
 
@@ -171,9 +175,10 @@ const AdminAdd = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="ornek@email.com"
+                  placeholder="Örn: admin@example.com veya mehmet.yilmaz@citycard.gov.tr"
                   required
                 />
+                <small className="form-hint">Geçerli bir e-posta adresi girin. Örnek: admin@example.com, mehmet.yilmaz@citycard.gov.tr</small>
               </div>
 
               <div className="form-group">
@@ -186,9 +191,10 @@ const AdminAdd = () => {
                   name="telephone"
                   value={formData.telephone}
                   onChange={handleChange}
-                  placeholder="5551234567"
+                  placeholder="Örn: 5551234567 veya +905551234567"
                   required
                 />
+                <small className="form-hint">10 haneli telefon numarası girin (başında 0 olmadan). Örnek: 5551234567, 5321234567</small>
               </div>
             </div>
 
@@ -202,11 +208,11 @@ const AdminAdd = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Güçlü bir şifre girin"
+                placeholder="Örn: Admin123! veya MyP@ssw0rd"
                 required
                 minLength={8}
               />
-              <span className="form-hint">Şifre en az 8 karakter olmalıdır</span>
+              <small className="form-hint">En az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter içermelidir. Örnek: Admin123!, MyP@ssw0rd</small>
             </div>
           </div>
 

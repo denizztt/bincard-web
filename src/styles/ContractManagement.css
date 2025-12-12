@@ -238,8 +238,8 @@
 
 .contract-management .contract-type {
   padding: 0.25rem 0.5rem;
-  background-color: var(--info-light);
-  color: var(--info-color);
+  background-color: transparent;
+  color: var(--text-color);
   border-radius: 4px;
   font-size: 0.875rem;
 }
@@ -258,16 +258,17 @@
   border-radius: 4px;
   font-size: 0.875rem;
   font-weight: 500;
+  background-color: transparent;
 }
 
 .contract-management .status-badge.active {
-  background-color: var(--success-light);
-  color: var(--success-color);
+  background-color: transparent;
+  color: var(--text-color);
 }
 
 .contract-management .status-badge.inactive {
-  background-color: var(--danger-light);
-  color: var(--danger-color);
+  background-color: transparent;
+  color: var(--text-color);
 }
 
 .contract-management .mandatory-badge {
@@ -275,8 +276,8 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  background-color: var(--warning-light);
-  color: var(--warning-color);
+  background-color: transparent;
+  color: var(--text-color);
   border-radius: 4px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -284,8 +285,8 @@
 
 .contract-management .optional-badge {
   padding: 0.25rem 0.5rem;
-  background-color: var(--info-light);
-  color: var(--info-color);
+  background-color: transparent;
+  color: var(--text-color);
   border-radius: 4px;
   font-size: 0.875rem;
 }
@@ -379,10 +380,12 @@
   background-color: var(--card-bg);
   border-radius: 8px;
   width: 90%;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .contract-management .modal-header {
@@ -421,6 +424,10 @@
   padding: 1.5rem;
   max-height: 60vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
 }
 
 /* Contract Details */
@@ -428,12 +435,14 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .contract-management .detail-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .contract-management .detail-group label {
@@ -451,12 +460,14 @@
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
   white-space: pre-wrap;
   font-family: 'Courier New', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Contract Form */
@@ -464,12 +475,16 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .contract-management .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0;
 }
 
 .contract-management .form-group label {
@@ -486,6 +501,8 @@
   background-color: var(--input-bg);
   color: var(--text-color);
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .contract-management .form-group textarea {
@@ -498,15 +515,27 @@
   flex-direction: row;
   align-items: center;
   gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.contract-management .checkbox-group label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 0;
 }
 
 .contract-management .checkbox-group input[type="checkbox"] {
   width: auto;
   margin: 0;
+  cursor: pointer;
 }
 
 .contract-management .checkbox-group span {
   color: var(--text-color);
+  font-weight: normal;
 }
 
 .contract-management .modal-footer {

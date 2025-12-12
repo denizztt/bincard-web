@@ -66,12 +66,13 @@
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: white !important;
   box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-color-dark);
+  color: white !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -147,10 +148,11 @@
 
 /* Filters Section */
 .filters-section {
-  background: var(--background-secondary);
+  background: white;
   border-bottom: 1px solid var(--border-color);
   padding: var(--spacing-6) var(--spacing-8);
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .filters-grid {
@@ -176,7 +178,7 @@
   padding: var(--spacing-3);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background: var(--background-primary);
+  background: white;
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   transition: all var(--transition-normal);

@@ -51,19 +51,19 @@ const AdminSettings = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await adminApi.getLocation();
+      // Backend direkt LocationDTO döner, DataResponseMessage wrapper'ı yok
+      const locationData = await adminApi.getLocation();
       
-      if (response && response.success && response.data) {
-        const data = response.data;
+      if (locationData && (locationData.latitude !== undefined || locationData.longitude !== undefined)) {
         setLocationData({
-          latitude: data.latitude,
-          longitude: data.longitude,
-          recordedAt: data.recordedAt
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          recordedAt: locationData.recordedAt
         });
         
         setLocationForm({
-          latitude: data.latitude?.toString() || '',
-          longitude: data.longitude?.toString() || '',
+          latitude: locationData.latitude?.toString() || '',
+          longitude: locationData.longitude?.toString() || '',
           speed: '',
           accuracy: ''
         });
@@ -139,7 +139,9 @@ const AdminSettings = () => {
       
       const response = await adminApi.updateDeviceInfo(deviceData);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Cihaz bilgileri başarıyla güncellendi');
         setTimeout(() => setSuccess(''), 3000);
       } else {
@@ -193,7 +195,9 @@ const AdminSettings = () => {
       
       const response = await adminApi.updateLocation(locationData);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Konum bilgisi başarıyla güncellendi');
         await loadLocation();
         setTimeout(() => setSuccess(''), 3000);

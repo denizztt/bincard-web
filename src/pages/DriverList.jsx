@@ -203,7 +203,6 @@ const DriverList = () => {
           <span className="status-icon">{getDriverStatusIcon(driver.active)}</span>
           <span 
             className="status-badge"
-            style={{ backgroundColor: getDriverStatusColor(driver.active) }}
           >
             {getDriverStatusLabel(driver.active)}
           </span>
@@ -215,7 +214,6 @@ const DriverList = () => {
           <span className="shift-icon">{getDriverShiftIcon(driver.shift)}</span>
           <span 
             className="shift-badge"
-            style={{ backgroundColor: getDriverShiftColor(driver.shift) }}
           >
             {getDriverShiftLabel(driver.shift)}
           </span>
@@ -239,7 +237,6 @@ const DriverList = () => {
         <div className="rating-container">
           <span 
             className="rating-badge"
-            style={{ backgroundColor: getDriverRatingColor(driver.averageRating) }}
           >
             {formatDriverRating(driver.averageRating)}
           </span>

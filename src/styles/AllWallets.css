@@ -2,7 +2,7 @@
   padding: 20px;
   max-width: 1800px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: white;
   min-height: 100vh;
 }
 
@@ -82,11 +82,12 @@
 
 .btn.btn-primary {
   background: #007bff;
-  color: white;
+  color: white !important;
 }
 
 .btn.btn-primary:hover:not(:disabled) {
   background: #0056b3;
+  color: white !important;
   transform: translateY(-1px);
 }
 
@@ -227,7 +228,7 @@
 }
 
 .wallets-table thead {
-  background: #f8f9fa;
+  background: white;
 }
 
 .wallets-table th {
@@ -246,7 +247,7 @@
 }
 
 .wallets-table tr:hover {
-  background: #f8f9fa;
+  background: white;
 }
 
 /* Table Cell Content */

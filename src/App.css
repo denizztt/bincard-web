@@ -1,6 +1,6 @@
 .App {
   min-height: 100vh;
-  background-color: var(--gray-50);
+  background-color: var(--white);
 }
 
 /* Global app-specific styles */
@@ -61,7 +61,7 @@
   min-height: 100vh;
   padding: var(--spacing-8);
   text-align: center;
-  background: var(--gray-50);
+  background: var(--white);
 }
 
 .error-icon {

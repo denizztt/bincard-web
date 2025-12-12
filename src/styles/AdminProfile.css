@@ -44,11 +44,12 @@
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: white !important;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  color: white !important;
 }
 
 .btn-primary:disabled {

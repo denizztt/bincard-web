@@ -81,7 +81,14 @@ const UserContractTracking = () => {
       if (err.response?.status === 404) {
         setError('Kullanıcı bulunamadı');
       } else if (err.response?.status === 500) {
-        setError('Sunucu hatası: Lütfen daha sonra tekrar deneyin');
+        // Backend'de kullanıcı yoksa UserNotFoundException fırlatılıyor ve 500 dönüyor
+        // Bu durumda kullanıcı bulunamadı mesajı göster
+        const errorMessage = err.response?.data?.message || '';
+        if (errorMessage.toLowerCase().includes('user') || errorMessage.toLowerCase().includes('kullanıcı')) {
+          setError('Kullanıcı bulunamadı. Lütfen geçerli bir kullanıcı adı girin.');
+        } else {
+          setError('Kullanıcı bulunamadı veya sunucu hatası oluştu. Lütfen geçerli bir kullanıcı adı girin.');
+        }
       } else if (err.response?.status === 401) {
         setError('Yetkilendirme hatası: Lütfen tekrar giriş yapın');
       } else if (err.response?.status === 403) {
@@ -89,7 +96,7 @@ const UserContractTracking = () => {
       } else if (err.code === 'NETWORK_ERROR') {
         setError('Bağlantı hatası: İnternet bağlantınızı kontrol edin');
       } else {
-        setError('Kullanıcı sözleşmeleri yüklenirken hata oluştu: ' + (err.message || 'Bilinmeyen hata'));
+        setError('Kullanıcı bulunamadı. Lütfen geçerli bir kullanıcı adı girin.');
       }
       
       setUserContracts([]);
@@ -274,15 +281,17 @@ const UserContractTracking = () => {
                       )}
                     </div>
 
-                    <div className="contract-actions">
-                      <button 
-                        className="detail-button"
-                        onClick={() => handleViewDetail(contract)}
-                      >
-                        <Eye size={16} />
-                        Detay
-                      </button>
-                    </div>
+                    {contract.accepted === true && (
+                      <div className="contract-actions">
+                        <button 
+                          className="detail-button"
+                          onClick={() => handleViewDetail(contract)}
+                        >
+                          <Eye size={16} />
+                          Detay
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

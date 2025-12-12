@@ -59,31 +59,52 @@ const StationAdd = () => {
   // Load Google Maps via JS API Loader on component mount
   useEffect(() => {
     // If already loaded, initialize map without loading again
-    if (window.google && window.google.maps) {
-      initializeMap();
-      setMapLoaded(true);
+    if (window.google && window.google.maps && window.google.maps.MapTypeId) {
+      setTimeout(() => {
+        initializeMap();
+      }, 100);
       return;
     }
+    
     const loader = new Loader({
       apiKey: config.googleMaps.apiKey,
       version: 'weekly',
-      libraries: config.googleMaps.libraries
+      libraries: config.googleMaps.libraries || ['geometry', 'places']
     });
+    
     loader.load()
       .then(() => {
-        initializeMap();
-        setMapLoaded(true);
+        // Google Maps tam yüklendiğinden emin olmak için kısa bir bekleme
+        setTimeout(() => {
+          if (window.google && window.google.maps && window.google.maps.MapTypeId) {
+            initializeMap();
+            setMapLoaded(true);
+          } else {
+            throw new Error('Google Maps API tam yüklenemedi');
+          }
+        }, 100);
       })
       .catch(err => {
         console.error('Google Maps loader error:', err);
-        setError('Google Maps yüklenemedi.');
+        setError('Google Maps yüklenemedi. Lütfen API anahtarınızın geçerli olduğundan ve billing\'in aktif olduğundan emin olun.');
+        setMapLoaded(false);
       });
   }, []);
 
   // ...existing code for initializeMap, placeMarker, getAddressFromCoordinates...
 
   const initializeMap = () => {
-    if (!mapRef.current) return;
+    if (!mapRef.current) {
+      console.warn('Map ref not available');
+      return;
+    }
+
+    // Google Maps API'nin tam yüklendiğinden emin ol
+    if (!window.google || !window.google.maps || !window.google.maps.MapTypeId) {
+      console.error('Google Maps API not fully loaded');
+      setError('Google Maps API tam yüklenemedi. Lütfen sayfayı yenileyin.');
+      return;
+    }
 
     try {
       const center = config.googleMaps.defaultCenter;
@@ -91,7 +112,7 @@ const StationAdd = () => {
       const map = new window.google.maps.Map(mapRef.current, {
         zoom: 13,
         center: center,
-        mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+        mapTypeId: window.google.maps.MapTypeId.ROADMAP || 'roadmap',
         styles: [
           {
             featureType: "poi",
@@ -117,7 +138,8 @@ const StationAdd = () => {
       
     } catch (err) {
       console.error('Map initialization error:', err);
-      setError('Harita başlatılırken hata oluştu: ' + err.message);
+      setError('Harita başlatılırken hata oluştu: ' + (err.message || 'Bilinmeyen hata'));
+      setMapLoaded(false);
     }
   };
 
@@ -154,34 +176,47 @@ const StationAdd = () => {
 
   // Get address components using Google Geocoder callback
   const getAddressFromCoordinates = (lat, lng) => {
-    if (!window.google || !window.google.maps) return;
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results && results.length > 0) {
-        const addressComponents = results[0].address_components;
-        let city = '', district = '', street = '', postalCode = '';
-        addressComponents.forEach(component => {
-          if (component.types.includes('administrative_area_level_1')) {
-            city = component.long_name;
-          } else if (component.types.includes('administrative_area_level_2')) {
-            district = component.long_name;
-          } else if (component.types.includes('route')) {
-            street = component.long_name;
-          } else if (component.types.includes('postal_code')) {
-            postalCode = component.long_name;
+    if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
+      console.warn('Geocoder not available');
+      return;
+    }
+    
+    try {
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results.length > 0) {
+          const addressComponents = results[0].address_components;
+          let city = '', district = '', street = '', postalCode = '';
+          addressComponents.forEach(component => {
+            if (component.types.includes('administrative_area_level_1')) {
+              city = component.long_name;
+            } else if (component.types.includes('administrative_area_level_2')) {
+              district = component.long_name;
+            } else if (component.types.includes('route')) {
+              street = component.long_name;
+            } else if (component.types.includes('postal_code')) {
+              postalCode = component.long_name;
+            }
+          });
+          setFormData(prev => ({
+            ...prev,
+            city: city || 'İstanbul',
+            district: district || '',
+            street: street || '',
+            postalCode: postalCode || ''
+          }));
+        } else {
+          console.warn('Geocoding failed:', status);
+          // Geocoding başarısız olsa bile form doldurulabilir
+          if (status === 'REQUEST_DENIED' || status === 'OVER_QUERY_LIMIT') {
+            console.warn('Geocoding API hatası. Lütfen Google Cloud Console\'da Geocoding API\'nin aktif olduğundan ve billing\'in açık olduğundan emin olun.');
           }
-        });
-        setFormData(prev => ({
-          ...prev,
-          city: city || 'İstanbul',
-          district: district || '',
-          street: street || '',
-          postalCode: postalCode || ''
-        }));
-      } else {
-        console.error('Geocoding failed:', status);
-      }
-    });
+        }
+      });
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      // Hata olsa bile devam et, kullanıcı manuel girebilir
+    }
   };
 
   const handleInputChange = (e) => {
@@ -279,7 +314,7 @@ const StationAdd = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'white', borderRadius: '12px', padding: '25px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -287,7 +322,7 @@ const StationAdd = () => {
             onClick={() => navigate('/station')}
             style={{ background: '#6c757d', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} style={{ display: 'block', width: '20px', height: '20px', flexShrink: 0 }} />
             Geri Dön
           </button>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>🚇 Yeni Durak Ekle</h1>
@@ -321,7 +356,7 @@ const StationAdd = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="örn: Taksim Meydanı"
+                placeholder="Örn: Taksim Meydanı veya Kadıköy İskele"
                 required
                 style={{ 
                   width: '100%', 
@@ -332,6 +367,9 @@ const StationAdd = () => {
                   transition: 'border-color 0.3s ease' 
                 }}
               />
+              <small style={{ display: 'block', fontSize: '12px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                Durak adını girin. Örnek: Taksim Meydanı, Kadıköy İskele, Beşiktaş Terminali
+              </small>
               {validationErrors.name && (
                 <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                   <AlertCircle size={12} />
@@ -381,13 +419,13 @@ const StationAdd = () => {
                 <MapPin size={16} />
                 Konum Seçimi:
               </label>
-              <div style={{ border: '2px solid #bdc3c7', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ border: '2px solid #bdc3c7', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
                 <div 
                   ref={mapRef}
                   style={{ 
                     width: '100%', 
                     height: '300px',
-                    background: '#f8f9fa'
+                    background: '#f5f5f5'
                   }}
                 />
                 {!mapLoaded && (
@@ -396,11 +434,20 @@ const StationAdd = () => {
                     top: '50%', 
                     left: '50%', 
                     transform: 'translate(-50%, -50%)',
-                    zIndex: 1
+                    zIndex: 1,
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
                   }}>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #dc3545', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }}></div>
-                      <p style={{ color: '#6c757d' }}>Harita yükleniyor...</p>
+                      <p style={{ color: '#6c757d', margin: '0' }}>Harita yükleniyor...</p>
+                      {error && error.includes('Google Maps') && (
+                        <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '10px', maxWidth: '300px' }}>
+                          Google Maps API hatası. Lütfen API anahtarınızın geçerli olduğundan ve billing'in aktif olduğundan emin olun.
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -414,7 +461,7 @@ const StationAdd = () => {
             </div>
 
             {/* Adres Bilgileri */}
-            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: '#f8f9fa' }}>
+            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: 'white' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#34495e' }}>Adres Bilgileri</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -427,7 +474,7 @@ const StationAdd = () => {
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    placeholder="İstanbul"
+                    placeholder="Örn: İstanbul veya Ankara"
                     required
                     style={{ 
                       width: '100%', 
@@ -437,6 +484,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    Şehir adını girin. Örnek: İstanbul, Ankara, İzmir
+                  </small>
                   {validationErrors.city && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -454,7 +504,7 @@ const StationAdd = () => {
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
-                    placeholder="Beyoğlu"
+                    placeholder="Örn: Beyoğlu veya Kadıköy"
                     required
                     style={{ 
                       width: '100%', 
@@ -464,6 +514,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    İlçe adını girin. Örnek: Beyoğlu, Kadıköy, Beşiktaş
+                  </small>
                   {validationErrors.district && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -483,7 +536,7 @@ const StationAdd = () => {
                     name="street"
                     value={formData.street}
                     onChange={handleInputChange}
-                    placeholder="İstiklal Caddesi"
+                    placeholder="Örn: İstiklal Caddesi veya Bağdat Caddesi"
                     required
                     style={{ 
                       width: '100%', 
@@ -493,6 +546,9 @@ const StationAdd = () => {
                       fontSize: '14px' 
                     }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    Sokak veya cadde adını girin. Örnek: İstiklal Caddesi, Bağdat Caddesi, Atatürk Bulvarı
+                  </small>
                   {validationErrors.street && (
                     <span style={{ color: '#e74c3c', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                       <AlertCircle size={12} />
@@ -510,9 +566,12 @@ const StationAdd = () => {
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
-                    placeholder="34000"
+                    placeholder="Örn: 34000 veya 34700"
                     style={{ width: '100%', padding: '12px', border: '2px solid #bdc3c7', borderRadius: '6px', fontSize: '14px' }}
                   />
+                  <small style={{ display: 'block', fontSize: '11px', color: '#6c757d', marginTop: '4px', fontStyle: 'italic' }}>
+                    5 haneli posta kodu (opsiyonel). Örnek: 34000, 34700, 06100
+                  </small>
                 </div>
               </div>
             </div>

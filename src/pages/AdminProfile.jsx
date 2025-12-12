@@ -34,6 +34,8 @@ const AdminProfile = () => {
     roles: []
   });
 
+  // Roller profileData.roles içinden alınacak, ayrı state'e gerek yok
+
   const [profileForm, setProfileForm] = useState({
     name: '',
     surname: '',
@@ -48,6 +50,8 @@ const AdminProfile = () => {
 
   useEffect(() => {
     loadProfile();
+    // getMyRoles endpoint'i Admin tablosunda arama yaptığı için SuperAdmin kullanıcıları için hata veriyor
+    // Roller zaten getProfile endpoint'inden geliyor, ayrıca çağırmaya gerek yok
   }, []);
 
   const loadProfile = async () => {
@@ -56,7 +60,9 @@ const AdminProfile = () => {
       setError('');
       const response = await adminApi.getProfile();
       
-      if (response && response.success && response.data) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess && response.data) {
         const data = response.data;
         setProfileData({
           name: data.name || '',
@@ -84,6 +90,8 @@ const AdminProfile = () => {
       setLoading(false);
     }
   };
+
+  // loadMyRoles fonksiyonu kaldırıldı - Roller getProfile endpoint'inden geliyor
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -116,7 +124,9 @@ const AdminProfile = () => {
       
       const response = await adminApi.updateProfile(profileForm);
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Profil bilgileriniz başarıyla güncellendi');
         await loadProfile();
         setTimeout(() => setSuccess(''), 3000);
@@ -159,7 +169,9 @@ const AdminProfile = () => {
         newPassword: passwordForm.newPassword
       });
       
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         setSuccess('Şifreniz başarıyla değiştirildi');
         setPasswordForm({
           currentPassword: '',
@@ -286,9 +298,24 @@ const AdminProfile = () => {
                 <label>Roller</label>
                 <div className="info-value">
                   <div className="roles-badge">
-                    {profileData.roles?.map((role, index) => (
-                      <span key={index} className="role-badge">{role}</span>
-                    )) || 'Yok'}
+                    {profileData.roles && profileData.roles.length > 0 ? (
+                      Array.isArray(profileData.roles) ? (
+                        profileData.roles.map((role, index) => (
+                          <span key={index} className="role-badge">
+                            {typeof role === 'string' ? role : role.name || role}
+                          </span>
+                        ))
+                      ) : (
+                        // Set veya başka bir iterable ise
+                        Array.from(profileData.roles).map((role, index) => (
+                          <span key={index} className="role-badge">
+                            {typeof role === 'string' ? role : role.name || role}
+                          </span>
+                        ))
+                      )
+                    ) : (
+                      'Yok'
+                    )}
                   </div>
                 </div>
               </div>

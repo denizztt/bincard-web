@@ -45,6 +45,21 @@
   box-shadow: var(--shadow-md);
 }
 
+.back-button svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.btn-secondary svg,
+.btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .header-content h1 {
   margin: 0 0 var(--spacing-1) 0;
   font-size: var(--font-size-2xl);
@@ -326,11 +341,12 @@
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: white !important;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-color-dark);
+  color: white !important;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }

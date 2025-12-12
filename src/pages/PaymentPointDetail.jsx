@@ -166,7 +166,7 @@ const PaymentPointDetail = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '30px', marginBottom: '25px', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -192,15 +192,16 @@ const PaymentPointDetail = () => {
               onClick={handleToggleStatus}
               disabled={actionLoading}
               style={{ 
-                background: actionLoading ? '#95a5a6' : (paymentPoint?.active ? '#dc3545' : '#28a745'), 
-                color: 'white', 
-                border: 'none', 
+                background: 'transparent', 
+                color: paymentPoint?.active ? '#dc3545' : '#28a745', 
+                border: `1px solid ${paymentPoint?.active ? '#dc3545' : '#28a745'}`, 
                 padding: '10px 15px', 
                 borderRadius: '8px', 
                 cursor: actionLoading ? 'not-allowed' : 'pointer', 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '8px' 
+                gap: '8px',
+                opacity: actionLoading ? 0.6 : 1
               }}
             >
               {actionLoading ? (
@@ -214,7 +215,7 @@ const PaymentPointDetail = () => {
             </button>
             <button 
               onClick={() => navigate(`/payment-point/edit/${id}`)}
-              style={{ background: '#ffc107', color: '#212529', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'transparent', color: '#6c757d', border: '1px solid #6c757d', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <Edit size={16} />
               Düzenle
@@ -386,7 +387,7 @@ const PaymentPointDetail = () => {
                   </button>
                   
                   <div style={{ 
-                    background: '#f8f9fa', 
+                    background: 'white', 
                     padding: '8px 12px', 
                     borderRadius: '6px', 
                     fontSize: '12px', 
@@ -416,8 +417,8 @@ const PaymentPointDetail = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 {paymentPoint.paymentMethods.map((method, index) => (
                   <div key={index} style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
+                    background: 'transparent',
+                    border: '1px solid #e9ecef',
                     borderRadius: '16px',
                     padding: '20px',
                     textAlign: 'center',
@@ -426,20 +427,22 @@ const PaymentPointDetail = () => {
                     alignItems: 'center',
                     gap: '10px',
                     transform: 'scale(1)',
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                     cursor: 'pointer'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'scale(1.05)';
-                    e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.6)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                    e.target.style.borderColor = '#667eea';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.transform = 'scale(1)';
-                    e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+                    e.target.style.borderColor = '#e9ecef';
                   }}>
                     <div style={{ fontSize: '24px' }}>{getPaymentMethodIcon(method)}</div>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: 'white' }}>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50' }}>
                       {getPaymentMethodLabel(method)}
                     </div>
                   </div>

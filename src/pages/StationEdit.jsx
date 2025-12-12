@@ -359,7 +359,7 @@ const StationEdit = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: '#f8f9fa', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', background: 'white', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ background: 'white', borderRadius: '12px', padding: '25px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -367,7 +367,7 @@ const StationEdit = () => {
             onClick={() => navigate('/station')}
             style={{ background: '#6c757d', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} style={{ display: 'block', width: '20px', height: '20px', flexShrink: 0 }} />
             Geri Dön
           </button>
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '700', color: '#2c3e50' }}>✏️ Durak Düzenle #{id}</h1>
@@ -467,7 +467,7 @@ const StationEdit = () => {
                   style={{ 
                     width: '100%', 
                     height: '300px',
-                    background: '#f8f9fa'
+                    background: 'white'
                   }}
                 />
                 {!mapLoaded && (
@@ -494,7 +494,7 @@ const StationEdit = () => {
             </div>
 
             {/* Adres Bilgileri */}
-            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: '#f8f9fa' }}>
+            <div style={{ border: '1px solid #e1e8ed', borderRadius: '8px', padding: '20px', background: 'white' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#34495e' }}>Adres Bilgileri</h3>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>

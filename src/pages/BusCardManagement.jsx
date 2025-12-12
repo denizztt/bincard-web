@@ -13,7 +13,12 @@ import {
   RefreshCw,
   Filter,
   Download,
-  Upload
+  Upload,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { busCardApi } from '../services/apiService';
 import '../styles/BusCardManagement.css';
@@ -32,53 +37,14 @@ const BusCardManagement = () => {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showUnblockModal, setShowUnblockModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-
-  // Mock data for demonstration
-  const mockCards = [
-    {
-      id: 1,
-      uid: '1234567890',
-      fullName: 'Ahmet Yılmaz',
-      cardType: 'TAM',
-      status: 'ACTIVE',
-      balance: 25.50,
-      active: true,
-      issueDate: '2024-01-15',
-      expiryDate: '2025-01-15',
-      lastTransactionAmount: 5.00,
-      lastTransactionDate: '2024-12-20'
-    },
-    {
-      id: 2,
-      uid: '0987654321',
-      fullName: 'Ayşe Demir',
-      cardType: 'ÖĞRENCİ',
-      status: 'BLOCKED',
-      balance: 12.75,
-      active: false,
-      issueDate: '2024-02-10',
-      expiryDate: '2025-02-10',
-      lastTransactionAmount: 3.00,
-      lastTransactionDate: '2024-12-18'
-    },
-    {
-      id: 3,
-      uid: '1122334455',
-      fullName: 'Mehmet Kaya',
-      cardType: 'YAŞLI',
-      status: 'ACTIVE',
-      balance: 8.25,
-      active: true,
-      issueDate: '2024-03-05',
-      expiryDate: '2025-03-05',
-      lastTransactionAmount: 2.50,
-      lastTransactionDate: '2024-12-19'
-    }
-  ];
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     loadCards();
-  }, []);
+  }, [page, size]);
 
   useEffect(() => {
     filterCards();
@@ -89,20 +55,38 @@ const BusCardManagement = () => {
       setLoading(true);
       setError('');
       
-      // Gerçek API çağrısı yapalım
-      console.log('📋 Kartlar yükleniyor...');
+      console.log('📋 Kartlar yükleniyor...', { page, size });
       
-      // Önce mock data ile başlayalım, sonra gerçek API'yi test edelim
-      setCards(mockCards);
-      console.log('📋 Mock kartlar yüklendi:', mockCards);
+      const response = await busCardApi.getAllCards(page, size);
       
-      // TODO: Gerçek API çağrısı için:
-      // const response = await busCardApi.getAllCards();
-      // setCards(response.data);
+      // Backend'den Page<BusCardDTO> dönüyor
+      if (response && response.content) {
+        setCards(response.content);
+        setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || 0);
+        console.log('📋 Kartlar başarıyla yüklendi:', {
+          content: response.content,
+          totalPages: response.totalPages,
+          totalElements: response.totalElements
+        });
+      } else if (response && Array.isArray(response)) {
+        // Eğer direkt array dönerse
+        setCards(response);
+        setTotalPages(1);
+        setTotalElements(response.length);
+      } else {
+        setCards([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        console.log('📋 Kart bulunamadı');
+      }
       
     } catch (err) {
       console.error('Kartlar yüklenirken hata:', err);
       setError('Kartlar yüklenirken hata oluştu');
+      setCards([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
@@ -115,11 +99,12 @@ const BusCardManagement = () => {
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = cards.filter(card => 
-      card.uid.toLowerCase().includes(query) ||
-      card.fullName.toLowerCase().includes(query) ||
-      card.cardType.toLowerCase().includes(query)
-    );
+    const filtered = cards.filter(card => {
+      const uid = (card.uid || card.cardNumber || '').toLowerCase();
+      const fullName = (card.fullName || '').toLowerCase();
+      const cardType = (card.cardType || card.type || '').toLowerCase();
+      return uid.includes(query) || fullName.includes(query) || cardType.includes(query);
+    });
     setFilteredCards(filtered);
   };
 
@@ -128,26 +113,31 @@ const BusCardManagement = () => {
       setActionLoading(true);
       setError('');
       
+      const cardUid = card.uid || card.cardNumber;
       console.log('🔒 Kart bloklama işlemi başlatılıyor:', { 
-        uid: card.uid, 
+        uid: cardUid, 
         reason: blockReason 
       });
       
-      const response = await busCardApi.blockCard(card.uid);
+      const response = await busCardApi.blockCard(cardUid);
       
       console.log('🔒 Backend response:', response);
       
       // Backend'den gelen response'u kontrol et
-      if (response && response.success) {
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      if (response && isSuccess) {
         console.log('✅ Backend bloklama başarılı');
         
-        // Local state'i güncelle - mock data'da kart durumunu değiştir
+        // Local state'i güncelle
+        const cardUid = card.uid || card.cardNumber;
         setCards(prevCards => 
-          prevCards.map(c => 
-            c.uid === card.uid 
+          prevCards.map(c => {
+            const cUid = c.uid || c.cardNumber;
+            return cUid === cardUid 
               ? { ...c, status: 'BLOCKED', active: false }
-              : c
-          )
+              : c;
+          })
         );
         
         setSuccess(`${card.fullName} adlı kullanıcının kartı başarıyla bloklandı`);
@@ -172,15 +162,17 @@ const BusCardManagement = () => {
       setActionLoading(true);
       setError('');
       
-      await busCardApi.unblockCard(card.uid);
+      const cardUid = card.uid || card.cardNumber;
+      await busCardApi.unblockCard(cardUid);
       
-      // Local state'i güncelle - mock data'da kart durumunu değiştir
+      // Local state'i güncelle
       setCards(prevCards => 
-        prevCards.map(c => 
-          c.uid === card.uid 
+        prevCards.map(c => {
+          const cUid = c.uid || c.cardNumber;
+          return cUid === cardUid 
             ? { ...c, status: 'ACTIVE', active: true }
-            : c
-        )
+            : c;
+        })
       );
       
       setSuccess(`${card.fullName} adlı kullanıcının kartı başarıyla aktif edildi`);
@@ -198,9 +190,10 @@ const BusCardManagement = () => {
       setLoading(true);
       setError('');
       
-      console.log('🔍 Kart okuma işlemi başlatılıyor:', { uid: card.uid });
+      const cardUid = card.uid || card.cardNumber;
+      console.log('🔍 Kart okuma işlemi başlatılıyor:', { uid: cardUid });
       
-      const response = await busCardApi.readCard(card.uid);
+      const response = await busCardApi.readCard(cardUid);
       console.log('✅ Kart okuma başarılı:', response);
       
       setSelectedCard({ ...card, ...response });
@@ -265,6 +258,35 @@ const BusCardManagement = () => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('tr-TR');
+  };
+
+  const handleDeleteCard = async (card) => {
+    try {
+      setActionLoading(true);
+      setError('');
+      
+      const cardUid = card.uid || card.cardNumber;
+      await busCardApi.deleteCard(cardUid);
+      
+      setSuccess(`${card.fullName} adlı kullanıcının kartı başarıyla silindi`);
+      loadCards(); // Listeyi yenile
+    } catch (err) {
+      console.error('Kart silme hatası:', err);
+      setError('Kart silinirken hata oluştu');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleSizeChange = (newSize) => {
+    setSize(newSize);
+    setPage(0); // Sayfa boyutu değiştiğinde ilk sayfaya dön
   };
 
   return (
@@ -344,7 +366,15 @@ const BusCardManagement = () => {
       {/* Cards Table */}
       <div className="cards-table-container">
         <div className="table-header">
-          <h3>Kart Listesi ({filteredCards.length})</h3>
+          <h3>Kart Listesi ({totalElements} toplam, {filteredCards.length} gösteriliyor)</h3>
+          <button 
+            className="btn btn-primary"
+            onClick={() => navigate('/buscard-register')}
+            title="Yeni Kart Ekle"
+          >
+            <Plus size={16} />
+            Yeni Kart Ekle
+          </button>
         </div>
         
         {loading ? (
@@ -372,16 +402,16 @@ const BusCardManagement = () => {
             {filteredCards.map((card) => (
               <div key={card.id} className="table-row">
                 <div className="col-uid">
-                  <code>{card.uid}</code>
+                  <code>{card.uid || card.cardNumber || '-'}</code>
                 </div>
                 <div className="col-name">
                   <div className="name-cell">
-                    <span className="name">{card.fullName}</span>
+                    <span className="name">{card.fullName || '-'}</span>
                     <span className="date">Kayıt: {formatDate(card.issueDate)}</span>
                   </div>
                 </div>
                 <div className="col-type">
-                  <span className="card-type-badge">{card.cardType}</span>
+                  <span className="card-type-badge">{card.cardType || card.type || '-'}</span>
                 </div>
                 <div className="col-status">
                   <span 
@@ -402,6 +432,14 @@ const BusCardManagement = () => {
                       title="Kart Detayları"
                     >
                       <Eye size={16} />
+                    </button>
+                    
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={() => navigate(`/buscard-edit/${card.uid || card.cardNumber}`)}
+                      title="Kartı Düzenle"
+                    >
+                      <Edit size={16} />
                     </button>
                     
                     {card.status === 'ACTIVE' ? (
@@ -427,10 +465,98 @@ const BusCardManagement = () => {
                         <Shield size={16} />
                       </button>
                     )}
+                    
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => {
+                        if (window.confirm(`${card.fullName} adlı kullanıcının kartını silmek istediğinize emin misiniz?`)) {
+                          handleDeleteCard(card);
+                        }
+                      }}
+                      title="Kartı Sil"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              <span>
+                Sayfa {page + 1} / {totalPages} (Toplam {totalElements} kayıt)
+              </span>
+              <select 
+                value={size} 
+                onChange={(e) => handleSizeChange(Number(e.target.value))}
+                className="page-size-select"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <div className="pagination-buttons">
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(0)}
+                disabled={page === 0}
+              >
+                İlk
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 0}
+              >
+                <ChevronLeft size={16} />
+                Önceki
+              </button>
+              <span className="page-numbers">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i;
+                  } else if (page < 3) {
+                    pageNum = i;
+                  } else if (page > totalPages - 4) {
+                    pageNum = totalPages - 5 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      className={`pagination-btn ${page === pageNum ? 'active' : ''}`}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum + 1}
+                    </button>
+                  );
+                })}
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages - 1}
+              >
+                Sonraki
+                <ChevronRight size={16} />
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => handlePageChange(totalPages - 1)}
+                disabled={page >= totalPages - 1}
+              >
+                Son
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -452,15 +578,15 @@ const BusCardManagement = () => {
               <div className="card-details-grid">
                 <div className="detail-item">
                   <label>UID</label>
-                  <span className="detail-value">{selectedCard.uid}</span>
+                  <span className="detail-value">{selectedCard.uid || selectedCard.cardNumber || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>Ad Soyad</label>
-                  <span className="detail-value">{selectedCard.fullName}</span>
+                  <span className="detail-value">{selectedCard.fullName || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>Kart Tipi</label>
-                  <span className="detail-value">{selectedCard.cardType}</span>
+                  <span className="detail-value">{selectedCard.cardType || selectedCard.type || '-'}</span>
                 </div>
                 <div className="detail-item">
                   <label>Durum</label>

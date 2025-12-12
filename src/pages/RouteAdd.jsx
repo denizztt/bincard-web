@@ -238,14 +238,36 @@ const RouteAdd = () => {
     setError('');
 
     try {
+      // Backend'in beklediği formata göre veriyi hazırla
       const submitData = {
-        ...formData,
+        routeName: formData.routeName.trim(),
+        routeCode: formData.routeCode.trim(),
+        description: formData.description ? formData.description.trim() : null,
+        routeType: formData.routeType,
+        color: formData.color || '#4f46e5',
         startStationId: parseInt(formData.startStationId),
         endStationId: parseInt(formData.endStationId),
-        estimatedDurationMinutes: parseInt(formData.estimatedDurationMinutes) || 60,
-        totalDistanceKm: parseFloat(formData.totalDistanceKm) || 10.0
+        estimatedDurationMinutes: formData.estimatedDurationMinutes ? parseInt(formData.estimatedDurationMinutes) : null,
+        totalDistanceKm: formData.totalDistanceKm ? parseFloat(formData.totalDistanceKm) : null,
+        weekdayHours: formData.weekdayHours || [],
+        weekendHours: formData.weekendHours || [],
+        outgoingStations: formData.outgoingStations.map(station => ({
+          fromStationId: station.fromStationId ? parseInt(station.fromStationId) : null,
+          toStationId: station.toStationId ? parseInt(station.toStationId) : null,
+          estimatedTravelTimeMinutes: station.estimatedTravelTimeMinutes ? parseInt(station.estimatedTravelTimeMinutes) : null,
+          distanceKm: station.distanceKm ? parseFloat(station.distanceKm) : null,
+          notes: station.notes ? station.notes.trim() : null
+        })),
+        returnStations: formData.returnStations && formData.returnStations.length > 0 ? formData.returnStations.map(station => ({
+          fromStationId: station.fromStationId ? parseInt(station.fromStationId) : null,
+          toStationId: station.toStationId ? parseInt(station.toStationId) : null,
+          estimatedTravelTimeMinutes: station.estimatedTravelTimeMinutes ? parseInt(station.estimatedTravelTimeMinutes) : null,
+          distanceKm: station.distanceKm ? parseFloat(station.distanceKm) : null,
+          notes: station.notes ? station.notes.trim() : null
+        })) : null
       };
 
+      console.log('Creating route with data:', submitData);
       const response = await routeApi.createBidirectionalRoute(submitData);
 
       if (response && response.success) {
@@ -258,7 +280,8 @@ const RouteAdd = () => {
       }
     } catch (err) {
       console.error('Error creating route:', err);
-      setError('Rota oluşturulurken hata oluştu');
+      const errorMessage = err.response?.data?.message || err.message || 'Rota oluşturulurken hata oluştu';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -290,9 +313,10 @@ const RouteAdd = () => {
                   type="text"
                   value={formData.routeName}
                   onChange={(e) => handleInputChange('routeName', e.target.value)}
-                  placeholder="Örn: 1 Numara Hat"
+                  placeholder="Örn: 1 Numara Hat veya Taksim-Kadıköy Hattı"
                   className="form-input"
                 />
+                <small className="form-hint">Rota adını girin. Örnek: 1 Numara Hat, Taksim-Kadıköy Hattı, Metrobüs M34</small>
               </div>
 
               <div className="form-group">
@@ -301,9 +325,10 @@ const RouteAdd = () => {
                   type="text"
                   value={formData.routeCode}
                   onChange={(e) => handleInputChange('routeCode', e.target.value)}
-                  placeholder="Örn: 01"
+                  placeholder="Örn: 01 veya M34"
                   className="form-input"
                 />
+                <small className="form-hint">Rota kodunu girin (genellikle 2-4 karakter). Örnek: 01, M34, T1, 15T</small>
               </div>
 
               <div className="form-group">
@@ -344,10 +369,11 @@ const RouteAdd = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Rota hakkında açıklama..."
+                  placeholder="Örn: Taksim ve Kadıköy arasında hizmet veren ana hat..."
                   className="form-textarea"
                   rows={3}
                 />
+                <small className="form-hint">Rota hakkında açıklama girin (opsiyonel). Örnek: Taksim ve Kadıköy arasında hizmet veren ana hat, Metro hattı açıklaması</small>
               </div>
             </div>
           </div>
@@ -455,7 +481,7 @@ const RouteAdd = () => {
                   type="number"
                   value={formData.estimatedDurationMinutes}
                   onChange={(e) => handleInputChange('estimatedDurationMinutes', e.target.value)}
-                  placeholder="60"
+                  placeholder="Örn: 60 veya 90"
                   className="form-input"
                 />
               </div>
@@ -467,7 +493,7 @@ const RouteAdd = () => {
                   step="0.1"
                   value={formData.totalDistanceKm}
                   onChange={(e) => handleInputChange('totalDistanceKm', e.target.value)}
-                  placeholder="10.0"
+                  placeholder="Örn: 10.0 veya 25.5"
                   className="form-input"
                 />
               </div>

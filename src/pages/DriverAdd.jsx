@@ -20,6 +20,7 @@ const DriverAdd = () => {
   
   // Form data
   const [formData, setFormData] = useState({
+    cardUid: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -150,19 +151,40 @@ const DriverAdd = () => {
     setSuccess('');
 
     try {
-      const response = await driverApi.createDriver(formData);
+      // Backend'in beklediği formata göre veriyi hazırla
+      const submitData = {
+        cardUid: formData.cardUid && formData.cardUid.trim() ? formData.cardUid.trim() : null,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        nationalId: formData.nationalId.trim(),
+        dateOfBirth: formData.dateOfBirth, // YYYY-MM-DD formatında string, Jackson otomatik LocalDate'e çevirir
+        licenseClass: formData.licenseClass,
+        licenseNumber: formData.licenseNumber.trim(),
+        licenseExpiryDate: formData.licenseExpiryDate, // YYYY-MM-DD formatında string
+        licenseIssueDate: formData.licenseIssueDate, // YYYY-MM-DD formatında string
+        address: formData.address.trim(),
+        shift: formData.shift // DAYTIME veya NIGHT
+      };
 
-      if (response && response.success) {
+      console.log('Creating driver with data:', submitData);
+      const response = await driverApi.createDriver(submitData);
+
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isSuccess = response?.success !== undefined ? response.success : (response?.isSuccess !== undefined ? response.isSuccess : false);
+      
+      if (response && isSuccess) {
         setSuccess('Şoför başarıyla eklendi!');
         setTimeout(() => {
           navigate('/driver');
         }, 2000);
       } else {
-        setError(response.message || 'Şoför eklenirken hata oluştu');
+        setError(response?.message || 'Şoför eklenirken hata oluştu');
       }
     } catch (err) {
       console.error('Error creating driver:', err);
-      setError('Şoför eklenirken hata oluştu');
+      const errorMessage = err.response?.data?.message || err.message || 'Şoför eklenirken hata oluştu';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -218,9 +240,10 @@ const DriverAdd = () => {
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    placeholder="Şoförün adı"
+                    placeholder="Örn: Ahmet veya Mehmet"
                     className={`form-input ${errors.firstName ? 'error' : ''}`}
                   />
+                  <small className="form-hint">Şoförün adını girin. Örnek: Ahmet, Mehmet, Ayşe</small>
                   {errors.firstName && (
                     <span className="error-text">{errors.firstName}</span>
                   )}
@@ -232,9 +255,10 @@ const DriverAdd = () => {
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    placeholder="Şoförün soyadı"
+                    placeholder="Örn: Yılmaz veya Demir"
                     className={`form-input ${errors.lastName ? 'error' : ''}`}
                   />
+                  <small className="form-hint">Şoförün soyadını girin. Örnek: Yılmaz, Demir, Kaya</small>
                   {errors.lastName && (
                     <span className="error-text">{errors.lastName}</span>
                   )}
@@ -248,10 +272,11 @@ const DriverAdd = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="ornek@email.com"
+                      placeholder="Örn: driver@example.com veya mehmet.yilmaz@citycard.gov.tr"
                       className={`form-input ${errors.email ? 'error' : ''}`}
                     />
                   </div>
+                  <small className="form-hint">Geçerli bir e-posta adresi girin. Örnek: driver@example.com, mehmet.yilmaz@citycard.gov.tr</small>
                   {errors.email && (
                     <span className="error-text">{errors.email}</span>
                   )}
@@ -265,13 +290,29 @@ const DriverAdd = () => {
                       type="text"
                       value={formData.nationalId}
                       onChange={(e) => handleInputChange('nationalId', e.target.value.replace(/\D/g, '').substring(0, 11))}
-                      placeholder="12345678901"
+                      placeholder="Örn: 12345678901"
                       className={`form-input ${errors.nationalId ? 'error' : ''}`}
                     />
                   </div>
+                  <small className="form-hint">11 haneli TC Kimlik numarasını girin (sadece rakam). Örnek: 12345678901, 98765432109</small>
                   {errors.nationalId && (
                     <span className="error-text">{errors.nationalId}</span>
                   )}
+                </div>
+
+                <div className="form-group">
+                  <label>Kart UID</label>
+                  <div className="input-with-icon">
+                    <CreditCard size={16} />
+                    <input
+                      type="text"
+                      value={formData.cardUid}
+                      onChange={(e) => handleInputChange('cardUid', e.target.value)}
+                      placeholder="Örn: CARD-1234567890 (opsiyonel)"
+                      className="form-input"
+                    />
+                  </div>
+                  <small className="form-hint">Kart UID'si genellikle 8-16 karakter arası alfanumerik bir değerdir. Örnek: CARD-1111, 12345678ABCD (opsiyonel)</small>
                 </div>
 
                 <div className="form-group">
@@ -344,9 +385,10 @@ const DriverAdd = () => {
                     type="text"
                     value={formData.licenseNumber}
                     onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                    placeholder="Ehliyet numarası"
+                    placeholder="Örn: 123456789 veya ABC123456"
                     className={`form-input ${errors.licenseNumber ? 'error' : ''}`}
                   />
+                  <small className="form-hint">Ehliyet numarasını girin. Örnek: 123456789, ABC123456, 987654321</small>
                   {errors.licenseNumber && (
                     <span className="error-text">{errors.licenseNumber}</span>
                   )}
@@ -400,11 +442,12 @@ const DriverAdd = () => {
                   <textarea
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="Tam adres bilgisi..."
+                    placeholder="Örn: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul"
                     className={`form-textarea ${errors.address ? 'error' : ''}`}
                     rows={3}
                   />
                 </div>
+                <small className="form-hint">Tam adres bilgisini girin. Örnek: Atatürk Mahallesi, İstiklal Caddesi No:123, Beyoğlu/İstanbul</small>
                 {errors.address && (
                   <span className="error-text">{errors.address}</span>
                 )}

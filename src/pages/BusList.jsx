@@ -45,6 +45,22 @@ const BusList = () => {
         });
       } else if (currentFilter === 'ACTIVE') {
         response = await busApi.getActiveBuses(page, pageSize);
+      } else if (currentFilter === 'INACTIVE') {
+        // Pasif otobüsler için tüm otobüsleri getirip filtrele
+        const allResponse = await busApi.getAllBuses(page, pageSize);
+        if (allResponse.success && allResponse.data) {
+          const filteredContent = (allResponse.data.content || []).filter(bus => !bus.isActive);
+          response = {
+            ...allResponse,
+            data: {
+              ...allResponse.data,
+              content: filteredContent,
+              totalElements: filteredContent.length
+            }
+          };
+        } else {
+          response = allResponse;
+        }
       } else {
         response = await busApi.getAllBuses(page, pageSize);
       }
@@ -207,7 +223,6 @@ const BusList = () => {
           <span className="status-icon">{getBusStatusIcon(bus.status)}</span>
           <span 
             className="status-badge"
-            style={{ backgroundColor: getBusStatusColor(bus.status) }}
           >
             {getBusStatusLabel(bus.status)}
           </span>

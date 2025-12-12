@@ -12,8 +12,6 @@ import {
   Clock,
   Users,
   Route,
-  Heart,
-  HeartOff,
   Trash2
 } from 'lucide-react';
 import { stationApi } from '../services/apiService';
@@ -31,7 +29,6 @@ const StationDetail = () => {
   const [routesLoading, setRoutesLoading] = useState(false);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState({});
-  const [isFavorite, setIsFavorite] = useState(false);
 
   // Load station data
   useEffect(() => {
@@ -133,32 +130,6 @@ const StationDetail = () => {
     }
   };
 
-  // Toggle favorite
-  const toggleFavorite = async () => {
-    if (!station) return;
-
-    try {
-      setActionLoading(prev => ({...prev, favorite: true}));
-      
-      let response;
-      if (isFavorite) {
-        response = await stationApi.removeFavoriteStation(station.id);
-      } else {
-        response = await stationApi.addFavoriteStation(station.id);
-      }
-      
-      if (response && (response.isSuccess || response.success)) {
-        setIsFavorite(!isFavorite);
-      } else {
-        throw new Error(response?.message || 'Favori işlemi başarısız');
-      }
-    } catch (error) {
-      console.error('Favori işlemi hatası:', error);
-      setError('Favori işlemi sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
-    } finally {
-      setActionLoading(prev => ({...prev, favorite: false}));
-    }
-  };
 
   if (loading) {
     return (
@@ -224,21 +195,6 @@ const StationDetail = () => {
         </div>
         
         <div className="header-actions">
-          <button
-            className={`btn-favorite ${isFavorite ? 'active' : ''}`}
-            onClick={toggleFavorite}
-            disabled={actionLoading.favorite}
-          >
-            {actionLoading.favorite ? (
-              <RefreshCw size={16} className="spinning" />
-            ) : isFavorite ? (
-              <Heart size={16} />
-            ) : (
-              <HeartOff size={16} />
-            )}
-            {isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'}
-          </button>
-          
           <button 
             className="btn-edit"
             onClick={() => navigate(`/station-form/${station.id}`)}

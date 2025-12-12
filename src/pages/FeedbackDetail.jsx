@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { feedbackApi } from '../services/apiService';
-import { getFeedbackTypeDisplayName, getFeedbackSourceDisplayName, getFeedbackTypeColor } from '../types';
+// Removed unused imports - using raw enum values instead
 import '../styles/FeedbackDetail.css';
 
 const FeedbackDetail = () => {
@@ -118,14 +118,11 @@ const FeedbackDetail = () => {
         <div className="feedback-card">
           <div className="card-header">
             <div className="feedback-meta">
-              <span 
-                className="type-badge"
-                style={{ backgroundColor: getFeedbackTypeColor(feedback.type) }}
-              >
-                {getFeedbackTypeDisplayName(feedback.type)}
+              <span className="type-badge">
+                {feedback.type}
               </span>
               <span className="source-badge">
-                {getFeedbackSourceDisplayName(feedback.source)}
+                {feedback.source}
               </span>
               <span className="feedback-id">
                 ID: {feedback.id}
@@ -176,11 +173,11 @@ const FeedbackDetail = () => {
               <div className="technical-info-grid">
                 <div className="info-item">
                   <label>Kaynak:</label>
-                  <span>{getFeedbackSourceDisplayName(feedback.source)}</span>
+                  <span>{feedback.source}</span>
                 </div>
                 <div className="info-item">
                   <label>Tür:</label>
-                  <span>{getFeedbackTypeDisplayName(feedback.type)}</span>
+                  <span>{feedback.type}</span>
                 </div>
                 <div className="info-item">
                   <label>Gönderim Tarihi:</label>
@@ -206,8 +203,8 @@ const FeedbackDetail = () => {
 Geri Bildirim Detayı
 ===================
 ID: ${feedback.id}
-Tür: ${getFeedbackTypeDisplayName(feedback.type)}
-Kaynak: ${getFeedbackSourceDisplayName(feedback.source)}
+Tür: ${feedback.type}
+Kaynak: ${feedback.source}
 Tarih: ${formatDate(feedback.submittedAt)}
 
 Konu: ${feedback.subject}

@@ -12,7 +12,7 @@ import {
   Monitor,
   History
 } from 'lucide-react';
-import { adminApi } from '../services/apiService';
+import { adminApi, superAdminApi } from '../services/apiService';
 import { ActionType, getActionTypeDisplayName } from '../types';
 import '../styles/AdminActivity.css';
 
@@ -79,14 +79,17 @@ const AdminActivity = () => {
         ? selectedAction 
         : undefined;
 
-      const response = await adminApi.getAuditLogs(fromDate, toDate, actionParam);
+      // SuperAdmin için superadmin endpoint'ini kullan
+      const response = await superAdminApi.getAuditLogs(fromDate, toDate, actionParam);
       
+      // Backend'de DataResponseMessage<List<AuditLogDTO>> dönüyor (Page değil, direkt List)
       if (response && response.success && response.data) {
-        const pageData = response.data;
-        if (Array.isArray(pageData.content)) {
-          setAuditLogs(pageData.content);
-        } else if (Array.isArray(pageData)) {
-          setAuditLogs(pageData);
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setAuditLogs(data);
+        } else if (data && Array.isArray(data.content)) {
+          // Eğer Page formatında gelirse
+          setAuditLogs(data.content);
         } else {
           setAuditLogs([]);
         }

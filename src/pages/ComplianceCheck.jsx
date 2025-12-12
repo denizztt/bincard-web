@@ -44,9 +44,12 @@ const ComplianceCheck = () => {
       const response = await contractApi.checkUserMandatoryStatus(searchUsername.trim());
       console.log('Compliance check result:', response);
       
+      // Backend'de isSuccess field'ı var, Jackson bunu success veya isSuccess olarak serialize edebilir
+      const isCompliant = response.success !== undefined ? response.success : response.isSuccess;
+      
       setComplianceData({
         username: searchUsername.trim(),
-        isCompliant: response.success,
+        isCompliant: isCompliant,
         message: response.message,
         checkedAt: new Date()
       });
@@ -55,6 +58,15 @@ const ComplianceCheck = () => {
       console.error('Error checking compliance:', err);
       if (err.response?.status === 404) {
         setError('Kullanıcı bulunamadı');
+      } else if (err.response?.status === 500) {
+        // Backend'de kullanıcı yoksa UserNotFoundException fırlatılıyor ve 500 dönüyor
+        // Bu durumda kullanıcı bulunamadı mesajı göster
+        const errorMessage = err.response?.data?.message || '';
+        if (errorMessage.toLowerCase().includes('user') || errorMessage.toLowerCase().includes('kullanıcı')) {
+          setError('Kullanıcı bulunamadı. Lütfen geçerli bir kullanıcı adı girin.');
+        } else {
+          setError('Kullanıcı bulunamadı veya sunucu hatası oluştu. Lütfen geçerli bir kullanıcı adı girin.');
+        }
       } else {
         setError('Uyumluluk kontrolü yapılırken hata oluştu');
       }
@@ -304,7 +316,6 @@ const ComplianceCheck = () => {
                     <th>Kullanıcı</th>
                     <th>Durum</th>
                     <th>Son Kontrol</th>
-                    <th>İşlemler</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,18 +336,6 @@ const ComplianceCheck = () => {
                           </div>
                         </td>
                         <td>{formatDate(result.lastCheck)}</td>
-                        <td>
-                          <button 
-                            className="detail-button"
-                            onClick={() => {
-                              setSearchUsername(result.username);
-                              setBulkCheckMode(false);
-                              handleSingleUserCheck();
-                            }}
-                          >
-                            Detay
-                          </button>
-                        </td>
                       </tr>
                     );
                   })}

@@ -12,18 +12,18 @@ export const BUS_STATUSES = {
   MOLA: 'Mola'
 };
 
-// Status colors for UI
+// Status colors for UI - Sade gri tonları
 export const BUS_STATUS_COLORS = {
-  CALISIYOR: '#10b981',
-  ARIZALI: '#ef4444',
-  BAKIMDA: '#f59e0b',
+  CALISIYOR: '#6b7280',
+  ARIZALI: '#6b7280',
+  BAKIMDA: '#6b7280',
   SERVIS_DISI: '#6b7280',
-  DURAKTA_BEKLIYOR: '#3b82f6',
-  HAREKET_HALINDE: '#10b981',
+  DURAKTA_BEKLIYOR: '#6b7280',
+  HAREKET_HALINDE: '#6b7280',
   GARAJDA: '#6b7280',
-  TEMIZLIK: '#8b5cf6',
-  YAKIT_ALIMI: '#f59e0b',
-  MOLA: '#06b6d4'
+  TEMIZLIK: '#6b7280',
+  YAKIT_ALIMI: '#6b7280',
+  MOLA: '#6b7280'
 };
 
 // Status icons
@@ -78,13 +78,13 @@ export const getOccupancyLevel = (rate) => {
   return 'full';
 };
 
-// Occupancy colors
+// Occupancy colors - Sade gri tonları
 export const OCCUPANCY_COLORS = {
-  empty: '#10b981',
-  low: '#10b981',
-  medium: '#f59e0b',
-  high: '#ef4444',
-  full: '#dc2626'
+  empty: '#9ca3af',
+  low: '#9ca3af',
+  medium: '#6b7280',
+  high: '#4b5563',
+  full: '#374151'
 };
 
 export const getOccupancyColor = (rate) => {

@@ -3,7 +3,7 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: white;
   min-height: 100vh;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .feedback-table thead {
-  background: #f8f9fa;
+  background: white;
 }
 
 .feedback-table th,
@@ -88,7 +88,7 @@
 }
 
 .feedback-table tbody tr:hover {
-  background: #f8f9fa;
+  background: white;
 }
 
 .feedback-type-badge {
@@ -180,7 +180,7 @@
 }
 
 .feedback-pagination button:hover {
-  background: #f8f9fa;
+  background: white;
 }
 
 .feedback-pagination button:disabled {
@@ -278,6 +278,14 @@
   align-items: center;
   gap: var(--spacing-3);
   margin: 0;
+  line-height: 1.5;
+}
+
+.filters-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin: 0;
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--text-primary);
@@ -294,13 +302,16 @@
 }
 
 .filters-count {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-  color: var(--white);
-  padding: var(--spacing-2) var(--spacing-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  box-shadow: var(--shadow-md);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .filters-grid {
@@ -412,4 +423,184 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Feedback Table Styles */
+.feedback-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.feedback-table thead {
+  background: #f8f9fa;
+}
+
+.feedback-table th {
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.feedback-table td {
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f4;
+  vertical-align: middle;
+}
+
+.feedback-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Type Badge - Düz Yazı (Arka Plan Yok) */
+.type-badge {
+  display: inline-block;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent !important;
+  color: #495057 !important;
+  border: none !important;
+}
+
+/* Source Badge - Düz Yazı (Arka Plan Yok) */
+.source-badge {
+  display: inline-block;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: #495057;
+  border: none;
+}
+
+/* Date Cell - Dikey hizalama düzeltmesi */
+.date-cell {
+  vertical-align: middle !important;
+  padding-top: 18px !important;
+  padding-bottom: 18px !important;
+}
+
+/* View Button - Büyüteç İkonu */
+.btn-view {
+  background: transparent !important;
+  border: none !important;
+  padding: 8px !important;
+  cursor: pointer;
+  color: #495057;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-view:hover {
+  color: #007bff;
+  transform: scale(1.1);
+}
+
+.btn-view:active {
+  transform: scale(0.95);
+}
+
+/* Subject Cell */
+.subject-cell {
+  max-width: 400px;
+}
+
+.subject-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.message-preview {
+  margin: 0;
+  font-size: 12px;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* User Cell */
+.user-cell {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* Actions Cell */
+.actions-cell {
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* No Data */
+.no-data {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+  padding: 20px;
+}
+
+.btn-pagination {
+  padding: 10px 20px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-pagination:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.btn-pagination:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-weight: 500;
+  color: #6c757d;
 } 

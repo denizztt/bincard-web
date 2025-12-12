@@ -70,11 +70,12 @@
 
 .btn.btn-primary {
   background: #3498db;
-  color: white;
+  color: white !important;
 }
 
 .btn.btn-primary:hover:not(:disabled) {
   background: #2980b9;
+  color: white !important;
   transform: translateY(-1px);
 }
 

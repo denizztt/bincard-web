@@ -44,11 +44,12 @@
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: white !important;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  color: white !important;
 }
 
 .btn-primary:disabled {
@@ -63,6 +64,14 @@
 
 .btn-secondary:hover {
   background: var(--border-color);
+}
+
+.btn-secondary svg,
+.btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .error-banner {

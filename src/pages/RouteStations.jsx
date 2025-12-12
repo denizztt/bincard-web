@@ -35,7 +35,15 @@ const RouteStations = () => {
     try {
       const response = await routeApi.getRouteStations(id);
       if (response.success) {
-        setStations(response.data);
+        // StationOrderDTO[]'yi StationDTO[]'ye dönüştür
+        const stationsData = response.data.map(item => ({
+          ...item.station,
+          order: item.order,
+          estimatedTimeFromPrevious: item.estimatedTimeFromPrevious,
+          distanceFromPrevious: item.distanceFromPrevious,
+          isActive: item.isActive
+        }));
+        setStations(stationsData);
       } else {
         setError('Rota durakları yüklenemedi');
       }
@@ -180,7 +188,7 @@ const RouteStations = () => {
           )}
         </div>
         <div className="header-actions">
-          <Link to={`/routes/${id}`} className="btn btn-secondary">
+          <Link to={`/route/${id}`} className="btn btn-secondary">
             👁️ Rota Detayı
           </Link>
         </div>

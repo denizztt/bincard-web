@@ -89,7 +89,7 @@ const RouteDetail = () => {
       const response = await routeApi.deleteRoute(route.id);
       if (response.success) {
         alert('Rota başarıyla silindi');
-        navigate('/routes');
+        navigate('/route');
       } else {
         alert('Rota silinirken hata oluştu');
       }
@@ -139,7 +139,7 @@ const RouteDetail = () => {
         <div className="error-message">
           ⚠️ {error || 'Rota bulunamadı'}
         </div>
-        <button onClick={() => navigate('/routes')} className="btn btn-primary">
+        <button onClick={() => navigate('/route')} className="btn btn-primary">
           ← Rota Listesine Dön
         </button>
       </div>
@@ -152,7 +152,7 @@ const RouteDetail = () => {
       <div className="route-detail-header">
         <div className="header-left">
           <button 
-            onClick={() => navigate('/routes')}
+            onClick={() => navigate('/route')}
             className="btn btn-back"
           >
             ← Geri
@@ -173,7 +173,7 @@ const RouteDetail = () => {
             ⭐ Favorilere Ekle
           </button>
           <Link 
-            to={`/routes/${route.id}/stations/manage`}
+            to={`/route/${route.id}/stations`}
             className="btn btn-edit"
           >
             🛠️ Durakları Yönet
@@ -329,7 +329,7 @@ const RouteDetail = () => {
           <div className="stations-header">
             <h4>🚏 Durak Listesi ({getDirectionTypeLabel(activeDirection)})</h4>
             <Link 
-              to={`/routes/${route.id}/stations/add?direction=${activeDirection}`}
+              to={`/route/${route.id}/stations/add?direction=${activeDirection}`}
               className="btn btn-add-station"
             >
               ➕ Durak Ekle
@@ -368,12 +368,12 @@ const RouteDetail = () => {
                       {stationOrder.isActive ? 'Aktif' : 'Pasif'}
                     </span>
                     {stationOrder.order > 0 && (
-                      <Link 
-                        to={`/routes/${route.id}/stations/remove?direction=${activeDirection}&stationId=${stationOrder.station.id}`}
-                        className="btn btn-remove-station"
-                      >
-                        🗑️ Çıkar
-                      </Link>
+              <Link 
+                to={`/route/${route.id}/stations/remove?direction=${activeDirection}&stationId=${stationOrder.station.id}`}
+                className="btn btn-remove-station"
+              >
+                🗑️ Çıkar
+              </Link>
                     )}
                   </div>
                 </div>
@@ -384,7 +384,7 @@ const RouteDetail = () => {
               <div className="no-stations-icon">🚏</div>
               <p>Bu yönde henüz durak bulunmuyor</p>
               <Link 
-                to={`/routes/${route.id}/stations/add?direction=${activeDirection}`}
+                to={`/route/${route.id}/stations/add?direction=${activeDirection}`}
                 className="btn btn-primary"
               >
                 ➕ İlk Durağı Ekle

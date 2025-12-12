@@ -174,7 +174,6 @@ const RouteList = () => {
                       <th>Rota</th>
                       <th>Tip</th>
                       <th>Güzergah</th>
-                      <th>Yönler</th>
                       <th>Süre</th>
                       <th>Mesafe</th>
                       <th>İşlemler</th>
@@ -186,9 +185,6 @@ const RouteList = () => {
                         <td className="route-id">#{route.id}</td>
                         <td className="route-info">
                           <div className="route-name-container">
-                            <span className="route-icon">
-                              {getRouteTypeIcon(route.routeType)}
-                            </span>
                             <div className="route-details">
                               <div className="route-name">{route.name}</div>
                               <div className="route-code">{route.code}</div>
@@ -206,14 +202,12 @@ const RouteList = () => {
                             <span className="path-separator">→</span>
                             <span className="end-station">{route.endStationName}</span>
                           </div>
-                        </td>
-                        <td className="route-directions">
-                          <div className="directions-info">
+                          <div className="directions-info" style={{ marginTop: '0.5rem' }}>
                             {route.hasOutgoingDirection && (
-                              <span className="direction-badge outgoing">Gidiş</span>
+                              <span className="direction-badge outgoing">GIDIŞ</span>
                             )}
                             {route.hasReturnDirection && (
-                              <span className="direction-badge return">Dönüş</span>
+                              <span className="direction-badge return">DÖNÜŞ</span>
                             )}
                           </div>
                         </td>
@@ -232,21 +226,18 @@ const RouteList = () => {
                             <Link 
                               to={`/route/${route.id}`}
                               className="btn btn-view"
-                              title="Detayları Görüntüle"
                             >
                               👁️ Detay
                             </Link>
                             <Link 
                               to={`/route/${route.id}/stations`}
                               className="btn btn-edit"
-                              title="Durakları Yönet"
                             >
                               🚏 Duraklar
                             </Link>
                             <button 
                               onClick={() => handleDeleteRoute(route.id)}
                               className="btn btn-delete"
-                              title="Rotayı Sil"
                             >
                               🗑️ Sil
                             </button>

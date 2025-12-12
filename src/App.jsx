@@ -22,7 +22,6 @@ import StationAdd from './pages/StationAdd';
 import StationEdit from './pages/StationEdit';
 import StationDetail from './pages/StationDetail';
 import StationMap from './pages/StationMap';
-import Analytics from './pages/Analytics';
 import AdminApprovals from './pages/AdminApprovals';
 import IdentityRequests from './pages/IdentityRequests';
 import AuditLogs from './pages/AuditLogs';
@@ -39,6 +38,9 @@ import WalletStatusUpdate from './pages/WalletStatusUpdate';
 import AllWallets from './pages/AllWallets';
 import WalletTransfers from './pages/WalletTransfers';
 import BusList from './pages/BusList';
+import BusAdd from './pages/BusAdd';
+import BusDetail from './pages/BusDetail';
+import BusEdit from './pages/BusEdit';
 import BusMap from './pages/BusMap';
 import DriverList from './pages/DriverList';
 import RouteList from './pages/RouteList';
@@ -54,6 +56,10 @@ import SystemHealth from './pages/SystemHealth';
 import BusCardManagement from './pages/BusCardManagement';
 import BusCardPricing from './pages/BusCardPricing';
 import BusCardPricingList from './pages/BusCardPricingList';
+import BusCardSubscription from './pages/BusCardSubscription';
+import BusCardEdit from './pages/BusCardEdit';
+import BusCardRegister from './pages/BusCardRegister';
+import AutoTopUpLogs from './pages/AutoTopUpLogs';
 import './App.css';
 
 function App() {
@@ -263,7 +269,7 @@ function App() {
               path="/bus/create"
               element={
                 <ProtectedRoute>
-                  <BusList />
+                  <BusAdd />
                 </ProtectedRoute>
               }
             />
@@ -271,7 +277,7 @@ function App() {
               path="/bus/:id"
               element={
                 <ProtectedRoute>
-                  <BusList />
+                  <BusDetail />
                 </ProtectedRoute>
               }
             />
@@ -279,7 +285,7 @@ function App() {
               path="/bus/:id/edit"
               element={
                 <ProtectedRoute>
-                  <BusList />
+                  <BusEdit />
                 </ProtectedRoute>
               }
             />
@@ -407,6 +413,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/routes/:id/stations/manage"
+              element={
+                <ProtectedRoute>
+                  <RouteStations />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Wallet Routes */}
             <Route
@@ -528,15 +542,7 @@ function App() {
               }
             />
 
-            {/* Analytics & Reports Routes */}
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              }
-            />
+            {/* Statistics Route */}
             <Route
               path="/statistics"
               element={
@@ -600,6 +606,30 @@ function App() {
               }
             />
             <Route
+              path="/buscard-register"
+              element={
+                <ProtectedRoute>
+                  <BusCardRegister />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-edit/:uid"
+              element={
+                <ProtectedRoute>
+                  <BusCardEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buscard-subscription"
+              element={
+                <ProtectedRoute>
+                  <BusCardSubscription />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/buscard-pricing"
               element={
                 <ProtectedRoute>
@@ -612,6 +642,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <BusCardPricingList />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Log Kayıtları Routes */}
+            <Route
+              path="/auto-top-up-logs"
+              element={
+                <ProtectedRoute>
+                  <AutoTopUpLogs />
                 </ProtectedRoute>
               }
             />

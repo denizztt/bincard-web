@@ -213,14 +213,14 @@ const PaymentPointList = () => {
           <div style={{ display: 'flex', gap: '10px' }}>
             <button 
               onClick={loadPaymentPoints}
-              style={{ background: '#007bff', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'white', color: '#475569', border: '1px solid #e2e8f0', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <RefreshCw size={16} />
               Yenile
             </button>
             <button 
               onClick={() => navigate('/payment-point/add')}
-              style={{ background: '#28a745', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'white', color: '#475569', border: '1px solid #e2e8f0', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <Plus size={16} />
               Yeni Nokta Ekle
@@ -456,9 +456,9 @@ const PaymentPointList = () => {
                         <button 
                           onClick={() => navigate(`/payment-point/detail/${point.id}`)}
                           style={{ 
-                            background: '#007bff', 
-                            color: 'white', 
-                            border: 'none', 
+                            background: 'white', 
+                            color: '#475569', 
+                            border: '1px solid #e2e8f0', 
                             padding: '6px 10px', 
                             borderRadius: '6px', 
                             cursor: 'pointer', 
@@ -475,9 +475,9 @@ const PaymentPointList = () => {
                         <button 
                           onClick={() => navigate(`/payment-point/edit/${point.id}`)}
                           style={{ 
-                            background: '#ffc107', 
-                            color: '#212529', 
-                            border: 'none', 
+                            background: 'white', 
+                            color: '#475569', 
+                            border: '1px solid #e2e8f0', 
                             padding: '6px 10px', 
                             borderRadius: '6px', 
                             cursor: 'pointer', 
@@ -495,9 +495,9 @@ const PaymentPointList = () => {
                           onClick={() => handleDelete(point.id, point.name)}
                           disabled={actionLoading[point.id]}
                           style={{ 
-                            background: actionLoading[point.id] ? '#95a5a6' : '#dc3545', 
-                            color: 'white', 
-                            border: 'none', 
+                            background: 'white', 
+                            color: actionLoading[point.id] ? '#94a3b8' : '#475569', 
+                            border: '1px solid #e2e8f0', 
                             padding: '6px 10px', 
                             borderRadius: '6px', 
                             cursor: actionLoading[point.id] ? 'not-allowed' : 'pointer', 

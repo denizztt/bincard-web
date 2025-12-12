@@ -969,11 +969,12 @@
 
 .btn-primary {
   background: #10b981;
-  color: white;
+  color: white !important;
 }
 
 .btn-primary:hover {
   background: #059669;
+  color: white !important;
 }
 
 .btn-primary:disabled {

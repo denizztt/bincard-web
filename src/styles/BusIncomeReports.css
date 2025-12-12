@@ -189,16 +189,18 @@
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: white !important;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
+  color: white !important;
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  color: white !important;
 }
 
 .btn-secondary {

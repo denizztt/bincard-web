@@ -22,10 +22,18 @@ const apiClient: AxiosInstance = axios.create({
 // Token refresh function
 const refreshAccessToken = async (refreshToken: string): Promise<TokenResponse> => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/refresh`, {}, {
+    const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+      refreshToken: refreshToken,
+      deviceInfo: 'Web Browser',
+      platform: 'Web',
+      appVersion: '1.0.0',
+      deviceUuid: 'web-' + Date.now(),
+      fcmToken: '',
+      latitude: null,
+      longitude: null
+    }, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${refreshToken}`
+        'Content-Type': 'application/json'
       }
     });
     
@@ -232,7 +240,7 @@ export const authApi = {
   },
 
   logout: async (): Promise<ApiResponse<any>> => {
-    const response = await apiClient.post('/auth/logout');
+    const response = await apiClient.get('/auth/logout');
     return response.data;
   }
 };
@@ -566,6 +574,11 @@ export const paymentPointApi = {
   deletePaymentPoint: async (id: number) => {
     const response = await apiClient.delete(`/payment-point/${id}`);
     return response.data;
+  },
+
+  togglePaymentPointStatus: async (id: number, active: boolean) => {
+    const response = await apiClient.patch(`/payment-point/${id}/status?active=${active}`);
+    return response.data;
   }
 };
 
@@ -609,8 +622,10 @@ export const busApi = {
   },
 
   // === ŞOFÖR YÖNETİMİ ===
-  assignDriver: async (busId: number, driverId: number) => {
-    const response = await apiClient.put(`/bus/${busId}/assign-driver`, { driverId });
+  // Not: Bu endpoint DRIVER rolü içindir, süperadmin için değil
+  // Backend authenticated user'ı otomatik olarak şoför olarak atar
+  assignDriver: async (busId: number) => {
+    const response = await apiClient.put(`/bus/${busId}/assign-driver`);
     return response.data;
   },
 
@@ -826,6 +841,44 @@ export const driverApi = {
   getDriversHiredBetween: async (startDate: string, endDate: string, page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/drivers/hired-between?startDate=${startDate}&endDate=${endDate}&page=${page}&size=${size}`);
     return response.data;
+  },
+
+  // === EARNINGS ===
+  getDriverEarnings: async (
+    page: number = 0,
+    size: number = 10,
+    startDate?: string,
+    endDate?: string
+  ) => {
+    let url = `/drivers/earnings?page=${page}&size=${size}`;
+    if (startDate) {
+      url += `&startDate=${startDate}`;
+    }
+    if (endDate) {
+      url += `&endDate=${endDate}`;
+    }
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getDriverEarning: async (
+    id: number,
+    startDate?: string,
+    endDate?: string
+  ) => {
+    let url = `/drivers/${id}/earnings`;
+    const params = new URLSearchParams();
+    if (startDate) {
+      params.append('startDate', startDate);
+    }
+    if (endDate) {
+      params.append('endDate', endDate);
+    }
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    const response = await apiClient.get(url);
+    return response.data;
   }
 };
 
@@ -914,24 +967,72 @@ export const walletApi = {
 };
 
 // Admin API endpoints (for admin users themselves)
+// Backend: /v1/api/admin/* (baseURL zaten /v1/api içeriyor)
 export const adminApi = {
-  // Profile Management
-  getProfile: async () => {
-    const response = await apiClient.get('/admin/profile');
+  /**
+   * POST /v1/api/admin/sign-up
+   * Admin kayıt işlemi
+   * Request: CreateAdminRequest { name, surname, telephone, password, email, roles? }
+   * Response: ResponseMessage
+   */
+  signUp: async (adminData: {
+    name: string;
+    surname: string;
+    telephone: string;
+    password: string;
+    email: string;
+    roles?: any[];
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post('/admin/sign-up', adminData);
     return response.data;
   },
 
-  updateProfile: async (profileData: { name?: string; surname?: string; email?: string }) => {
-    const response = await apiClient.put('/admin/update-profile', profileData);
-    return response.data;
-  },
-
-  changePassword: async (passwordData: { currentPassword: string; newPassword: string }) => {
+  /**
+   * PUT /v1/api/admin/change-password
+   * Şifre değiştirme
+   * Request: ChangePasswordRequest { currentPassword, newPassword }
+   * Response: ResponseMessage
+   */
+  changePassword: async (passwordData: { 
+    currentPassword: string; 
+    newPassword: string 
+  }): Promise<ApiResponse<any>> => {
     const response = await apiClient.put('/admin/change-password', passwordData);
     return response.data;
   },
 
-  // Device & Location Management
+  /**
+   * GET /v1/api/admin/profile
+   * Admin profil bilgilerini getir
+   * Response: DataResponseMessage<AdminDTO>
+   */
+  getProfile: async (): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get('/admin/profile');
+    return response.data;
+  },
+
+  /**
+   * PUT /v1/api/admin/update-profile
+   * Profil bilgilerini güncelle
+   * Request: UpdateProfileRequest { name, surname, email }
+   * Response: ResponseMessage
+   */
+  updateProfile: async (profileData: { 
+    name?: string; 
+    surname?: string; 
+    email?: string 
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.put('/admin/update-profile', profileData);
+    return response.data;
+  },
+
+  /**
+   * PUT /v1/api/admin/update-device-info
+   * Cihaz bilgilerini güncelle
+   * Request: UpdateDeviceInfoRequest { fcmToken?, ipAddress?, lastKnownLatitude?, lastKnownLongitude?, 
+   *                                    lastLoginDevice?, lastLoginPlatform?, lastLoginAppVersion?, profilePicture? }
+   * Response: ResponseMessage
+   */
   updateDeviceInfo: async (deviceData: {
     fcmToken?: string;
     ipAddress?: string;
@@ -941,33 +1042,72 @@ export const adminApi = {
     lastLoginPlatform?: string;
     lastLoginAppVersion?: string;
     profilePicture?: string;
-  }) => {
+  }): Promise<ApiResponse<any>> => {
     const response = await apiClient.put('/admin/update-device-info', deviceData);
     return response.data;
   },
 
-  getLocation: async () => {
+  /**
+   * GET /v1/api/admin/location
+   * Admin konum bilgisini getir
+   * Response: LocationDTO (direkt, DataResponseMessage değil!)
+   * LocationDTO: { latitude, longitude, recordedAt, userId }
+   */
+  getLocation: async (): Promise<any> => {
     const response = await apiClient.get('/admin/location');
+    // Backend direkt LocationDTO döner, DataResponseMessage wrapper'ı yok
     return response.data;
   },
 
+  /**
+   * PUT /v1/api/admin/location
+   * Konum bilgisini güncelle
+   * Request: UpdateLocationRequest { latitude, longitude, speed?, accuracy? }
+   * Response: ResponseMessage
+   */
   updateLocation: async (locationData: {
     latitude: number;
     longitude: number;
     speed?: number;
     accuracy?: number;
-  }) => {
+  }): Promise<ApiResponse<any>> => {
     const response = await apiClient.put('/admin/location', locationData);
     return response.data;
   },
 
-  // Activity & History
-  getLoginHistory: async (page: number = 0, size: number = 10, sort: string = 'id,desc') => {
-    const response = await apiClient.get(`/admin/login-history?page=${page}&size=${size}&sort=${sort}`);
+  /**
+   * GET /v1/api/admin/login-history
+   * Giriş geçmişini getir (sayfalanmış)
+   * Query Params: page (default: 0), size (default: 10), sort (default: "id,desc")
+   * Response: DataResponseMessage<Page<LoginHistoryDTO>>
+   * LoginHistoryDTO: { ipAddress, device, platform, appVersion, loginAt }
+   */
+  getLoginHistory: async (
+    page: number = 0, 
+    size: number = 10, 
+    sort: string = 'id,desc'
+  ): Promise<ApiResponse<any>> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+    params.append('sort', sort);
+    
+    const response = await apiClient.get(`/admin/login-history?${params.toString()}`);
     return response.data;
   },
 
-  getAuditLogs: async (fromDate?: string, toDate?: string, action?: string) => {
+  /**
+   * GET /v1/api/admin/audit-logs
+   * Denetim kayıtlarını getir (sayfalanmış)
+   * Query Params: fromDate?, toDate?, action?
+   * Response: DataResponseMessage<Page<AuditLogDTO>>
+   * AuditLogDTO: { id, action, description, timestamp, ipAddress, deviceInfo }
+   */
+  getAuditLogs: async (
+    fromDate?: string, 
+    toDate?: string, 
+    action?: string
+  ): Promise<ApiResponse<any>> => {
     const params = new URLSearchParams();
     if (fromDate) params.append('fromDate', fromDate);
     if (toDate) params.append('toDate', toDate);
@@ -977,7 +1117,17 @@ export const adminApi = {
     return response.data;
   },
 
-  // Legacy endpoints (for superadmin operations)
+  /**
+   * GET /v1/api/admin/roles
+   * Admin'in rollerini getir
+   * Response: DataResponseMessage<List<String>>
+   */
+  getMyRoles: async (): Promise<ApiResponse<any>> => {
+    const response = await apiClient.get('/admin/roles');
+    return response.data;
+  },
+
+  // Legacy endpoints (for superadmin operations - AdminController'da yok, başka controller'da olabilir)
   getAdminApprovals: async (page: number = 0, size: number = 10) => {
     const response = await apiClient.get(`/admin/approvals?page=${page}&size=${size}`);
     return response.data;
@@ -999,33 +1149,6 @@ export const adminApi = {
   }
 };
 
-// Analytics API endpoints
-export const analyticsApi = {
-  getDashboardStats: async () => {
-    const response = await apiClient.get('/analytics/dashboard');
-    return response.data;
-  },
-
-  getUserAnalytics: async (timeRange: string = '7d') => {
-    const response = await apiClient.get(`/analytics/users?range=${timeRange}`);
-    return response.data;
-  },
-
-  getTransactionAnalytics: async (timeRange: string = '7d') => {
-    const response = await apiClient.get(`/analytics/transactions?range=${timeRange}`);
-    return response.data;
-  },
-
-  getRevenueAnalytics: async (timeRange: string = '7d') => {
-    const response = await apiClient.get(`/analytics/revenue?range=${timeRange}`);
-    return response.data;
-  },
-
-  getSystemPerformance: async () => {
-    const response = await apiClient.get('/analytics/system-performance');
-    return response.data;
-  }
-};
 
 // Statistics API endpoints
 export const statisticsApi = {
@@ -1117,12 +1240,99 @@ export const contractApi = {
   },
 
   getUserAcceptedContracts: async (username: string) => {
-    const response = await apiClient.get(`/admin/contract/users/user/accepted-contracts?username=${username}`);
+    const response = await apiClient.get(`/admin/contract/users/${username}/accepted-contracts`);
     return response.data;
   },
 
   checkUserMandatoryStatus: async (username: string) => {
     const response = await apiClient.get(`/admin/contract/users/${username}/mandatory-status`);
+    return response.data;
+  },
+
+  // User Contract Operations (ContractController)
+  getUserContracts: async () => {
+    const response = await apiClient.get('/contract/contracts');
+    return response.data;
+  },
+
+  getMandatoryContracts: async () => {
+    const response = await apiClient.get('/contract/contracts/mandatory');
+    return response.data;
+  },
+
+  getPendingContracts: async () => {
+    const response = await apiClient.get('/contract/contracts/pending');
+    return response.data;
+  },
+
+  acceptContract: async (contractId: number, acceptData: { accepted: boolean; contractVersion?: string }) => {
+    const response = await apiClient.post(`/contract/contracts/${contractId}/accept`, acceptData);
+    return response.data;
+  },
+
+  rejectContract: async (contractId: number, rejectData: { rejectionReason: string }) => {
+    const response = await apiClient.post(`/contract/contracts/${contractId}/reject`, rejectData);
+    return response.data;
+  },
+
+  getAcceptedContracts: async () => {
+    const response = await apiClient.get('/contract/contracts/accepted');
+    return response.data;
+  },
+
+  checkContractAcceptanceStatus: async (contractId: number) => {
+    const response = await apiClient.get(`/contract/contracts/${contractId}/acceptance-status`);
+    return response.data;
+  },
+
+  checkMandatoryContractsAcceptanceStatus: async () => {
+    const response = await apiClient.get('/contract/contracts/mandatory/acceptance-status');
+    return response.data;
+  },
+
+  // Public Contract Operations (PublicContractController)
+  getPublicActiveContracts: async () => {
+    const response = await apiClient.get('/public/contracts');
+    return response.data;
+  },
+
+  getPublicContractById: async (contractId: number) => {
+    const response = await apiClient.get(`/public/contracts/${contractId}`);
+    return response.data;
+  },
+
+  getLatestContractByType: async (contractType: string) => {
+    const response = await apiClient.get(`/public/contracts/type/${contractType}`);
+    return response.data;
+  },
+
+  getMembershipContract: async () => {
+    const response = await apiClient.get('/public/contracts/membership');
+    return response.data;
+  },
+
+  getKvkkIllumination: async () => {
+    const response = await apiClient.get('/public/contracts/kvkk-illumination');
+    return response.data;
+  },
+
+  getDataProcessingConsent: async () => {
+    const response = await apiClient.get('/public/contracts/data-processing-consent');
+    return response.data;
+  },
+
+  getPrivacyPolicy: async () => {
+    const response = await apiClient.get('/public/contracts/privacy-policy');
+    return response.data;
+  },
+
+  getTermsOfUse: async () => {
+    const response = await apiClient.get('/public/contracts/terms-of-use');
+    return response.data;
+  },
+
+  getContractTypes: async () => {
+    const response = await apiClient.get('/public/contracts/types');
     return response.data;
   }
 };
@@ -1223,6 +1433,12 @@ export const walletStatsApi = {
 
   getWalletStatsByStatus: async (status: string) => {
     const response = await apiClient.get(`/statistics/wallets/status/${status}`);
+    return response.data;
+  },
+
+  // Admin wallet statistics - Backend: GET /wallet/admin/stats
+  getWalletAdminStats: async () => {
+    const response = await apiClient.get('/wallet/admin/stats');
     return response.data;
   }
 };
@@ -1492,39 +1708,106 @@ export const busCardApi = {
   readCard: async (uid: string) => {
     console.log('🔍 BusCard readCard API çağrısı başlatılıyor:', { uid });
     try {
+      // Token'ı kontrol et
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('❌ Token bulunamadı');
+        const error = new Error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+        (error as any).response = { status: 401 };
+        throw error;
+      }
+      
       const response = await apiClient.post('/buscard/read', { 
         uid: uid
       });
       console.log('✅ BusCard readCard başarılı:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ BusCard readCard hatası:', error);
+      
+      // Hata detaylarını logla
+      if (error.response) {
+        console.error('❌ Response error:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      
       throw error;
     }
   },
 
   // Kart kayıt (POST /v1/api/buscard/register)
-  registerCard: async (cardData: any) => {
-    const response = await apiClient.post('/buscard/register', cardData);
-    return response.data;
+  registerCard: async (cardData: {
+    uid: string;
+    fullName: string;
+    status?: string;
+    kartTipi: string;
+    bakiye: number;
+  }) => {
+    console.log('📝 Kart kayıt isteği:', cardData);
+    try {
+      const response = await apiClient.post('/buscard/register', cardData);
+      console.log('✅ Kart kayıt başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kart kayıt hatası:', error);
+      throw error;
+    }
+  },
+
+  // Tüm kartları listeleme (GET /v1/api/buscard/all)
+  getAllCards: async (page: number = 0, size: number = 20) => {
+    console.log('📋 Tüm kartlar listeleniyor...', { page, size });
+    try {
+      const response = await apiClient.get(`/buscard/all?page=${page}&size=${size}`);
+      console.log('✅ Kartlar başarıyla alındı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kartlar alma hatası:', error);
+      throw error;
+    }
   },
 
   // Bakiye yükleme (POST /v1/api/buscard/top-up)
   topUpBalance: async (uid: string, amount: number) => {
-    const response = await apiClient.post('/buscard/top-up', { uid, amount });
-    return response.data;
+    console.log('💰 Bakiye yükleme isteği:', { uid, amount });
+    try {
+      const response = await apiClient.post('/buscard/top-up', { uid, amount });
+      console.log('✅ Bakiye yükleme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Bakiye yükleme hatası:', error);
+      throw error;
+    }
   },
 
   // Kart vize (POST /v1/api/buscard/card-visa)
-  cardVisa: async (cardData: any) => {
-    const response = await apiClient.post('/buscard/card-visa', cardData);
-    return response.data;
+  cardVisa: async (uid: string) => {
+    console.log('✈️ Kart vizeleme isteği:', { uid });
+    try {
+      const response = await apiClient.post('/buscard/card-visa', { uid });
+      console.log('✅ Kart vizeleme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kart vizeleme hatası:', error);
+      throw error;
+    }
   },
 
   // Biniş işlemi (POST /v1/api/buscard/get-on)
-  getOn: async (uid: string) => {
-    const response = await apiClient.post('/buscard/get-on', { uid });
-    return response.data;
+  getOn: async (uid: string, validatorId: string) => {
+    console.log('🚌 Biniş işlemi:', { uid, validatorId });
+    try {
+      const response = await apiClient.post('/buscard/get-on', { uid, validatorId });
+      console.log('✅ Biniş işlemi başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Biniş işlemi hatası:', error);
+      throw error;
+    }
   },
 
   // QR kod oluşturma (POST /v1/api/buscard/generate-qr)
@@ -1537,8 +1820,148 @@ export const busCardApi = {
 
   // QR kod tarama (POST /v1/api/buscard/scan-qr)
   scanQrCode: async (qrToken: string) => {
-    const response = await apiClient.post('/buscard/scan-qr', { qrToken });
-    return response.data;
+    console.log('📱 QR kod tarama isteği');
+    try {
+      const response = await apiClient.post('/buscard/scan-qr', { qrToken });
+      console.log('✅ QR kod tarama başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ QR kod tarama hatası:', error);
+      throw error;
+    }
+  },
+
+  // Abonman oluşturma (POST /v1/api/buscard/abonman)
+  createSubscription: async (subscriptionData: {
+    uid: string;
+    type: string;
+    loaded?: number;
+    startDate?: string;
+    endDate?: string;
+    remainingUses?: number;
+    remainingDays?: number;
+  }) => {
+    console.log('📅 Abonman oluşturma isteği:', subscriptionData);
+    try {
+      const response = await apiClient.post('/buscard/abonman', subscriptionData);
+      console.log('✅ Abonman oluşturma başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Abonman oluşturma hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kart düzenleme (PUT /v1/api/buscard/edit-card)
+  editCard: async (cardData: {
+    uid: string;
+    fullName?: string;
+    status?: string;
+    active?: boolean;
+    expiryDate?: string;
+  }) => {
+    console.log('✏️ Kart düzenleme isteği:', cardData);
+    try {
+      const response = await apiClient.put('/buscard/edit-card', cardData);
+      console.log('✅ Kart düzenleme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kart düzenleme hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kart silme (DELETE /v1/api/buscard/delete-card)
+  deleteCard: async (uid: string) => {
+    console.log('🗑️ Kart silme isteği:', { uid });
+    try {
+      const response = await apiClient.delete('/buscard/delete-card', { data: { uid } });
+      console.log('✅ Kart silme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kart silme hatası:', error);
+      throw error;
+    }
+  },
+
+  // QR durum kontrolü (GET /v1/api/buscard/qr-status/{token})
+  qrStatus: async (token: string) => {
+    console.log('🔍 QR durum kontrolü:', { token });
+    try {
+      const response = await apiClient.get(`/buscard/qr-status/${token}`);
+      console.log('✅ QR durum kontrolü başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ QR durum kontrolü hatası:', error);
+      throw error;
+    }
+  },
+
+  // Kredi kartı ile bakiye yükleme (POST /v1/api/buscard/top-up/card)
+  topUpCard: async (cardNumber: string, topUpData: {
+    amount: number;
+    cardNumber: string;
+    cardExpiry?: string;
+    cardCvc?: string;
+    platformType: string;
+  }) => {
+    console.log('💳 Kredi kartı ile bakiye yükleme:', { cardNumber });
+    try {
+      // Backend'de cardNumber hem query param hem body'de olabilir
+      const response = await apiClient.post(`/buscard/top-up/card?cardNumber=${encodeURIComponent(cardNumber)}`, topUpData);
+      console.log('✅ Kredi kartı ile bakiye yükleme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Kredi kartı ile bakiye yükleme hatası:', error);
+      throw error;
+    }
+  },
+
+  // 3D ödeme callback (POST /v1/api/buscard/payment/3d-callback)
+  complete3DPayment: async (paymentId?: string, conversationId?: string) => {
+    console.log('💳 3D ödeme callback:', { paymentId, conversationId });
+    try {
+      const params = new URLSearchParams();
+      if (paymentId) params.append('paymentId', paymentId);
+      if (conversationId) params.append('conversationId', conversationId);
+      
+      const response = await apiClient.post(`/buscard/payment/3d-callback?${params.toString()}`);
+      console.log('✅ 3D ödeme callback başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ 3D ödeme callback hatası:', error);
+      throw error;
+    }
+  },
+
+  // Cüzdandan karta yükleme (POST /v1/api/buscard/top-up/wallet)
+  topUpWallet: async (topUpData: {
+    cardNumber: string;
+    amount: number;
+  }) => {
+    console.log('💼 Cüzdandan karta yükleme:', topUpData);
+    try {
+      const response = await apiClient.post('/buscard/top-up/wallet', topUpData);
+      console.log('✅ Cüzdandan karta yükleme başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Cüzdandan karta yükleme hatası:', error);
+      throw error;
+    }
+  },
+
+  // Bakiye sorgulama (GET /v1/api/buscard/balance inquiry)
+  balanceInquiry: async (cardNumber: string) => {
+    console.log('💰 Bakiye sorgulama:', { cardNumber });
+    try {
+      // Backend'de endpoint'te boşluk var, URL encode edilmeli
+      const response = await apiClient.get(`/buscard/balance%20inquiry?cardNumber=${encodeURIComponent(cardNumber)}`);
+      console.log('✅ Bakiye sorgulama başarılı:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Bakiye sorgulama hatası:', error);
+      throw error;
+    }
   }
 };
 
@@ -1713,6 +2136,39 @@ export const superAdminApi = {
   // Admin listesi (şikayet atama için - sadece SUPERADMIN)
   getAdminsListForReports: async () => {
     const response = await apiClient.get('/admin/report/admins');
+    return response.data;
+  }
+};
+
+// AutoTopUp API endpoints
+export const autoTopUpApi = {
+  // Kullanıcının otomatik yükleme loglarını getir
+  getAutoTopUpLogs: async () => {
+    const response = await apiClient.get('/auto_top_up/logs');
+    return response.data;
+  },
+
+  // Belirli bir konfigürasyon için logları getir
+  getAutoTopUpLogsByConfig: async (configId: number) => {
+    const response = await apiClient.get(`/auto_top_up/${configId}/logs`);
+    return response.data;
+  },
+
+  // Tüm kullanıcıların loglarını getir (SuperAdmin)
+  getAllAutoTopUpLogs: async () => {
+    const response = await apiClient.get('/auto_top_up/admin/logs');
+    return response.data;
+  },
+
+  // Kullanıcının otomatik yükleme konfigürasyonlarını getir
+  getAutoTopUpConfigs: async () => {
+    const response = await apiClient.get('/auto_top_up');
+    return response.data;
+  },
+
+  // Tüm konfigürasyonları getir (Admin)
+  getAllAutoTopUpConfigs: async () => {
+    const response = await apiClient.get('/auto_top_up/admin/configs');
     return response.data;
   }
 };
