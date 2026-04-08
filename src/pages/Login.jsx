@@ -148,7 +148,7 @@ const Login = () => {
       console.log('🔄 İlk deneme (orijinal format):', loginPayload);
       
       try {
-        response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
+        response = await fetch(`${import.meta.env.VITE_API_URL || 'https://bingolkart.com.tr/v1/api'}/auth/superadmin-login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ const Login = () => {
         console.log('🔄 Alternatif format ile deneme:', alternativePayload);
         
         try {
-          response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/auth/superadmin-login`, {
+          response = await fetch(`${import.meta.env.VITE_API_URL || 'https://bingolkart.com.tr/v1/api'}/auth/superadmin-login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

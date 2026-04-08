@@ -34,13 +34,6 @@ const AdminProfile = () => {
     roles: []
   });
 
-<<<<<<< HEAD
-  // Roller profileData.roles içinden alınacak, ayrı state'e gerek yok
-=======
-  const [myRoles, setMyRoles] = useState([]);
-  const [loadingRoles, setLoadingRoles] = useState(false);
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
-
   const [profileForm, setProfileForm] = useState({
     name: '',
     surname: '',
@@ -55,12 +48,8 @@ const AdminProfile = () => {
 
   useEffect(() => {
     loadProfile();
-<<<<<<< HEAD
     // getMyRoles endpoint'i Admin tablosunda arama yaptığı için SuperAdmin kullanıcıları için hata veriyor
     // Roller zaten getProfile endpoint'inden geliyor, ayrıca çağırmaya gerek yok
-=======
-    loadMyRoles();
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
   }, []);
 
   const loadProfile = async () => {
@@ -100,9 +89,9 @@ const AdminProfile = () => {
     }
   };
 
-<<<<<<< HEAD
+
   // loadMyRoles fonksiyonu kaldırıldı - Roller getProfile endpoint'inden geliyor
-=======
+
   const loadMyRoles = async () => {
     try {
       setLoadingRoles(true);
@@ -122,7 +111,7 @@ const AdminProfile = () => {
       setLoadingRoles(false);
     }
   };
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -329,7 +318,6 @@ const AdminProfile = () => {
                 <label>Roller</label>
                 <div className="info-value">
                   <div className="roles-badge">
-<<<<<<< HEAD
                     {profileData.roles && profileData.roles.length > 0 ? (
                       Array.isArray(profileData.roles) ? (
                         profileData.roles.map((role, index) => (
@@ -345,18 +333,6 @@ const AdminProfile = () => {
                           </span>
                         ))
                       )
-=======
-                    {loadingRoles ? (
-                      <span>Yükleniyor...</span>
-                    ) : myRoles.length > 0 ? (
-                      myRoles.map((role, index) => (
-                        <span key={index} className="role-badge">{role}</span>
-                      ))
-                    ) : profileData.roles?.length > 0 ? (
-                      profileData.roles.map((role, index) => (
-                        <span key={index} className="role-badge">{role}</span>
-                      ))
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
                     ) : (
                       'Yok'
                     )}

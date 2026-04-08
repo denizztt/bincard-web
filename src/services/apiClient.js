@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getAccessToken } from '../utils/tokenManager';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'https://bingolkart.com.tr/v1/api';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -13,16 +14,39 @@ const apiClient = axios.create({
 
 // Add request interceptor to include auth token
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    try {
+      // Prefer encrypted token, fall back to plain storage for compatibility
+      let token = getAccessToken();
+      if (!token) {
+        token = localStorage.getItem('accessToken') || localStorage.getItem('encrypted_access_token');
+      }
+
+      console.log('🔍 REQUEST INTERCEPTOR (apiClient.js):', {
+        url: config.url,
+        method: config.method?.toUpperCase(),
+        tokenExists: !!token,
+        tokenPreview: typeof token === 'string' && token.length ? token.substring(0, 20) + '...' : 'NO TOKEN'
+      });
+
+      if (token) {
+        config.headers = config.headers || {};
+        if (!config.headers.Authorization) {
+          config.headers.Authorization = `Bearer ${token}`;
+          console.log('✅ Authorization header SET');
+        } else {
+          console.log('ℹ️ Authorization header already present');
+        }
+      } else {
+        console.warn('⚠️ NO TOKEN FOUND - Authorization header NOT set');
+      }
+    } catch (err) {
+      console.error('❌ Error in request interceptor token retrieval:', err);
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Add response interceptor to handle token refresh and errors
@@ -38,13 +62,28 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const response = await refreshAccessToken(refreshToken);
-          if (response.success) {
-            const newAccessToken = response.data.accessToken.token;
-            localStorage.setItem('accessToken', newAccessToken);
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return apiClient(originalRequest);
-          }
+            const refreshRes = await refreshAccessToken(refreshToken);
+            if (refreshRes.success && refreshRes.data) {
+              const d = refreshRes.data;
+              const newAccessToken = d?.accessToken?.token || d?.accessToken || d?.token || (d?.data && (d.data.accessToken || d.data.token));
+              if (newAccessToken) {
+                // store plain token for compatibility and set expiry if provided
+                try {
+                  localStorage.setItem('accessToken', newAccessToken);
+                  if (d?.accessToken?.expiresAt) {
+                    localStorage.setItem('token_expiry_time', new Date(d.accessToken.expiresAt).getTime().toString());
+                  } else if (d?.data?.accessToken?.expiresAt) {
+                    localStorage.setItem('token_expiry_time', new Date(d.data.accessToken.expiresAt).getTime().toString());
+                  }
+                } catch (e) {
+                  console.warn('Could not persist refreshed token to localStorage', e);
+                }
+
+                originalRequest.headers = originalRequest.headers || {};
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return apiClient(originalRequest);
+              }
+            }
         } catch (refreshError) {
           // Refresh failed, redirect to login
           localStorage.removeItem('accessToken');
@@ -85,18 +124,19 @@ apiClient.interceptors.response.use(
 // Refresh token function
 const refreshAccessToken = async (refreshToken) => {
   try {
-    const response = await axios.post(`${BASE_URL}/v1/api/auth/refresh`, {
+    const response = await apiClient.post(`/auth/refresh`, {
       refreshToken
     });
-    
+
     return {
       success: true,
       data: response.data
     };
   } catch (error) {
+    console.error('Refresh token request failed:', error);
     return {
       success: false,
-      error: error.response?.data?.message || 'Token refresh failed'
+      error: error.response?.data || error.message || 'Token refresh failed'
     };
   }
 };

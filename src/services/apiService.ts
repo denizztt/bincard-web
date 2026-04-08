@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import apiClient from './apiClient';
+import type { AxiosRequestConfig } from 'axios';
 import type { 
   ApiResponse, 
   PagedResponse, 
@@ -7,22 +8,10 @@ import type {
 } from '../types/index';
 import type { News } from '../types';
 
-// Base API configuration
-const BASE_URL = 'http://localhost:8080/v1/api';
-
-// Create axios instance
-const apiClient: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
 // Token refresh function
 const refreshAccessToken = async (refreshToken: string): Promise<TokenResponse> => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+    const response = await apiClient.post(`/auth/refresh`, {
       refreshToken: refreshToken,
       deviceInfo: 'Web Browser',
       platform: 'Web',
@@ -44,68 +33,7 @@ const refreshAccessToken = async (refreshToken: string): Promise<TokenResponse> 
   }
 };
 
-// Request interceptor to add auth token with automatic validation
-apiClient.interceptors.request.use(
-  async (config) => {
-    console.log('🚀 API REQUEST:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      data: config.data,
-      params: config.params
-    });
-    
-    // Skip token validation for auth endpoints
-    const isAuthEndpoint = config.url?.includes('/auth/');
-    
-    if (!isAuthEndpoint) {
-      try {
-        // Import token manager functions
-        const { getAccessToken, isTokenExpired, isTokenExpiring } = await import('../utils/tokenManager.js');
-        
-        // Check if token is expired or expiring
-        if (isTokenExpired()) {
-          console.log('❌ Token expired, redirecting to login...');
-          // Clear expired tokens
-          const { clearTokens } = await import('../utils/tokenManager.js');
-          clearTokens();
-          
-          // Redirect to login
-          window.location.href = '/login';
-          return Promise.reject(new Error('Token expired'));
-        }
-        
-        // Get current token
-        const token = getAccessToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-          console.log('🔑 Token added to request:', {
-            tokenLength: token.length,
-            tokenPreview: token.substring(0, 20) + '...',
-            url: config.url,
-            fullToken: token // DEBUG: Tam token'ı göster
-          });
-          
-          // Log warning if token is expiring soon
-          if (isTokenExpiring(60)) {
-            console.warn('⚠️ Token expiring soon (< 1 minute)');
-          }
-        } else {
-          console.log('⚠️ No token found for URL:', config.url);
-        }
-      } catch (error) {
-        console.error('❌ Token validation error:', error);
-      }
-    }
-    
-    return config;
-  },
-  (error) => {
-    console.error('❌ REQUEST INTERCEPTOR ERROR:', error);
-    return Promise.reject(error);
-  }
-);
+// Request interceptor moved to `src/services/apiClient.js` to centralize auth handling
 
 // Response interceptor with enhanced token management
 apiClient.interceptors.response.use(
@@ -1684,7 +1612,7 @@ export const busCardApi = {
     console.log('📤 Gönderilen request body:', JSON.stringify(pricingData, null, 2));
     console.log('📤 CardType değeri:', pricingData.cardType, 'Type:', typeof pricingData.cardType);
     console.log('📤 Price değeri:', pricingData.price, 'Type:', typeof pricingData.price);
-    console.log('📤 Full URL:', `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/v1/api/buscard/card-pricing`);
+    console.log('📤 Full URL:', `${import.meta.env.VITE_API_URL || 'https://bingolkart.com.tr/v1/api'}/buscard/card-pricing`);
     
     try {
       const response = await apiClient.put('/buscard/card-pricing', pricingData);

@@ -1,14 +1,4 @@
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:8080';
-
-// Create axios instance with base configuration
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import apiClient from './apiClient';
 
 // Add request interceptor to include auth token
 apiClient.interceptors.request.use(
@@ -26,8 +16,23 @@ apiClient.interceptors.request.use(
 
 // Add response interceptor to handle token refresh
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API RESPONSE OK:', {
+      status: response.status,
+      url: response.config.url,
+      method: response.config.method?.toUpperCase()
+    });
+    return response;
+  },
   async (error) => {
+    console.error('❌ API RESPONSE ERROR:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      responseData: error.response?.data
+    });
+    
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -58,7 +63,7 @@ apiClient.interceptors.response.use(
 export const authService = {
   async login(telephone, password) {
     try {
-      const response = await apiClient.post('/v1/api/auth/login', {
+      const response = await apiClient.post('/auth/login', {
         telephone,
         password
       });
@@ -85,7 +90,7 @@ export const authService = {
 
   async verifyPhone(code, telephone) {
     try {
-      const response = await apiClient.post('/v1/api/auth/phone-verify', {
+      const response = await apiClient.post('/auth/phone-verify', {
         code
       });
       
@@ -111,7 +116,7 @@ export const authService = {
 
   async resendVerificationCode(telephone) {
     try {
-      const response = await apiClient.post(`/v1/api/auth/resend-verify-code?telephone=${telephone}`);
+      const response = await apiClient.post(`/auth/resend-verify-code?telephone=${telephone}`);
       
       // Check the API's success field from the response
       if (response.data && response.data.success) {
@@ -135,7 +140,7 @@ export const authService = {
 
   async refreshToken(refreshToken) {
     try {
-      const response = await axios.post(`${BASE_URL}/v1/api/auth/refresh`, {
+      const response = await apiClient.post(`/auth/refresh`, {
         refreshToken
       });
       
@@ -152,4 +157,4 @@ export const authService = {
   }
 };
 
-export default apiClient;
+// authService exports `authService` only; apiClient is provided by src/services/apiClient.js

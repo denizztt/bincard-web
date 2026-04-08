@@ -1,6 +1,6 @@
-// ========================
+// ===
 // API Response Types
-// ========================
+// ===
 
 export interface ApiResponse<T> {
   message: string;
@@ -37,9 +37,9 @@ export interface Sort {
   unsorted: boolean;
 }
 
-// ========================
+// ===
 // Authentication Types
-// ========================
+// ===
 
 export interface TokenDTO {
   token: string;
@@ -62,9 +62,9 @@ export enum TokenType {
   REFRESH = 'REFRESH'
 }
 
-// ========================
+// ===
 // Location & Address Types
-// ========================
+// ===
 
 export interface Location {
   latitude: number;
@@ -78,9 +78,9 @@ export interface Address {
   postalCode: string;
 }
 
-// ========================
+// ===
 // Payment Types
-// ========================
+// ===
 
 export enum PaymentMethod {
   CASH = 'CASH',
@@ -119,9 +119,9 @@ export interface PaymentPoint {
   distance?: number; // Optional distance
 }
 
-// ========================
+// ===
 // Utility Types
-// ========================
+// ===
 
 export interface PaginationParams {
   page: number;
@@ -137,18 +137,18 @@ export interface FilterParams {
   paymentMethod?: PaymentMethod;
 }
 
-// ========================
+// ===
 // Authentication Types (Extended)
-// ========================
+// ===
 
 export interface LoginResponse {
   success: boolean;
   message: string;
 }
 
-// ========================
+// ===
 // Payment Point Management
-// ========================
+// ===
 
 export interface LocationDTO {
   latitude: number;
@@ -173,9 +173,9 @@ export interface PaymentPointUpdateDTO {
   active: boolean;
 }
 
-// ========================
+// ===
 // UI/Menu Types
-// ========================
+// ===
 
 export interface MenuItem {
   title: string;
@@ -187,9 +187,9 @@ export interface MenuItem {
   isSubItem: boolean;
 }
 
-// ========================
+// ===
 // Feedback Types
-// ========================
+// ===
 
 export interface Feedback {
   id: number;
@@ -286,9 +286,9 @@ export interface FeedbackFilters {
   search?: string;
 }
 
-// ========================
+// ===
 // Helper Functions for Types
-// ========================
+// ===
 
 export const createMenuItem = (
   title: string, 

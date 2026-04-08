@@ -201,7 +201,7 @@ const FeedbackDetail = () => {
             onClick={() => {
               const feedbackText = `
 Geri Bildirim Detayı
-===================
+=====
 ID: ${feedback.id}
 Tür: ${feedback.type}
 Kaynak: ${feedback.source}

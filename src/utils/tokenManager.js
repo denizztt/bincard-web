@@ -32,23 +32,10 @@ const encryptData = (data) => {
       return null;
     }
     
-    console.log('🔐 Encrypting data:', { 
-      dataType: typeof data, 
-      dataLength: data.length,
-      preview: data.substring(0, 20) + '...'
-    });
-    
     const encrypted = CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
-    console.log('✅ Encryption successful:', { encryptedLength: encrypted.length });
     return encrypted;
   } catch (error) {
     console.error('Encryption error:', error);
-    console.error('Encryption error details:', {
-      message: error.message,
-      stack: error.stack,
-      dataType: typeof data,
-      dataLength: data?.length
-    });
     return null;
   }
 };

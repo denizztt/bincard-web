@@ -157,7 +157,7 @@ export function AuthProvider({ children }) {
           // Use sendBeacon for more reliable request on page unload
           if (navigator.sendBeacon) {
             const logoutData = JSON.stringify({});
-            navigator.sendBeacon('/v1/api/auth/logout', logoutData);
+            navigator.sendBeacon('/auth/logout', logoutData);
           } else {
             await authApi.logout();
           }
@@ -225,12 +225,17 @@ export function AuthProvider({ children }) {
         // Calculate expiry time from token
         const expiryTime = parseTokenExpiry(response.token) || new Date(Date.now() + 30 * 60 * 1000);
         
-        // Store new tokens
+        // Store new tokens (encrypted)
         const stored = storeTokens(response.token, refreshToken, expiryTime);
+        
+        // ALSO store plain tokens for apiClient.js compatibility
+        localStorage.setItem('accessToken', response.token);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('token_expiry_time', expiryTime.getTime().toString());
         
         if (stored) {
           updateLastActivity();
-          console.log('✅ Token refreshed successfully');
+          console.log('✅ Token refreshed successfully - expiry:', expiryTime.toISOString());
           return true;
         } else {
           throw new Error('Failed to store refreshed tokens');
@@ -251,12 +256,20 @@ export function AuthProvider({ children }) {
   const login = async (accessToken, refreshToken, userData) => {
     try {
       console.log('🔐 Starting login process...');
+      console.log('📝 Storing tokens...');
       
       // Parse token expiry
       const expiryTime = parseTokenExpiry(accessToken) || new Date(Date.now() + 30 * 60 * 1000);
       
-      // Store encrypted tokens
+      // Store encrypted tokens (tokenManager)
       const stored = storeTokens(accessToken, refreshToken, expiryTime);
+      
+      // ALSO store plain tokens for apiClient.js & authService.js compatibility
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('token_expiry_time', expiryTime.getTime().toString());
+      console.log('✅ Tokens stored (both encrypted & plain)');
+      console.log('📅 Token expiry time:', expiryTime.toISOString(), '← KAYDEDILDI');
       
       if (stored) {
         // Store user data
@@ -266,7 +279,7 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
         updateLastActivity();
         
-        console.log('✅ Login successful');
+        console.log('✅ Login successful - Ready for API requests');
         return true;
       } else {
         throw new Error('Failed to store tokens securely');
@@ -303,8 +316,12 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('❌ Logout error:', error);
     } finally {
-      // Clear all tokens and user data
+      // Clear all tokens (encrypted) and user data
       clearTokens();
+      
+      // ALSO clear plain tokens for apiClient.js compatibility
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('userData');
       
       setUser(null);

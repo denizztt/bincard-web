@@ -268,11 +268,11 @@
 .status-badge {
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
-<<<<<<< HEAD
+
   background: white !important;
-=======
+
   background: #f3f4f6;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   color: #374151;
   font-size: 0.75rem;
   font-weight: 500;
@@ -342,15 +342,15 @@
 }
 
 .btn-view {
-<<<<<<< HEAD
+
   background: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background: #6b7280;
   color: white;
   border: none;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -363,7 +363,7 @@
 }
 
 .btn-view:hover {
-<<<<<<< HEAD
+
   background: #f8f9fa;
   border-color: #6b7280;
 }
@@ -372,7 +372,7 @@
   background: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background: #4b5563;
 }
 
@@ -380,7 +380,7 @@
   background: #6b7280;
   color: white;
   border: none;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -389,7 +389,7 @@
 }
 
 .btn-activate:hover {
-<<<<<<< HEAD
+
   background: #f8f9fa;
   border-color: #6b7280;
 }
@@ -398,7 +398,7 @@
   background: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background: #4b5563;
 }
 
@@ -406,7 +406,7 @@
   background: #6b7280;
   color: white;
   border: none;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -415,7 +415,7 @@
 }
 
 .btn-deactivate:hover {
-<<<<<<< HEAD
+
   background: #f8f9fa;
   border-color: #6b7280;
 }
@@ -424,7 +424,7 @@
   background: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background: #4b5563;
 }
 
@@ -432,7 +432,7 @@
   background: #6b7280;
   color: white;
   border: none;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -445,7 +445,7 @@
 }
 
 .btn-edit:hover {
-<<<<<<< HEAD
+
   background: #f8f9fa;
   border-color: #6b7280;
 }
@@ -454,7 +454,7 @@
   background: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background: #4b5563;
 }
 
@@ -462,7 +462,7 @@
   background: #6b7280;
   color: white;
   border: none;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
   padding: 0.375rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -471,12 +471,12 @@
 }
 
 .btn-delete:hover {
-<<<<<<< HEAD
+
   background: #f8f9fa;
   border-color: #6b7280;
-=======
+
   background: #4b5563;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 }
 
 .bus-checkbox, .select-all-checkbox {
@@ -1089,14 +1089,14 @@
 }
 
 .btn-view {
-<<<<<<< HEAD
+
   background-color: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background-color: #6b7280;
   color: white;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 }
 
 .btn-view:hover {
@@ -1106,14 +1106,14 @@
 }
 
 .btn-activate {
-<<<<<<< HEAD
+
   background-color: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background-color: #6b7280;
   color: white;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 }
 
 .btn-activate:hover {
@@ -1135,14 +1135,14 @@
 }
 
 .btn-edit {
-<<<<<<< HEAD
+
   background-color: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background-color: #6b7280;
   color: white;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 }
 
 .btn-edit:hover {
@@ -1152,14 +1152,14 @@
 }
 
 .btn-delete {
-<<<<<<< HEAD
+
   background-color: white;
   color: #6b7280;
   border: 1px solid #e9ecef;
-=======
+
   background-color: #6b7280;
   color: white;
->>>>>>> 9d37eb05744291455eca991958fcde8a077f8437
+
 }
 
 .btn-delete:hover {
