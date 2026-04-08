@@ -1,0 +1,607 @@
+/* Compliance Check Styles */
+.compliance-check {
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Header */
+.compliance-check .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.compliance-check .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.compliance-check .header-left h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.compliance-check .back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--secondary-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compliance-check .back-button:hover {
+  background-color: var(--secondary-dark);
+}
+
+.compliance-check .header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.compliance-check .logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--danger-color);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compliance-check .logout-btn:hover {
+  background-color: var(--danger-dark);
+}
+
+/* Control Panel */
+.compliance-check .control-panel {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.compliance-check .panel-section {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compliance-check .panel-section h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.compliance-check .panel-section p {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.compliance-check .search-container {
+  margin-bottom: 1rem;
+}
+
+.compliance-check .search-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background-color: var(--input-bg);
+  transition: border-color 0.2s;
+}
+
+.compliance-check .search-input-group:focus-within {
+  border-color: var(--primary-color);
+}
+
+.compliance-check .search-input-group svg {
+  color: var(--text-muted);
+}
+
+.compliance-check .search-input-group input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 1rem;
+  outline: none;
+}
+
+.compliance-check .search-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compliance-check .search-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.compliance-check .search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.compliance-check .bulk-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.compliance-check .bulk-check-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--info-color);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compliance-check .bulk-check-button:hover {
+  background-color: var(--info-dark);
+}
+
+.compliance-check .bulk-check-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.compliance-check .export-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--success-color);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compliance-check .export-button:hover {
+  background-color: var(--success-dark);
+}
+
+.compliance-check .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.compliance-check .error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 2rem;
+  padding: 1rem;
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  border-radius: 8px;
+  border-left: 4px solid var(--danger-color);
+}
+
+/* Results Section */
+.compliance-check .results-section {
+  padding: 2rem;
+}
+
+.compliance-check .user-compliance-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compliance-check .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.compliance-check .user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.compliance-check .user-info svg {
+  color: var(--primary-color);
+}
+
+.compliance-check .user-info h3 {
+  margin: 0;
+  color: var(--text-color);
+}
+
+.compliance-check .user-info p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.compliance-check .compliance-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.compliance-check .compliance-status.compliant {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.compliance-check .compliance-status.non-compliant {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.compliance-check .card-content {
+  padding: 1.5rem;
+}
+
+.compliance-check .status-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--info-light);
+  border-radius: 8px;
+  border-left: 4px solid var(--info-color);
+}
+
+.compliance-check .status-message svg {
+  color: var(--info-color);
+  margin-top: 0.125rem;
+}
+
+.compliance-check .status-message p {
+  margin: 0;
+  color: var(--info-color);
+  line-height: 1.5;
+}
+
+.compliance-check .warning-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--warning-light);
+  border-radius: 8px;
+  border-left: 4px solid var(--warning-color);
+}
+
+.compliance-check .warning-section svg {
+  color: var(--warning-color);
+  margin-top: 0.125rem;
+}
+
+.compliance-check .warning-section h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--warning-color);
+}
+
+.compliance-check .warning-section p {
+  margin: 0;
+  color: var(--warning-color);
+  line-height: 1.5;
+}
+
+.compliance-check .actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.compliance-check .view-contracts-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.compliance-check .view-contracts-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Bulk Results */
+.compliance-check .bulk-results-section {
+  padding: 2rem;
+}
+
+.compliance-check .bulk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.compliance-check .bulk-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.compliance-check .bulk-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.compliance-check .stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.compliance-check .stat.compliant {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.compliance-check .stat.non-compliant {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.compliance-check .stat.total {
+  background-color: var(--info-light);
+  color: var(--info-color);
+}
+
+.compliance-check .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+}
+
+.compliance-check .bulk-results-table {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.compliance-check .bulk-results-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compliance-check .bulk-results-table th {
+  background-color: var(--header-bg);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.compliance-check .bulk-results-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.compliance-check .bulk-results-table tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.compliance-check .user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compliance-check .status-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.compliance-check .status-cell.compliant {
+  background-color: var(--success-light);
+  color: var(--success-color);
+}
+
+.compliance-check .status-cell.non-compliant {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+.compliance-check .detail-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.compliance-check .detail-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.compliance-check .bulk-actions-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.compliance-check .back-to-single {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--secondary-color);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.compliance-check .back-to-single:hover {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+/* Info Panel */
+.compliance-check .info-panel {
+  margin: 2rem;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compliance-check .info-panel h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--primary-color);
+}
+
+.compliance-check .info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.compliance-check .info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--info-light);
+  border-radius: 8px;
+}
+
+.compliance-check .info-item svg {
+  color: var(--info-color);
+  margin-top: 0.125rem;
+}
+
+.compliance-check .info-item h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--info-color);
+}
+
+.compliance-check .info-item p {
+  margin: 0;
+  color: var(--info-color);
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .compliance-check .header {
+    padding: 1rem;
+  }
+  
+  .compliance-check .control-panel {
+    padding: 1rem;
+    grid-template-columns: 1fr;
+  }
+  
+  .compliance-check .search-input-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .compliance-check .bulk-actions {
+    flex-direction: column;
+  }
+  
+  .compliance-check .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .compliance-check .bulk-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .compliance-check .bulk-stats {
+    flex-wrap: wrap;
+  }
+  
+  .compliance-check .bulk-results-table {
+    overflow-x: auto;
+  }
+  
+  .compliance-check .bulk-actions-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .compliance-check .info-grid {
+    grid-template-columns: 1fr;
+  }
+}

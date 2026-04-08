@@ -1,0 +1,95 @@
+.roles-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header .page-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.page-description {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn.btn-secondary {
+  background: #f9fafb;
+}
+
+.roles-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.role-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.role-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-content {
+  flex: 1;
+}
+
+.role-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.role-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.role-label {
+  font-weight: 600;
+}
+
+.role-desc {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.roles-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  color: #6b7280;
+}
+
+
