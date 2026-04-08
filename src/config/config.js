@@ -11,7 +11,7 @@ export const config = {
     defaultZoom: 11
   },
 
-  // API Configuration
+  // API Configuration asd
   api: {
     baseUrl: 'https://bingolkart.com.tr/v1/api',
     timeout: 30000
